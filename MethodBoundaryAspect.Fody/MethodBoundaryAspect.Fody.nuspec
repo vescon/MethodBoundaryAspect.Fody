@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata  minClientVersion="2.8">
+    <id>MethodBoundaryAspect.Fody</id>
+    <version>0.3.5</version>
+    <title>MethodBoundaryAspect.Fody</title>
+    <authors>Ralf Kornelius</authors>
+    <owners>Ralf Kornelius</owners>
+    <developmentDependency>true</developmentDependency>
+    <projectUrl>https://github.com/Fody/MethodBoundaryAspect</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Fody add-in to decorate arbitrary methods to run code before, after invocation and on exception</description>
+    <copyright>Copyright Ralf Kornelius 2015</copyright>
+    <tags>ILWeaving Fody Aspect AOP Method Invocation MethodBoundary</tags>
+    <dependencies>
+      <dependency id="Fody" version="1.28.3"/>
+      <dependency id="FodyCecil" version="1.28.3"/>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="bin\Release\MethodBoundaryAspect.Fody.pdb" target="lib\net45\" />
+    <file src="bin\Release\MethodBoundaryAspect.Fody.dll" target="" />
+  </files>
+</package>

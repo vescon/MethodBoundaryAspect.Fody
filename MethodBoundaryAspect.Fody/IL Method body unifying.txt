@@ -1,0 +1,124 @@
+
+IL Method body unifying
+
+Body (original)
+	- instr 1
+	- instr 2
+	- instr 3
+	- instr 4
+	- ret 1
+	- instr 5
+	- instr 6
+	- throw
+	- instr 7
+	- instr 8
+	- ret 2
+	
+Body (unified) (Remark: replaced ret instructions with branches to nop e1, also fix exception handlers which pointed to old ret)
+	- nop s1	
+	- nop s2
+	- nop s3
+	- nop s4
+	- instr 1
+	- instr 2
+	- instr 3
+	- instr 4	
+	- br to nop e1
+	- instr 5
+	- instr 6
+	- throw
+	- instr 7
+	- instr 8	
+	- br to nop e1	
+	- nop e1
+	- st ret value (if non void method)
+	- nop e2
+	- ld ret value (if non void method)
+	- ret r1
+	
+Body (unified - OnEntry+OnExit)
+	- nop s1
+	- create arguments array
+	- nop s2
+	- create execution args
+	- nop s3
+	- call OnEntry	
+	- nop s4
+	- instr 1
+	- instr 2
+	- instr 3
+	- instr 4	
+	- br to nop e1
+	- instr 5
+	- instr 6
+	- throw
+	- instr 7
+	- instr 8	
+	- br to nop e1	
+	- nop e1
+	- st ret value
+	- nop e2
+	- ld ret value
+	- set ret value in execution args (if non void method)
+	- call OnExit
+	- ld ret value
+	- ret r1
+	
+Body (unified - try-catch)
+try
+	- nop s1
+	- nop s2	
+	- nop s3
+	- nop s4
+	- instr 1
+	- instr 2
+	- instr 3
+	- instr 4	
+	- br to nop e1
+	- instr 5
+	- instr 6
+	- throw
+	- instr 7
+	- instr 8	
+	- br to nop e1
+	- nop e1
+	- st ret value
+	- leave	nop e2
+catch
+	- rethrow
+catch end
+	- nop e2
+	- ld ret value
+	- ret r1
+	
+Body (unified - try-catch - OnException)
+try
+	- nop s1
+	- create arguments array
+	- nop s2
+	- create execution args
+	- nop s3
+	- nop s4
+	- instr 1
+	- instr 2
+	- instr 3
+	- instr 4	
+	- br to nop e1
+	- instr 5
+	- instr 6
+	- throw
+	- instr 7
+	- instr 8	
+	- br to nop e1
+	- nop e1
+	- st ret value
+	- leave	nop e2
+catch
+	- set exception value in execution args
+	- call OnException
+	- rethrow
+catch end
+	- nop e2
+	- ld ret value
+	- ret r1
+

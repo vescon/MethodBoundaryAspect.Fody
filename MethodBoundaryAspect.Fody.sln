@@ -1,0 +1,79 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30723.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody", "MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj", "{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.UnitTests", "MethodBoundaryAspect.Fody.UnitTests\MethodBoundaryAspect.Fody.UnitTests.csproj", "{B5B7719B-E431-48AF-A29C-1BF169408F34}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.UnitTests.TestAssembly", "MethodBoundaryAspect.Fody.UnitTests.TestAssembly\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.csproj", "{6AA69B8F-B99B-415C-AF49-358DE78B3B23}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.UnitTests.TestProgram", "MethodBoundaryAspect.Fody.UnitTests.TestProgram\MethodBoundaryAspect.Fody.UnitTests.TestProgram.csproj", "{A6523801-A86B-4FA5-97C7-0B314B6BC08A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{2A55FD7C-EB50-45DF-ADCA-470334A5873B}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\NuGet.Config = .nuget\NuGet.Config
+		.nuget\NuGet.exe = .nuget\NuGet.exe
+		.nuget\NuGet.targets = .nuget\NuGet.targets
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects", "MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects\MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.csproj", "{1AC3CF01-711C-4C93-AB9C-010C0AD7D5D6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0564AB89-550A-4700-8E48-C7091CE9A03C}"
+	ProjectSection(SolutionItems) = preProject
+		MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.nuspec = MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.nuspec
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 6
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://ft-tfs:8080/tfs/defaultcollection
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = MethodBoundaryAspect.Fody\\MethodBoundaryAspect.Fody.csproj
+		SccProjectName1 = MethodBoundaryAspect.Fody
+		SccLocalPath1 = MethodBoundaryAspect.Fody
+		SccProjectUniqueName2 = MethodBoundaryAspect.Fody.UnitTests\\MethodBoundaryAspect.Fody.UnitTests.csproj
+		SccProjectName2 = MethodBoundaryAspect.Fody.UnitTests
+		SccLocalPath2 = MethodBoundaryAspect.Fody.UnitTests
+		SccProjectUniqueName3 = MethodBoundaryAspect.Fody.UnitTests.TestAssembly\\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.csproj
+		SccProjectName3 = MethodBoundaryAspect.Fody.UnitTests.TestAssembly
+		SccLocalPath3 = MethodBoundaryAspect.Fody.UnitTests.TestAssembly
+		SccProjectUniqueName4 = MethodBoundaryAspect.Fody.UnitTests.TestProgram\\MethodBoundaryAspect.Fody.UnitTests.TestProgram.csproj
+		SccProjectName4 = MethodBoundaryAspect.Fody.UnitTests.TestProgram
+		SccLocalPath4 = MethodBoundaryAspect.Fody.UnitTests.TestProgram
+		SccProjectUniqueName5 = MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects\\MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.csproj
+		SccProjectName5 = MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects
+		SccLocalPath5 = MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5B7719B-E431-48AF-A29C-1BF169408F34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5B7719B-E431-48AF-A29C-1BF169408F34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5B7719B-E431-48AF-A29C-1BF169408F34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5B7719B-E431-48AF-A29C-1BF169408F34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6AA69B8F-B99B-415C-AF49-358DE78B3B23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6AA69B8F-B99B-415C-AF49-358DE78B3B23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6AA69B8F-B99B-415C-AF49-358DE78B3B23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6AA69B8F-B99B-415C-AF49-358DE78B3B23}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6523801-A86B-4FA5-97C7-0B314B6BC08A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6523801-A86B-4FA5-97C7-0B314B6BC08A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6523801-A86B-4FA5-97C7-0B314B6BC08A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6523801-A86B-4FA5-97C7-0B314B6BC08A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1AC3CF01-711C-4C93-AB9C-010C0AD7D5D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AC3CF01-711C-4C93-AB9C-010C0AD7D5D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AC3CF01-711C-4C93-AB9C-010C0AD7D5D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AC3CF01-711C-4C93-AB9C-010C0AD7D5D6}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
