@@ -1,5 +1,75 @@
 # MethodBoundaryAspect.Fody
 
+## Introduction 
+Allows decorated method to access some runtime properties before and after method execution.
+
+public class MethodExecutionArgs
+  {
+    public object Instance { get; set; }
+
+    public MethodBase Method { get; set; }
+
+    public object[] Arguments { get; set; }
+
+    public object ReturnValue { get; set; }
+
+    public Exception Exception { get; set; }
+
+    public object MethodExecutionTag { get; set; }
+  }
+
+### Your Code
+	public sealed class TransactionScopeAttribute : OnMethodBoundaryAspect
+    {
+        public int TimeoutInSeconds { get; set; }
+
+        public override void OnEntry(MethodExecutionArgs args)
+        {
+            var transactionScopeProvider = GlobalServiceLocator.ServiceLocator.GetInstance<ITransactionScopeProvider>();
+
+            if (TimeoutInSeconds != 0)
+                transactionScopeProvider.Timeout = TimeSpan.FromSeconds(TimeoutInSeconds);
+
+            var transactionScope = transactionScopeProvider.Create();
+            args.MethodExecutionTag = transactionScope;
+        }
+
+        public override void OnException(MethodExecutionArgs args)
+        {
+            FinishTransaction(args);
+        }
+
+        public override void OnExit(MethodExecutionArgs args)
+        {
+            FinishTransaction(args);
+        }
+
+        private static void FinishTransaction(MethodExecutionArgs args)
+        {
+            var transactionScope = (ITransactionScope)args.MethodExecutionTag;
+
+            try
+            {
+                if (args.Exception == null)
+                    transactionScope.Complete();
+            }
+            finally
+            {
+                if (transactionScope != null)
+                    transactionScope.Dispose();
+            }
+        }
+    }
+	
+	public class Sample	{
+		[TransactionScope]
+		public void Method()
+		{
+		    Debug.WriteLine("Do some database stuff isolated in surrounding transaction");
+		}
+	}
+	
+
 License
 -------
 
