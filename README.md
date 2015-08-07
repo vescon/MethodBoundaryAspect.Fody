@@ -2,23 +2,20 @@
 
 ## Introduction 
 Allows decorated method to access some runtime properties before and after method execution.
-
-public class MethodExecutionArgs
+```csharp
+ public class MethodExecutionArgs
   {
     public object Instance { get; set; }
-
     public MethodBase Method { get; set; }
-
     public object[] Arguments { get; set; }
-
     public object ReturnValue { get; set; }
-
     public Exception Exception { get; set; }
-
     public object MethodExecutionTag { get; set; }
   }
-
+```
 ### Your Code
+
+```csharp
 	public sealed class TransactionScopeAttribute : OnMethodBoundaryAspect
     {
         public int TimeoutInSeconds { get; set; }
@@ -61,14 +58,15 @@ public class MethodExecutionArgs
         }
     }
 	
-	public class Sample	{
+	public class Sample	
+	{
 		[TransactionScope]
 		public void Method()
 		{
 		    Debug.WriteLine("Do some database stuff isolated in surrounding transaction");
 		}
 	}
-	
+```	
 
 License
 -------
