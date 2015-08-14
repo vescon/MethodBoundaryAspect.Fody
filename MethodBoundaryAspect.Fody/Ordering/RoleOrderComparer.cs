@@ -54,7 +54,7 @@ namespace MethodBoundaryAspect.Fody.Ordering
                 return -1;
             }
 
-            return 0;
+            return x.CompareTo(y);
         }
     }
 }
