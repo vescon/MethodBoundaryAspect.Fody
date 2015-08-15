@@ -5,12 +5,12 @@
     <version>0.3.5</version>
     <title>MethodBoundaryAspect.Fody</title>
     <authors>Ralf Kornelius</authors>
-    <owners>Ralf Kornelius</owners>
+    <owners>VESCON GmbH</owners>
     <developmentDependency>true</developmentDependency>
     <projectUrl>https://github.com/Fody/MethodBoundaryAspect</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Fody add-in to decorate arbitrary methods to run code before, after invocation and on exception</description>
-    <copyright>Copyright Ralf Kornelius 2015</copyright>
+    <copyright>VESCON GmbH 2015</copyright>
     <tags>ILWeaving Fody Aspect AOP Method Invocation MethodBoundary</tags>
     <dependencies>
       <dependency id="Fody" version="1.28.3"/>
