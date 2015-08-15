@@ -1,6 +1,8 @@
 # MethodBoundaryAspect.Fody
 
-## Introduction 
+[![Build status](https://ci.appveyor.com/api/projects/status/983caboro9uy91m9?svg=true)](https://ci.appveyor.com/project/marcells/methodboundaryaspect-fody)
+
+## Introduction
 Allows decorated method to access some runtime properties before and after method execution.
 ```csharp
  public class MethodExecutionArgs
@@ -57,8 +59,8 @@ Allows decorated method to access some runtime properties before and after metho
             }
         }
     }
-	
-	public class Sample	
+
+	public class Sample
 	{
 		[TransactionScope]
 		public void Method()
@@ -66,7 +68,7 @@ Allows decorated method to access some runtime properties before and after metho
 		    Debug.WriteLine("Do some database stuff isolated in surrounding transaction");
 		}
 	}
-```	
+```
 
 License
 -------
