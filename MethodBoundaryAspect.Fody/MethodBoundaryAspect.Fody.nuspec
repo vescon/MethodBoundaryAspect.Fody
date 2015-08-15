@@ -7,7 +7,7 @@
     <authors>Ralf Kornelius</authors>
     <owners>VESCON GmbH</owners>
     <developmentDependency>true</developmentDependency>
-    <projectUrl>https://github.com/Fody/MethodBoundaryAspect</projectUrl>
+    <projectUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <copyright>VESCON GmbH 2015</copyright>
