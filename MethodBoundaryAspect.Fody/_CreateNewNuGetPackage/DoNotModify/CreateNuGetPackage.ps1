@@ -237,18 +237,59 @@ function Ensure-AssemblyFileExistsWhereNuGetExpectsItToBe([string]$ProjectFilePa
 Ensure-AssemblyFileExistsWhereNuGetExpectsItToBe -ProjectFilePath $ProjectFilePath -OutputDirectory $OutputDirectory -Configuration $BuildConfiguration -Platform $BuildPlatform
 #-----
 
-# If the NuGet package file exists, rename it.
-if (Test-Path -Path $nugetPackageFilePath -PathType Leaf)
-{
-	Remove-Item -Path $nugetPackageFilePath
-	Write-Output "'$nuGetPackageFilePath' was deleted."
-}
-
 # Create the new NuGet package.
 $nuGetPackageFilePath = & "$THIS_SCRIPTS_DIRECTORY_PATH\New-NuGetPackage.ps1" -ProjectFilePath "$ProjectFilePath" -VersionNumber $versionNumber -ReleaseNotes $releaseNotes -PackOptions "-OutputDirectory ""$OutputDirectory"" -Properties $packProperties -NonInteractive $packOptions" -DoNotUpdateNuSpecFile -NoPrompt -Verbose
 
 # If the NuGet package file should be renamed to include the Configuration and Platform.
+if ($appendConfigurationAndPlatformToNuGetPackageFileName)
+{
+	# Build the new desired NuGet package file path.
+	$nuGetPackageFileNameWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($nuGetPackageFilePath)
+	$nuGetPackageFileExtension = [System.IO.Path]::GetExtension($nuGetPackageFilePath)
+	$desiredNuGetPackageFileName = "$nuGetPackageFileNameWithoutExtension.$BuildConfiguration.$BuildPlatform$nuGetPackageFileExtension"
+	$desiredNuGetPackageFilePath = Join-Path -Path (Split-Path $nuGetPackageFilePath -Parent) -ChildPath $desiredNuGetPackageFileName
 
+	# If the NuGet package file exists, rename it.
+	if (Test-Path -Path $nugetPackageFilePath -PathType Leaf)
+	{
+		# If a file with the desired name already exists, we must delete that file first bfeore doing the rename.
+		if (Test-Path -Path $desiredNuGetPackageFilePath -PathType Leaf)
+		{ Remove-Item -Path $desiredNuGetPackageFilePath -Force }
+	
+		# Rename the NuGet package file name to the desired file name.
+		Rename-Item -Path $nugetPackageFilePath -NewName $desiredNuGetPackageFilePath -Force
+		
+		# Display that the NuGet package file was renamed.
+		Write-Output "'$nuGetPackageFilePath' was renamed to '$desiredNuGetPackageFilePath'."
+	}
+	else
+	{ Write-Warning "Could not find NuGet package at '$nugetPackageFilePath', so it was not renamed to '$desiredNuGetPackageFilePath'." }
+	
+	# Save the new NuGet package file path.
+	$nuGetPackageFilePath = $desiredNuGetPackageFilePath
+	
+	# If a Symbols NuGet package was specified to be created too, rename it as well.
+	if ($packOptions -like '*-Symbols*')
+	{
+		# Build the new desired Symbols NuGet package file path.
+		$desiredSymbolsNuGetPackageFileName = "$nuGetPackageFileNameWithoutExtension.$BuildConfiguration.$BuildPlatform.symbols$nuGetPackageFileExtension"
+		$desiredSymbolsNuGetPackageFilePath = Join-Path -Path (Split-Path $nuGetPackageFilePath -Parent) -ChildPath $desiredSymbolsNuGetPackageFileName
+
+		# Construct the path of what the original Symbols NuGet package should be, and if it exists, rename it to the desired file name.
+		$originalSymbolsNuGetPackageFileName = "$nuGetPackageFileNameWithoutExtension.symbols$nuGetPackageFileExtension"
+		$originalSymbolsNuGetPackageFilePath = Join-Path -Path (Split-Path $nuGetPackageFilePath -Parent) -ChildPath $originalSymbolsNuGetPackageFileName
+		if (Test-Path -Path $originalSymbolsNuGetPackageFilePath -PathType Leaf) 
+		{ 
+			# Rename the Symbols NuGet package to the desired name.
+			Rename-Item -Path $originalSymbolsNuGetPackageFilePath -NewName $desiredSymbolsNuGetPackageFilePath -Force
+			
+			# Display that the NuGet package file was renamed.
+			Write-Output "'$originalSymbolsNuGetPackageFilePath' was renamed to '$desiredSymbolsNuGetPackageFilePath'."
+		}
+		else
+		{ Write-Warning "Could not find Symbols NuGet package at '$originalSymbolsNuGetPackageFilePath', so it was not renamed to '$desiredSymbolsNuGetPackageFilePath'." }
+	}
+}
 
 # Display the path to the NuGet package file.
 Write-Output $nuGetPackageFilePath

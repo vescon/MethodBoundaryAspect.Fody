@@ -25,7 +25,7 @@ $releaseNotes = ""
 # Specify a specific Configuration and/or Platform to only create a NuGet package when building the project with this Configuration and/or Platform.
 #	e.g. $configuration = "Release"
 #		 $platform = "AnyCPU"
-$configuration = "Release"
+$configuration = ""
 $platform = ""
 
 # Specify any NuGet Pack Properties to pass to MsBuild.

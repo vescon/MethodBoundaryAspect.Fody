@@ -13,8 +13,8 @@
     <copyright>VESCON GmbH 2015</copyright>
     <tags>ILWeaving Fody Aspect AOP Method Invocation MethodBoundary</tags>
     <dependencies>
-      <dependency id="Fody" version="1.28.3"/>
-      <dependency id="FodyCecil" version="1.28.3"/>
+      <dependency id="Fody" version="1.29.2"/>
+      <dependency id="FodyCecil" version="1.29.2"/>
     </dependencies>
   </metadata>
   <files>

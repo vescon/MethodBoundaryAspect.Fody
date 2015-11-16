@@ -234,7 +234,10 @@ param
 	[string] $NuGetExecutableFilePath,
 	
 	[Alias("UNE")]
-	[switch] $UpdateNuGetExecutable
+	[switch] $UpdateNuGetExecutable,
+	
+	[Alias("FSV")]
+	[switch] $ForceSemanticVersioning
 )
 
 # Turn on Strict Mode to help catch syntax-related errors.
