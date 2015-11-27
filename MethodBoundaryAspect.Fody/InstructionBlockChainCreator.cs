@@ -153,13 +153,13 @@ namespace MethodBoundaryAspect.Fody
             return block;
         }
 
-        public NamedInstructionBlockChain LoadReturnValue(NamedInstructionBlockChain saveReturnValue)
+        public NamedInstructionBlockChain LoadValueOnStack(NamedInstructionBlockChain instructionBlock)
         {
-            var block = new NamedInstructionBlockChain(saveReturnValue.Variable, saveReturnValue.TypeReference);
-            if (saveReturnValue.Variable == null)
+            var block = new NamedInstructionBlockChain(instructionBlock.Variable, instructionBlock.TypeReference);
+            if (instructionBlock.Variable == null)
                 return block;
 
-            var loadReturnValueBlock = _creator.PushValueOnStack(saveReturnValue.Variable);
+            var loadReturnValueBlock = _creator.PushValueOnStack(instructionBlock.Variable);
             block.Add(loadReturnValueBlock);
             return block;
         }
@@ -173,6 +173,21 @@ namespace MethodBoundaryAspect.Fody
             var block = new NamedInstructionBlockChain(returnValueVariable, _method.ReturnType);
 
             var instructions = _creator.SaveReturnValueFromStack(returnValueVariable);
+            block.Add(instructions);
+            return block;
+        } 
+        
+        public NamedInstructionBlockChain SaveThrownException()
+        {
+            var exceptionTypeRef = _referenceFinder.GetTypeReference(typeof(Exception));
+
+            if (!_creator.HasThrowAsReturn())
+                return new NamedInstructionBlockChain(null, exceptionTypeRef);
+
+            var exceptionVariable = _creator.CreateVariable(CreateVariableName("thrownException"), exceptionTypeRef);
+            var block = new NamedInstructionBlockChain(exceptionVariable, exceptionTypeRef);
+
+            var instructions = _creator.AssignValueFromStack(exceptionVariable);
             block.Add(instructions);
             return block;
         }

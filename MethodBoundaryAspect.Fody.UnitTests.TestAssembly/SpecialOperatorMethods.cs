@@ -55,6 +55,17 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             }
         }
 
+        [SetMethodNameAspect]
+        public object MethodWithThrowAndReturnValue()
+        {
+            throw new InvalidOperationException("This is a test exception");
+        }
+
+        public object MethodWithThrowAndReturnValueNoWeave()
+        {
+            throw new InvalidOperationException("This is a test exception");
+        }
+
         public class ParameterWithNullableType
         {
             public Guid? NullableGuid { get; set; }

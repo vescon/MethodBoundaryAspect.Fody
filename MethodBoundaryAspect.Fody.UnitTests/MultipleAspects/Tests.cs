@@ -66,7 +66,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.MultipleAspects
             var peVerifyResult = RunPeVerify();
             peVerifyResult.Should().Be(0);
 
-            AssertUnifiedMethod(weaver.LastWeavedMethod);
+            AssertUnifiedMethod(weaver.LastWeavedMethod, true);
         }
 
         [Test]
@@ -105,15 +105,30 @@ namespace MethodBoundaryAspect.Fody.UnitTests.MultipleAspects
 
         private static void AssertUnifiedMethod(MethodDefinition method)
         {
+            AssertUnifiedMethod(method, false);
+        }
+
+        private static void AssertUnifiedMethod(MethodDefinition method, bool methodThrows)
+        {
             var instructions = method.Body.Instructions;
             instructions[0].OpCode.Should().Be(OpCodes.Nop);
 
             var lastIndex = instructions.Count - 1;
-            instructions[lastIndex].OpCode.Should().Be(OpCodes.Ret);
+            instructions[lastIndex].OpCode.Should().Be(methodThrows ? OpCodes.Throw : OpCodes.Ret);
             if (method.ReturnType.Name == "Void")
             {
-                instructions[lastIndex - 4].OpCode.Should().Be(OpCodes.Nop);
-                instructions[lastIndex - 5].OpCode.Should().Be(OpCodes.Nop);
+                if (methodThrows)
+                {
+                    instructions[lastIndex - 1].OpCode.Should().Be(OpCodes.Ldloc_S);
+                    instructions[lastIndex - 9].OpCode.Should().Be(OpCodes.Ldloc_S);
+                    instructions[lastIndex - 10].OpCode.Should().Be(OpCodes.Stloc_S);
+                    instructions[lastIndex - 11].OpCode.Should().Be(OpCodes.Nop);
+                }
+                else
+                {
+                    instructions[lastIndex - 4].OpCode.Should().Be(OpCodes.Nop);
+                    instructions[lastIndex - 5].OpCode.Should().Be(OpCodes.Nop);
+                }
             }
             else
             {

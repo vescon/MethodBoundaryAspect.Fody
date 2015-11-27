@@ -27,6 +27,11 @@ namespace MethodBoundaryAspect.Fody
             return !IsVoid(_method.ReturnType);
         }
 
+        public bool HasThrowAsReturn()
+        {
+            return _method.Body.Instructions.Last().OpCode.Code == Code.Throw;
+        }
+
         public VariableDefinition CreateVariable(string variableName, TypeReference variableTypeReference)
         {
             if (IsVoid(variableTypeReference))

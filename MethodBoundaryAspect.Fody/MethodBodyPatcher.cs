@@ -9,6 +9,8 @@ namespace MethodBoundaryAspect.Fody
 {
     public class MethodBodyPatcher
     {
+        private readonly string _methodName;
+
         private static readonly ISet<OpCode> JumpInstructions = new HashSet<OpCode>
         {
             OpCodes.Beq,
@@ -70,8 +72,9 @@ namespace MethodBoundaryAspect.Fody
 
         private bool _aspectInstanceCreated;
 
-        public MethodBodyPatcher(MethodDefinition method)
+        public MethodBodyPatcher(string methodName, MethodDefinition method)
         {
+            _methodName = methodName;
             _methodBody = method.Body;
             _processor = _methodBody.GetILProcessor();
 
@@ -84,10 +87,16 @@ namespace MethodBoundaryAspect.Fody
             _markStart4BeforeRealBodyStartExceptionHandler = _processor.Create(OpCodes.Nop);
             _markEnd1NewRealBodyEnd = _processor.Create(OpCodes.Nop);
             _markEnd2BeforeOnExitCall = _processor.Create(OpCodes.Nop);
-            _markRetNew = _processor.Create(OpCodes.Ret);
+            _markRetNew = EndsWithThrow ? _processor.Create(OpCodes.Throw) : _processor.Create(OpCodes.Ret);
         }
 
-        public void Unify(NamedInstructionBlockChain saveReturnValue, NamedInstructionBlockChain loadReturnValue)
+        public bool EndsWithThrow
+        {
+            get { return _realBodyEnd.OpCode.Code == Code.Throw; }
+        }
+
+        public void Unify(
+            NamedInstructionBlockChain saveReturnValue,NamedInstructionBlockChain loadReturnValue)
         {
             _methodBody.InitLocals = true;
 
@@ -99,11 +108,38 @@ namespace MethodBoundaryAspect.Fody
             _processor.InsertAfter(_markEnd1NewRealBodyEnd, _markEnd2BeforeOnExitCall);
             _processor.InsertAfter(_markEnd2BeforeOnExitCall, _markRetNew);
 
-            saveReturnValue.InsertAfter(_markEnd1NewRealBodyEnd, _processor);
-            loadReturnValue.InsertAfter(_markEnd2BeforeOnExitCall, _processor);
+            if (!EndsWithThrow)
+            {
+                saveReturnValue.InsertAfter(_markEnd1NewRealBodyEnd, _processor);
+                loadReturnValue.InsertAfter(_markEnd2BeforeOnExitCall, _processor);
+            }
 
             FixRealRetsToBranchToNewRealBodyEnd();
             FixCatchHandlersWithNullEnd();
+        }
+
+        public void FixThrowAtEndOfRealBody(
+            NamedInstructionBlockChain saveThrownException,
+            NamedInstructionBlockChain loadThrownException,
+            NamedInstructionBlockChain loadThrownException2)
+        {
+            // store exception from stack
+            var retTemp = _processor.Create(OpCodes.Nop);
+            _processor.InsertBefore(_realBodyEnd, retTemp);
+            var lastInstruction = saveThrownException.InsertAfter(retTemp, _processor);
+
+            // load exception to stack
+            loadThrownException.InsertAfter(lastInstruction, _processor);
+
+            // exception will be thrown at old real body end (maybe in try/catch)
+
+            // after "OnException" load exception again to stack
+            var retTemp2 = _processor.Create(OpCodes.Nop);
+            _processor.Replace(_markRetNew, retTemp2);
+            lastInstruction = loadThrownException2.InsertAfter(retTemp2, _processor);
+
+            // then throw again
+            _processor.InsertAfter(lastInstruction, _processor.Create(OpCodes.Throw));
         }
 
         private void FixRealRetsToBranchToNewRealBodyEnd()
@@ -212,6 +248,8 @@ namespace MethodBoundaryAspect.Fody
         public void OptimizeBody()
         {
             _methodBody.OptimizeMacros();
+
+            Trace.WriteLine("Method: " + _methodName);
 
             Dump("_realBodyStart", _realBodyStart);
             Dump("_realBodyEnd", _realBodyEnd);

@@ -136,5 +136,24 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             Weaver.TotalWeavedTypes.Should().Be(1);
             result.Should().Be(null);
         }
+
+        [Test]
+        public void IfMethodWithThrowIsWeaved_ThenTheAssemblyShouldBeValid()
+        {
+            // Arrange
+            const string testMethodName = "MethodWithThrowAndReturnValue";
+            var testClassType = typeof(SpecialOperatorMethods);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+            Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName);
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+            call.ShouldThrow<TargetInvocationException>()
+                .WithInnerException<InvalidOperationException>()
+                .WithInnerMessage("This is a test exception");
+        }
     }
 }

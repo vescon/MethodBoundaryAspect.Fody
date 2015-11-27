@@ -22,9 +22,9 @@ namespace MethodBoundaryAspect.Fody
             
             var creator = new InstructionBlockChainCreator(method, aspect.AttributeType, moduleDefinition, WeaveCounter);
 
-            _methodBodyChanger = new MethodBodyPatcher(method);
+            _methodBodyChanger = new MethodBodyPatcher(method.Name, method);
             var saveReturnValue = creator.SaveReturnValue();
-            var loadReturnValue = creator.LoadReturnValue(saveReturnValue);
+            var loadReturnValue = creator.LoadValueOnStack(saveReturnValue);
             _methodBodyChanger.Unify(saveReturnValue, loadReturnValue);
 
             if (WeaveCounter == 0)
@@ -60,6 +60,17 @@ namespace MethodBoundaryAspect.Fody
                     createMethodExecutionArgsInstance);
                 _methodBodyChanger.AddOnExceptionCall(createAspectInstance, callAspectOnException,
                     setMethodExecutionArgsExceptionFromStack);
+            }
+
+            if (_methodBodyChanger.EndsWithThrow)
+            {
+                var saveThrownExcpetion = creator.SaveThrownException();
+                var loadThrownException = creator.LoadValueOnStack(saveThrownExcpetion);
+                var loadThrownException2 = creator.LoadValueOnStack(saveThrownExcpetion);
+                _methodBodyChanger.FixThrowAtEndOfRealBody(
+                    saveThrownExcpetion, 
+                    loadThrownException,
+                    loadThrownException2);
             }
 
             _methodBodyChanger.OptimizeBody();
