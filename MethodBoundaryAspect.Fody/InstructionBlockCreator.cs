@@ -110,8 +110,8 @@ namespace MethodBoundaryAspect.Fody
                 throw new InvalidOperationException(string.Format("Didn't found matching constructor on type '{0}'",
                     typeDefinition.FullName));
 
-            var ctroRef = module.Import(constructor);
-            var newObjectInstruction = _processor.Create(OpCodes.Newobj, ctroRef);
+            var ctorRef = module.Import(constructor);
+            var newObjectInstruction = _processor.Create(OpCodes.Newobj, ctorRef);
             var assignToVariableInstruction = _processor.Create(OpCodes.Stloc, newInstance);
 
             var loadConstValuesOnStack = new List<Instruction>();
@@ -121,7 +121,7 @@ namespace MethodBoundaryAspect.Fody
                 // ctor parameters
                 var loadInstructions = aspect.Constructor.Parameters
                     .Zip(aspect.ConstructorArguments, (p, v) => new {Parameter = p, Value = v})
-                    .Select(x => LoadConstOnStack(x.Parameter.ParameterType, x.Value.Value))
+                    .SelectMany(x => LoadValueOnStack(x.Parameter.ParameterType, x.Value.Value, module))
                     .ToList();
                 loadConstValuesOnStack.AddRange(loadInstructions);
 
@@ -131,14 +131,14 @@ namespace MethodBoundaryAspect.Fody
                 {
                     var propertyCopy = property;
 
-                    var loadOnStackInstruction = LoadConstOnStack(propertyCopy.Argument.Type, propertyCopy.Argument.Value);
+                    var loadOnStackInstruction = LoadValueOnStack(propertyCopy.Argument.Type, propertyCopy.Argument.Value, module);
                     var valueVariable = CreateVariable(CreateVariableName("namedArgument", aspectCounter, namedArgumentCounter), propertyCopy.Argument.Type);
                     var assignVariableInstructionBlock = AssignValueFromStack(valueVariable);
 
                     var methodRef = _referenceFinder.GetMethodReference(instanceTypeReference, md => md.Name == "set_" + propertyCopy.Name);
                     var setPropertyInstructionBlock = CallVoidInstanceMethod(newInstance,methodRef, valueVariable);
 
-                    loadSetConstValuesToAspect.Add(loadOnStackInstruction);
+                    loadSetConstValuesToAspect.AddRange(loadOnStackInstruction);
                     loadSetConstValuesToAspect.AddRange(assignVariableInstructionBlock.Instructions);
                     loadSetConstValuesToAspect.AddRange(setPropertyInstructionBlock.Instructions);
 
@@ -223,17 +223,17 @@ namespace MethodBoundaryAspect.Fody
             if (callerInstance != null)
                 loadVariableInstruction = _processor.Create(OpCodes.Ldloc, callerInstance);
 
-            var loadArgumentsInstrucions = new List<Instruction>();
+            var loadArgumentsInstructions = new List<Instruction>();
             int parameterCount = 0;
             foreach (var argument in arguments)
             {
-                loadArgumentsInstrucions.Add(_processor.Create(OpCodes.Ldloc, argument));
+                loadArgumentsInstructions.Add(_processor.Create(OpCodes.Ldloc, argument));
 
                 var parameter = methodReference.Parameters[parameterCount];
                 if (parameter.ParameterType != argument.VariableType)
                 {
                     if (argument.VariableType.IsValueType)
-                        loadArgumentsInstrucions.Add(_processor.Create(OpCodes.Box, argument.VariableType));
+                        loadArgumentsInstructions.Add(_processor.Create(OpCodes.Box, argument.VariableType));
                 }
                 parameterCount++;
             }
@@ -257,37 +257,54 @@ namespace MethodBoundaryAspect.Fody
             var instructions = new List<Instruction>();
             if (loadVariableInstruction != null)
                 instructions.Add(loadVariableInstruction);
-            instructions.AddRange(loadArgumentsInstrucions);
+            instructions.AddRange(loadArgumentsInstructions);
             instructions.Add(methodCallInstruction);
             if (assignReturnValueToVariableInstruction != null)
                 instructions.Add(assignReturnValueToVariableInstruction);
             return instructions;
         }
 
-        private Instruction LoadConstOnStack(TypeReference parameterType, object value)
+        private IList<Instruction> LoadValueOnStack(TypeReference parameterType, object value, ModuleDefinition module)
         {
-            if (parameterType.IsPrimitive)
-                return LoadPrimtiveConstOnStack(parameterType.MetadataType, value);
+            if (parameterType.IsPrimitive || (parameterType.FullName == "System.String"))
+                return new List<Instruction> {LoadPrimitiveConstOnStack(parameterType.MetadataType, value)};
 
             if (parameterType.IsValueType) // enum
             {
                 var enumUnderlyingType = GetEnumUnderlyingType(parameterType.Resolve());
-                return LoadPrimtiveConstOnStack(enumUnderlyingType.MetadataType,value);
+                return new List<Instruction> {LoadPrimitiveConstOnStack(enumUnderlyingType.MetadataType, value)};
+            }
+
+            if (parameterType.FullName == "System.Type")
+            {
+                var typeName = value.ToString();
+                var typeReference = module.GetType(typeName, true);
+
+                var typeTypeRef = _referenceFinder.GetTypeReference(typeof (Type));
+                var methodReference = _referenceFinder.GetMethodReference(typeTypeRef, md => md.Name == "GetTypeFromHandle");
+                
+                var instructions = new List<Instruction>
+                {
+                    _processor.Create(OpCodes.Ldtoken, typeReference),
+                    _processor.Create(OpCodes.Call, methodReference)
+                };
+
+                return instructions;
             }
 
             throw new NotSupportedException("Parametertype: " + parameterType);
         }
 
-        private Instruction LoadPrimtiveConstOnStack(MetadataType type, object value)
+        private Instruction LoadPrimitiveConstOnStack(MetadataType type, object value)
         {
             switch (type)
             {
                 case MetadataType.String:
                     return _processor.Create(OpCodes.Ldstr, (string) value);
                 case MetadataType.Int32:
-                    return _processor.Create(OpCodes.Ldc_I4, (Int32) value);
+                    return _processor.Create(OpCodes.Ldc_I4, (int) value);
                 case MetadataType.Int64:
-                    return _processor.Create(OpCodes.Ldc_I8, (Int64) value);
+                    return _processor.Create(OpCodes.Ldc_I8, (long) value);
                 case MetadataType.Boolean:
                     return _processor.Create(OpCodes.Ldc_I4, (bool) value ? 1 : 0);
             }

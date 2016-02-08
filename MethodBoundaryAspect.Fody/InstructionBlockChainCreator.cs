@@ -84,7 +84,7 @@ namespace MethodBoundaryAspect.Fody
             var methodBaseVariable = _creator.CreateVariable(CreateVariableName("methodBase"), methodBaseTypeRef);
             var methodBaseGetCurrentMethod = _referenceFinder.GetMethodReference(methodBaseTypeRef,
                 md => md.Name == "GetCurrentMethod");
-            var callGetCurrenMethodBlock = _creator.CallStaticMethod(methodBaseGetCurrentMethod, methodBaseVariable);
+            var callGetCurrentMethodBlock = _creator.CallStaticMethod(methodBaseGetCurrentMethod, methodBaseVariable);
 
             var methodExecutionArgsSetMethodBaseMethodRef =
                 _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Method");
@@ -95,7 +95,7 @@ namespace MethodBoundaryAspect.Fody
                 methodExecutionArgsTypeRef);
             newMethodExectionArgsBlockChain.Add(newObjectMethodExecutionArgsBlock);
             newMethodExectionArgsBlockChain.Add(callSetArgumentsBlock);
-            newMethodExectionArgsBlockChain.Add(callGetCurrenMethodBlock);
+            newMethodExectionArgsBlockChain.Add(callGetCurrentMethodBlock);
             newMethodExectionArgsBlockChain.Add(callSetMethodBlock);
             if (callSetInstanceBlock != null)
             {

@@ -5,9 +5,9 @@ using NUnit.Framework;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
-    public class SetConstructorArgumentAspectTests : MethodBoundaryAspectTestBase
+    public class SetConstructorArgumentPrimitivesAspectTests : MethodBoundaryAspectTestBase
     {
-        private static readonly Type TestClassType = typeof(SetConstructorArgumentAspectMethods);
+        private static readonly Type TestClassType = typeof(SetConstructorArgumentPrimitivesAspectMethods);
 
         [SetUp]
         public override void SetUp()

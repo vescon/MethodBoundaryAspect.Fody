@@ -110,7 +110,8 @@
     <Compile Include="PropertyAspectTests.cs" />
     <Compile Include="SetArgumentValueAspectTests.cs" />
     <Compile Include="SetAspectNameResultAspectTests.cs" />
-    <Compile Include="SetConstructorArgumentAspectTests.cs" />
+    <Compile Include="SetConstructorArgumentPrimitivesAspectTests.cs" />
+    <Compile Include="SetConstructorArgumentReferencesAspectTests.cs" />
     <Compile Include="SetExceptionValueAspectTests.cs" />
     <Compile Include="SetInstanceValueAspectTests.cs" />
     <Compile Include="SetMethodExecutionTagValueAspectTests.cs" />

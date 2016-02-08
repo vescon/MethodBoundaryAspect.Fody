@@ -46,7 +46,8 @@
     <Compile Include="Aspects\SetArgumentValueAspect.cs" />
     <Compile Include="Aspects\SetAspectNameResultAspect.cs" />
     <Compile Include="Aspects\SetClassNameAspect.cs" />
-    <Compile Include="Aspects\SetConstructorArgumentAspect.cs" />
+    <Compile Include="Aspects\SetConstructorArgumentPrimitivesAspect.cs" />
+    <Compile Include="Aspects\SetConstructorArgumentReferencesAspect.cs" />
     <Compile Include="Aspects\SetExceptionValueAspect.cs" />
     <Compile Include="Aspects\SetInstanceValueAspect.cs" />
     <Compile Include="Aspects\SetMethodExecutionTagValueAspect.cs" />
@@ -62,7 +63,8 @@
     <Compile Include="PropertyAspectMethods.cs" />
     <Compile Include="SetArgumentValueAspectMethods.cs" />
     <Compile Include="SetAspectNameResultAspectMethods.cs" />
-    <Compile Include="SetConstructorArgumentAspectMethods.cs" />
+    <Compile Include="SetConstructorArgumentPrimitivesAspectMethods.cs" />
+    <Compile Include="SetConstructorArgumentReferencesAspectMethods.cs" />
     <Compile Include="SetExceptionValueAspectMethods.cs" />
     <Compile Include="SetInstanceValueAspectMethods.cs" />
     <Compile Include="SetMethodExecutionTagValueAspectMethods.cs" />

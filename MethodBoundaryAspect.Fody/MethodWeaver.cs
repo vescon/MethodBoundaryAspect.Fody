@@ -64,11 +64,11 @@ namespace MethodBoundaryAspect.Fody
 
             if (_methodBodyChanger.EndsWithThrow)
             {
-                var saveThrownExcpetion = creator.SaveThrownException();
-                var loadThrownException = creator.LoadValueOnStack(saveThrownExcpetion);
-                var loadThrownException2 = creator.LoadValueOnStack(saveThrownExcpetion);
+                var saveThrownException = creator.SaveThrownException();
+                var loadThrownException = creator.LoadValueOnStack(saveThrownException);
+                var loadThrownException2 = creator.LoadValueOnStack(saveThrownException);
                 _methodBodyChanger.FixThrowAtEndOfRealBody(
-                    saveThrownExcpetion, 
+                    saveThrownException, 
                     loadThrownException,
                     loadThrownException2);
             }

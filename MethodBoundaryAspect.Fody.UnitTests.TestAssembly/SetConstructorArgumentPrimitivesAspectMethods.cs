@@ -2,16 +2,16 @@
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
 {
-    public class SetConstructorArgumentAspectMethods
+    public class SetConstructorArgumentPrimitivesAspectMethods
     {
         public static object Result { get; set; }
 
-        [SetConstructorArgumentAspect(42, AllowedValue.Value3)]
+        [SetConstructorArgumentPrimitivesAspect(42, AllowedValue.Value3)]
         public static void StaticMethodCall()
         {
         }
 
-        [SetConstructorArgumentAspect(42, AllowedValue.Value3)]
+        [SetConstructorArgumentPrimitivesAspect(42, AllowedValue.Value3)]
         public void InstanceMethodCall()
         {
         }
