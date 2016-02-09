@@ -2,6 +2,8 @@
 
 [![Build status](https://ci.appveyor.com/api/projects/status/983caboro9uy91m9?svg=true)](https://ci.appveyor.com/project/marcells/methodboundaryaspect-fody)
 
+NuGet package https://www.nuget.org/packages/MethodBoundaryAspect.Fody/
+
 ## Introduction
 Allows decorated method to access some runtime properties before and after method execution.
 ```csharp
