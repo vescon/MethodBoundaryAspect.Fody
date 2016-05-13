@@ -152,7 +152,7 @@ namespace MethodBoundaryAspect.Fody
                 foreach (var method in type.Methods.Where(IsWeavableMethod))
                 {
                     var methodMethodBoundaryAspects = method.CustomAttributes;
-
+                    
                     if (method.IsGetter || method.IsSetter)
                     {
                         var propertyNameParts = method.Name.Split(new[] { '_' });
@@ -231,7 +231,16 @@ namespace MethodBoundaryAspect.Fody
 
         private bool IsMethodBoundaryAspect(TypeDefinition attributeTypeDefinition)
         {
-            return attributeTypeDefinition.BaseType.FullName == typeof(OnMethodBoundaryAspect).FullName;
+            var currentType = attributeTypeDefinition.BaseType;
+            do
+            {
+                if (currentType.FullName == typeof(OnMethodBoundaryAspect).FullName)
+                    return true;
+
+                currentType = currentType.Resolve().BaseType;
+            } while (currentType != null);
+
+            return false;
         }
 
         private bool IsMethodBoundaryAspect(CustomAttribute customAttribute)
