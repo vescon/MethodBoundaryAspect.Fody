@@ -217,14 +217,32 @@ namespace MethodBoundaryAspect.Fody
 
         private AspectMethods GetUsedAspectMethods(TypeReference aspectTypeDefinition)
         {
-            var overloadedMethods = aspectTypeDefinition.Resolve().Methods;
+            var overloadedMethods = new Dictionary<string, MethodDefinition>();
+
+            var currentType = aspectTypeDefinition;
+            do
+            {
+                var typeDefinition = currentType.Resolve();
+                var methods = typeDefinition.Methods
+                    .Where(x => x.IsVirtual)
+                    .ToList();
+                foreach (var method in methods)
+                {
+                    if (overloadedMethods.ContainsKey(method.Name))
+                        continue;
+
+                    overloadedMethods.Add(method.Name, method);
+                }
+
+                currentType = typeDefinition.BaseType;
+            } while (currentType.FullName != typeof(OnMethodBoundaryAspect).FullName);
 
             var aspectMethods = AspectMethods.None;
-            if (overloadedMethods.Any(x => x.Name == "OnEntry"))
+            if (overloadedMethods.ContainsKey("OnEntry"))
                 aspectMethods |= AspectMethods.OnEntry;
-            if (overloadedMethods.Any(x => x.Name == "OnExit"))
+            if (overloadedMethods.ContainsKey("OnExit"))
                 aspectMethods |= AspectMethods.OnExit;
-            if (overloadedMethods.Any(x => x.Name == "OnException"))
+            if (overloadedMethods.ContainsKey("OnException"))
                 aspectMethods |= AspectMethods.OnException;
             return aspectMethods;
         }
