@@ -36,6 +36,12 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>MethodBoundaryAspect.Fody.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Mono.Cecil">
       <HintPath>..\packages\FodyCecil.1.29.2\lib\net40\Mono.Cecil.dll</HintPath>
@@ -83,6 +89,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="MethodBoundaryAspect.Fody.nuspec" />
+    <None Include="MethodBoundaryAspect.Fody.snk" />
     <None Include="packages.config" />
     <None Include="PublishNugetPackages.bat">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
