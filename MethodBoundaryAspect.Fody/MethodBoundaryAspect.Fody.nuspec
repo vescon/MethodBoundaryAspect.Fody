@@ -10,7 +10,7 @@
     <projectUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
-    <copyright>VESCON GmbH 2015</copyright>
+    <copyright>VESCON GmbH 2016</copyright>
     <tags>ILWeaving Fody Aspect AOP Method Invocation MethodBoundary</tags>
     <dependencies>
       <dependency id="Fody" version="1.29.2"/>

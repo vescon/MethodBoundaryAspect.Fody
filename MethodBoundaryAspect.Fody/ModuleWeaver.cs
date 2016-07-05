@@ -145,74 +145,96 @@ namespace MethodBoundaryAspect.Fody
             var assemblyMethodBoundaryAspects = module.Assembly.CustomAttributes;
 
             foreach (var type in module.Types)
+                WeaveType(module, type, assemblyMethodBoundaryAspects);
+        }
+
+        private void WeaveType(ModuleDefinition module, TypeDefinition type, Collection<CustomAttribute> assemblyMethodBoundaryAspects)
+        {
+            var classMethodBoundaryAspects = type.CustomAttributes;
+
+            var propertyGetters = type.Properties
+                .Where(x => x.GetMethod != null)
+                .ToDictionary(x => x.GetMethod);
+
+            var propertySetters = type.Properties
+                .Where(x => x.SetMethod != null)
+                .ToDictionary(x => x.SetMethod);
+
+            var weavedAtLeastOneMethod = false;
+            foreach (var method in type.Methods)
             {
-                var classMethodBoundaryAspects = type.CustomAttributes;
+                if (!IsWeavableMethod(method))
+                    continue;
 
-                var weavedAtLeastOneMethod = false;
-                foreach (var method in type.Methods.Where(IsWeavableMethod))
+                Collection<CustomAttribute> methodMethodBoundaryAspects;
+
+                if (method.IsGetter)
+                    methodMethodBoundaryAspects = propertyGetters[method].CustomAttributes;
+                else if (method.IsSetter)
+                    methodMethodBoundaryAspects = propertySetters[method].CustomAttributes;
+                else
+                    methodMethodBoundaryAspects = method.CustomAttributes;
+
+                var aspectInfos = assemblyMethodBoundaryAspects
+                    .Concat(classMethodBoundaryAspects)
+                    .Concat(methodMethodBoundaryAspects)
+                    .Where(IsMethodBoundaryAspect)
+                    .Select(x => new AspectInfo(x))
+                    .ToList();
+                if (aspectInfos.Count == 0)
+                    continue;
+
+                weavedAtLeastOneMethod = WeaveMethod(
+                    module,
+                    method,
+                    aspectInfos);
+            }   
+
+            if (weavedAtLeastOneMethod)
+                TotalWeavedTypes++;
+        }
+
+        private bool WeaveMethod(
+            ModuleDefinition module, 
+            MethodDefinition method,
+            List<AspectInfo> aspectInfos)
+        {
+            aspectInfos = AspectOrderer.Order(aspectInfos);
+            aspectInfos.Reverse(); // last aspect has to be weaved in first
+
+            using (var methodWeaver = new MethodWeaver())
+            {
+                foreach (var aspectInfo in aspectInfos)
                 {
-                    var methodMethodBoundaryAspects = method.CustomAttributes;
-                    
-                    if (method.IsGetter || method.IsSetter)
-                    {
-                        var propertyNameParts = method.Name.Split(new[] { '_' });
-                        var propertyName = string.Join("_", propertyNameParts.Skip(1));
-                        var propertyDefinition = type.Properties.Single(x => x.Name == propertyName);
-                        methodMethodBoundaryAspects = propertyDefinition.CustomAttributes;
-                    }
+                    ////var log = string.Format("Weave OnMethodBoundaryAspect '{0}' in method '{1}' from class '{2}'",
+                    ////    attributeTypeDefinition.Name,
+                    ////    method.Name,
+                    ////    method.DeclaringType.FullName);
+                    ////LogWarning(log);
 
-                    var aspectInfos = assemblyMethodBoundaryAspects
-                        .Concat(classMethodBoundaryAspects)
-                        .Concat(methodMethodBoundaryAspects)
-                        .Where(IsMethodBoundaryAspect)
-                        .Select(x => new AspectInfo(x))
-                        .ToList();
-
-                    if (aspectInfos.Count == 0)
+                    if (aspectInfo.SkipProperties && (method.IsGetter || method.IsSetter))
                         continue;
 
-                    aspectInfos = AspectOrderer.Order(aspectInfos);
-                    aspectInfos.Reverse(); // last aspect has to be weaved in first
+                    var aspectTypeDefinition = aspectInfo.AspectAttribute.AttributeType;
 
-                    using (var methodWeaver = new MethodWeaver())
-                    {
-                        foreach (var aspectInfo in aspectInfos)
-                        {
-                            ////var log = string.Format("Weave OnMethodBoundaryAspect '{0}' in method '{1}' from class '{2}'",
-                            ////    attributeTypeDefinition.Name,
-                            ////    method.Name,
-                            ////    method.DeclaringType.FullName);
-                            ////LogWarning(log);
+                    var overriddenAspectMethods = GetUsedAspectMethods(aspectTypeDefinition);
+                    if (overriddenAspectMethods == AspectMethods.None)
+                        continue;
 
-                            if (aspectInfo.SkipProperties && (method.IsGetter || method.IsSetter))
-                                continue;
-
-                            var aspectTypeDefinition = aspectInfo.AspectAttribute.AttributeType;
-
-                            var overriddenAspectMethods = GetUsedAspectMethods(aspectTypeDefinition);
-                            if (overriddenAspectMethods == AspectMethods.None)
-                                continue;
-
-                            methodWeaver.Weave(method, aspectInfo.AspectAttribute, overriddenAspectMethods, module);
-                        }
-
-                        if (methodWeaver.WeaveCounter == 0)
-                            continue;
-                    }
-
-                    weavedAtLeastOneMethod = true;
-
-                    if (method.IsGetter || method.IsSetter)
-                        TotalWeavedPropertyMethods++;
-                    else
-                        TotalWeavedMethods++;
-
-                    LastWeavedMethod = method;
+                    methodWeaver.Weave(method, aspectInfo.AspectAttribute, overriddenAspectMethods, module);
                 }
 
-                if (weavedAtLeastOneMethod)
-                    TotalWeavedTypes++;
+                if (methodWeaver.WeaveCounter == 0)
+                    return false;
             }
+
+            if (method.IsGetter || method.IsSetter)
+                TotalWeavedPropertyMethods++;
+            else
+                TotalWeavedMethods++;
+
+            LastWeavedMethod = method;
+            return true;
         }
 
         private AspectMethods GetUsedAspectMethods(TypeReference aspectTypeDefinition)
@@ -268,35 +290,47 @@ namespace MethodBoundaryAspect.Fody
 
         private bool IsWeavableMethod(MethodDefinition method)
         {
+            var fullName = method.DeclaringType.FullName;
+            var name = method.Name;
+
+            if (IsUserFiltered(fullName, name))
+                return false;
+
+            return !(method.IsAbstract // abstract or interface method
+                     || method.IsConstructor
+                     || name.StartsWith("<") // anonymous
+                     || method.IsPInvokeImpl); // extern
+        }
+
+        private bool IsUserFiltered(string fullName, string name)
+        {
             if (_classFilters.Any())
             {
-                var classFullName = method.DeclaringType.FullName;
+                var classFullName = fullName;
                 var matched = _classFilters.Contains(classFullName);
                 if (!matched)
-                    return false;
+                    return true;
             }
 
             if (_methodFilters.Any())
             {
-                var methodFullName = string.Format("{0}.{1}", method.DeclaringType.FullName, method.Name);
+                var methodFullName = string.Format("{0}.{1}", fullName, name);
                 var matched = _methodFilters.Contains(methodFullName);
                 if (!matched)
-                    return false;
+                    return true;
             }
 
             if (_propertyFilter.Any())
             {
-                var propertySetterFullName = string.Format("{0}.{1}", method.DeclaringType.FullName, method.Name);
-                var propertyGetterFullName = string.Format("{0}.{1}", method.DeclaringType.FullName, method.Name);
-                var matched = _propertyFilter.Contains(propertySetterFullName) || _methodFilters.Contains(propertyGetterFullName);
+                var propertySetterFullName = string.Format("{0}.{1}", fullName, name);
+                var propertyGetterFullName = string.Format("{0}.{1}", fullName, name);
+                var matched = _propertyFilter.Contains(propertySetterFullName) ||
+                              _methodFilters.Contains(propertyGetterFullName);
                 if (!matched)
-                    return false;
+                    return true;
             }
 
-            return !(method.IsAbstract // abstract or interface method
-                     || method.IsConstructor
-                     || method.Name.StartsWith("<") // anonymous
-                     || method.IsPInvokeImpl); // extern
+            return false;
         }
     }
 }

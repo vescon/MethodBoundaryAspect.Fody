@@ -119,6 +119,7 @@
     <Compile Include="DebugAspectTests.cs" />
     <Compile Include="SetNamedArgumentAspectTests.cs" />
     <Compile Include="SetReturnValueAspectTests.cs" />
+    <Compile Include="ClassWithIndexerTests.cs" />
     <Compile Include="SpecialMethodBodyTests.cs" />
     <Compile Include="TestDomain.cs" />
     <Compile Include="Unified\OnEntry\OnlyOnEntryAspect.cs" />

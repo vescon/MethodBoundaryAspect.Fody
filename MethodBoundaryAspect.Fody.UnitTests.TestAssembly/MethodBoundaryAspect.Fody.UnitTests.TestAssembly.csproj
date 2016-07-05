@@ -74,6 +74,7 @@
     <Compile Include="MultipleAspectsMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SpecialMethodBodies.cs" />
+    <Compile Include="ClassWithIndexer.cs" />
     <Compile Include="SpecialOperatorMethods.cs" />
     <Compile Include="TryCatchMethods.cs" />
   </ItemGroup>
