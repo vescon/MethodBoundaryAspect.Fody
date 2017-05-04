@@ -35,8 +35,7 @@ namespace MethodBoundaryAspect.Fody
         {
             //  argument values
             var argumentsTypeReference = _referenceFinder.GetTypeReference(typeof (object[]));
-            var argumentsArrayVariable = _creator.CreateVariable(CreateVariableName("arguments"),
-                argumentsTypeReference);
+            var argumentsArrayVariable = _creator.CreateVariable(argumentsTypeReference);
             var createObjectArrayWithMethodArgumentsBlock =
                 _creator.CreateObjectArrayWithMethodArguments(argumentsArrayVariable,
                     _referenceFinder.GetTypeReference(typeof (object)));
@@ -50,16 +49,15 @@ namespace MethodBoundaryAspect.Fody
         public NamedInstructionBlockChain CreateMethodExecutionArgsInstance(NamedInstructionBlockChain argumentsArrayChain)
         {
             // instance value
-            var instanceVariable = _creator.CreateVariable(CreateVariableName("this"), _method.DeclaringType);
+            var instanceVariable = _creator.CreateVariable(_method.DeclaringType);
             var createThisVariableBlock = _creator.CreateThisVariable(instanceVariable, _method.DeclaringType);
             
             // MethodExecutionArgs instance
             var onEntryMethodTypeRef =
                 _aspectTypeDefinition.Resolve().BaseType.Resolve().Methods.Single(x => x.Name == "OnEntry");
             var firstParameterType = onEntryMethodTypeRef.Parameters.Single().ParameterType;
-            var methodExecutionArgsTypeRef = _moduleDefinition.Import(firstParameterType);
-            var methodExecutionArgsVariable = _creator.CreateVariable(CreateVariableName("methodExecutionArgs"),
-                methodExecutionArgsTypeRef);
+            var methodExecutionArgsTypeRef = _moduleDefinition.ImportReference(firstParameterType);
+            var methodExecutionArgsVariable = _creator.CreateVariable(methodExecutionArgsTypeRef);
             var newObjectMethodExecutionArgsBlock = _creator.NewObject(
                 methodExecutionArgsVariable,
                 methodExecutionArgsTypeRef, 
@@ -81,7 +79,7 @@ namespace MethodBoundaryAspect.Fody
                 methodExecutionArgsSetArgumentsMethodRef, argumentsArrayChain.Variable);
 
             var methodBaseTypeRef = _referenceFinder.GetTypeReference(typeof (MethodBase));
-            var methodBaseVariable = _creator.CreateVariable(CreateVariableName("methodBase"), methodBaseTypeRef);
+            var methodBaseVariable = _creator.CreateVariable(methodBaseTypeRef);
             var methodBaseGetCurrentMethod = _referenceFinder.GetMethodReference(methodBaseTypeRef,
                 md => md.Name == "GetCurrentMethod");
             var callGetCurrentMethodBlock = _creator.CallStaticMethod(methodBaseGetCurrentMethod, methodBaseVariable);
@@ -108,8 +106,8 @@ namespace MethodBoundaryAspect.Fody
 
         public NamedInstructionBlockChain CreateAspectInstance(CustomAttribute aspect)
         {
-            var aspectTypeReference = _moduleDefinition.Import(_aspectTypeDefinition);
-            var aspectVariable = _creator.CreateVariable(CreateVariableName("aspect"), aspectTypeReference);
+            var aspectTypeReference = _moduleDefinition.ImportReference(_aspectTypeDefinition);
+            var aspectVariable = _creator.CreateVariable(aspectTypeReference);
             var newObjectAspectBlock = _creator.NewObject(aspectVariable, aspectTypeReference, _moduleDefinition, aspect, _aspectCounter);
 
             var newObjectAspectBlockChain = new NamedInstructionBlockChain(aspectVariable, aspectTypeReference);
@@ -138,7 +136,7 @@ namespace MethodBoundaryAspect.Fody
             NamedInstructionBlockChain createMethodExecutionArgsInstance)
         {
             var exceptionTypeRef = _referenceFinder.GetTypeReference(typeof (Exception));
-            var exceptionVariable = _creator.CreateVariable(CreateVariableName("exception"), exceptionTypeRef);
+            var exceptionVariable = _creator.CreateVariable(exceptionTypeRef);
             var assignExceptionVariable = _creator.AssignValueFromStack(exceptionVariable);
 
             var methodExecutionArgsSetExceptionMethodRef =
@@ -169,7 +167,7 @@ namespace MethodBoundaryAspect.Fody
             if (!_creator.HasReturnValue())
                 return new NamedInstructionBlockChain(null, _method.ReturnType);
 
-            var returnValueVariable = _creator.CreateVariable(CreateVariableName("returnValue"), _method.ReturnType);
+            var returnValueVariable = _creator.CreateVariable(_method.ReturnType);
             var block = new NamedInstructionBlockChain(returnValueVariable, _method.ReturnType);
 
             var instructions = _creator.SaveReturnValueFromStack(returnValueVariable);
@@ -184,7 +182,7 @@ namespace MethodBoundaryAspect.Fody
             if (!_creator.HasThrowAsReturn())
                 return new NamedInstructionBlockChain(null, exceptionTypeRef);
 
-            var exceptionVariable = _creator.CreateVariable(CreateVariableName("thrownException"), exceptionTypeRef);
+            var exceptionVariable = _creator.CreateVariable(exceptionTypeRef);
             var block = new NamedInstructionBlockChain(exceptionVariable, exceptionTypeRef);
 
             var instructions = _creator.AssignValueFromStack(exceptionVariable);

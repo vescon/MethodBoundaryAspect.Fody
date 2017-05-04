@@ -32,12 +32,12 @@ namespace MethodBoundaryAspect.Fody
             return _method.Body.Instructions.Last().OpCode.Code == Code.Throw;
         }
 
-        public VariableDefinition CreateVariable(string variableName, TypeReference variableTypeReference)
+        public VariableDefinition CreateVariable(TypeReference variableTypeReference)
         {
             if (IsVoid(variableTypeReference))
                 throw new InvalidOperationException("Variable of type 'Void' is not possible!");
 
-            var variableDefinition = new VariableDefinition(variableName, variableTypeReference);
+            var variableDefinition = new VariableDefinition(variableTypeReference);
             _method.Body.Variables.Add(variableDefinition);
             return variableDefinition;
         }
@@ -132,7 +132,7 @@ namespace MethodBoundaryAspect.Fody
                     var propertyCopy = property;
 
                     var loadOnStackInstruction = LoadValueOnStack(propertyCopy.Argument.Type, propertyCopy.Argument.Value, module);
-                    var valueVariable = CreateVariable(CreateVariableName("namedArgument", aspectCounter, namedArgumentCounter), propertyCopy.Argument.Type);
+                    var valueVariable = CreateVariable(propertyCopy.Argument.Type);
                     var assignVariableInstructionBlock = AssignValueFromStack(valueVariable);
 
                     var methodRef = _referenceFinder.GetMethodReference(instanceTypeReference, md => md.Name == "set_" + propertyCopy.Name);

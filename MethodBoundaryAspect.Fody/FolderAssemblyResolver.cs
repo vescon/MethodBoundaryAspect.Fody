@@ -43,5 +43,10 @@ namespace MethodBoundaryAspect.Fody
         {
             throw new NotImplementedException();
         }
-    }
+
+		public void Dispose()
+		{
+			_defaultAssemblyResolver.Dispose();
+		}
+	}
 }
