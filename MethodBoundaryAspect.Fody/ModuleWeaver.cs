@@ -93,22 +93,25 @@ namespace MethodBoundaryAspect.Fody
             var readerParameters = new ReaderParameters
             {
                 ReadSymbols = true,
-                SymbolReaderProvider = new PdbReaderProvider()
+                SymbolReaderProvider = new PdbReaderProvider(),
+				ReadWrite = true,
             };
 
             if (AdditionalAssemblyResolveFolders.Any())
                 readerParameters.AssemblyResolver = new FolderAssemblyResolver(AdditionalAssemblyResolveFolders);
-            var assemblyDefinition = AssemblyDefinition.ReadAssembly(assemblyPath, readerParameters);
 
-            var module = assemblyDefinition.MainModule;
-            Execute(module);
+			using (var assemblyDefinition = AssemblyDefinition.ReadAssembly(assemblyPath, readerParameters))
+			{
+				var module = assemblyDefinition.MainModule;
+				Execute(module);
 
-            var writerParameters = new WriterParameters
-            {
-                WriteSymbols = true,
-                SymbolWriterProvider = new PdbWriterProvider()
-            };
-            assemblyDefinition.Write(assemblyPath, writerParameters);
+				var writerParameters = new WriterParameters
+				{
+					WriteSymbols = true,
+					SymbolWriterProvider = new PdbWriterProvider()
+				};
+				assemblyDefinition.Write(writerParameters);
+			}
         }
 
         public void AddClassFilter(string classFilter)
