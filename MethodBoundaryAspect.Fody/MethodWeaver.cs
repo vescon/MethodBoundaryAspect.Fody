@@ -75,6 +75,8 @@ namespace MethodBoundaryAspect.Fody
 
             _methodBodyChanger.OptimizeBody();
 
+            Catel.Fody.CecilExtensions.UpdateDebugInfo(method);
+
             WeaveCounter++;
         }
 

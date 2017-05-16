@@ -31,12 +31,12 @@ namespace MethodBoundaryAspect.Fody
                     : typeDefinition.BaseType.Resolve();
             } while (methodDefinition == null && typeDefinition != null);
 
-            return _moduleDefinition.Import(methodDefinition);
+            return _moduleDefinition.ImportReference(methodDefinition);
         }
 
         public TypeReference GetTypeReference(Type type)
         {
-            return _moduleDefinition.Import(type);
+            return _moduleDefinition.ImportReference(type);
         }
     }
 }

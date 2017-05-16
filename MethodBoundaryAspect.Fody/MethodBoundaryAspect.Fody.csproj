@@ -72,6 +72,7 @@
     <Compile Include="Attributes\OnMethodBoundaryAspect.cs" />
     <Compile Include="Attributes\AspectSkipPropertiesAttributes.cs" />
     <Compile Include="Attributes\ProvideAspectRoleAttribute.cs" />
+    <Compile Include="CecilExtensions.cs" />
     <Compile Include="Ordering\AspectInfo.cs" />
     <Compile Include="Ordering\AspectOrder.cs" />
     <Compile Include="Ordering\AspectOrderer.cs" />

@@ -110,7 +110,7 @@ namespace MethodBoundaryAspect.Fody
                 throw new InvalidOperationException(string.Format("Didn't found matching constructor on type '{0}'",
                     typeDefinition.FullName));
 
-            var ctorRef = module.Import(constructor);
+            var ctorRef = module.ImportReference(constructor);
             var newObjectInstruction = _processor.Create(OpCodes.Newobj, ctorRef);
             var assignToVariableInstruction = _processor.Create(OpCodes.Stloc, newInstance);
 
@@ -126,7 +126,6 @@ namespace MethodBoundaryAspect.Fody
                 loadConstValuesOnStack.AddRange(loadInstructions);
 
                 // named arguments
-                int namedArgumentCounter = 0;
                 foreach (var property in aspect.Properties)
                 {
                     var propertyCopy = property;
@@ -141,8 +140,6 @@ namespace MethodBoundaryAspect.Fody
                     loadSetConstValuesToAspect.AddRange(loadOnStackInstruction);
                     loadSetConstValuesToAspect.AddRange(assignVariableInstructionBlock.Instructions);
                     loadSetConstValuesToAspect.AddRange(setPropertyInstructionBlock.Instructions);
-
-                    namedArgumentCounter++;
                 }
             }
 
