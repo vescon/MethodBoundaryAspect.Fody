@@ -56,6 +56,7 @@
     <Compile Include="Aspects\SetReturnValueAspect.cs" />
     <Compile Include="ClassSetMethodNameAspect.cs" />
     <Compile Include="ClassSetMethodNameAspectResult.cs" />
+    <Compile Include="ClassWithGenericType.cs" />
     <Compile Include="ExternMethods.cs" />
     <Compile Include="IInterfaceMethods.cs" />
     <Compile Include="InterfaceMethods.cs" />

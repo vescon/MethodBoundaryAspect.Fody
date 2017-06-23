@@ -49,9 +49,10 @@ namespace MethodBoundaryAspect.Fody
         public NamedInstructionBlockChain CreateMethodExecutionArgsInstance(NamedInstructionBlockChain argumentsArrayChain)
         {
             // instance value
-            var instanceVariable = _creator.CreateVariable(_method.DeclaringType);
-            var createThisVariableBlock = _creator.CreateThisVariable(instanceVariable, _method.DeclaringType);
-            
+            var objectType = _referenceFinder.GetTypeReference(typeof(object));
+            var instanceVariable = _creator.CreateVariable(objectType);
+            var createThisVariableBlock = _creator.CreateThisVariable(instanceVariable, objectType);
+
             // MethodExecutionArgs instance
             var onEntryMethodTypeRef =
                 _aspectTypeDefinition.Resolve().BaseType.Resolve().Methods.Single(x => x.Name == "OnEntry");

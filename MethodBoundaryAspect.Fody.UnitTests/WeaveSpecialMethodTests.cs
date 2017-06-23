@@ -155,5 +155,20 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 .WithInnerException<InvalidOperationException>()
                 .WithInnerMessage("This is a test exception");
         }
+
+        [Test]
+        public void IfClassWithGenericTypeIsWeaved_ThenTheAssemblyShouldBeValid()
+        {
+            // Arrange
+            const string testMethodName = "DoIt";
+            var testClassType = typeof(ClassWithGenericType<>);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+        }
     }
 }
