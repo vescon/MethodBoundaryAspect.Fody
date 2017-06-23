@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using FluentAssertions;
 using Mono.Cecil.Cil;
 using NUnit.Framework;
 
@@ -40,9 +42,10 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
             File.Copy(sourcePdb, targetPdb, true);
         }
 
-        protected int RunPeVerify()
+        protected void AssertRunPeVerify()
         {
-            return PeVerifier.Verify(WeaveDll);
+            Action action = () => PeVerifier.Verify(WeaveDll);
+            action.ShouldNotThrow();
         }
     }
 }

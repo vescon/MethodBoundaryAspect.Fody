@@ -3,9 +3,9 @@ using System.Diagnostics;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.Unified
 {
-    public class PeVerifier
+    public static class PeVerifier
     {
-        public static int Verify(string assemblyPath)
+        public static void Verify(string assemblyPath)
         {
             const string peVerifyPath =
                 @"C:\Program Files (x86)\Microsoft SDKs\Windows\v8.1A\bin\NETFX 4.5.1 Tools\peverify.exe";
@@ -20,8 +20,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
 
             var process = Process.Start(psi);
             var output = process.StandardOutput.ReadToEnd();
+            var processExitCode = process.ExitCode;
             Trace.WriteLine("PEVerify output: " + Environment.NewLine + output);
-            return process.ExitCode;
+
+            if (processExitCode != 0)
+                throw new PeVerifyException(processExitCode, output);
         }
     }
 }

@@ -137,6 +137,7 @@
     <Compile Include="Unified\OnExit\TestMethods.cs" />
     <Compile Include="Unified\OnExit\Tests.cs" />
     <Compile Include="Unified\PeVerifier.cs" />
+    <Compile Include="Unified\PeVerifyException.cs" />
     <Compile Include="Unified\UnifiedWeaverTestBase.cs" />
     <Compile Include="Unified\OnEntry\Tests.cs" />
     <Compile Include="WeaveSpecialMethodTests.cs" />

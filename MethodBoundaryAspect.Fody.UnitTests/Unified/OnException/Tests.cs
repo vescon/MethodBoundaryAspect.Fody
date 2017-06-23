@@ -29,9 +29,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnException
             weaver.Weave(WeaveDll);
 
             // Arrange
-            var peVerifyResult = RunPeVerify();
-            peVerifyResult.Should().Be(0);
-
+            AssertRunPeVerify();
             AssertUnifiedMethod(weaver.LastWeavedMethod);
         }
 
@@ -46,9 +44,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnException
             weaver.Weave(WeaveDll);
 
             // Arrange
-            var peVerifyResult = RunPeVerify();
-            peVerifyResult.Should().Be(0);
-
+            AssertRunPeVerify();
             AssertUnifiedMethod(weaver.LastWeavedMethod);
         }
 
@@ -63,9 +59,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnException
             weaver.Weave(WeaveDll);
 
             // Arrange
-            var peVerifyResult = RunPeVerify();
-            peVerifyResult.Should().Be(0);
-
+            AssertRunPeVerify();
             AssertUnifiedMethod(weaver.LastWeavedMethod, true);
         }
 
@@ -80,9 +74,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnException
             weaver.Weave(WeaveDll);
 
             // Arrange
-            var peVerifyResult = RunPeVerify();
-            peVerifyResult.Should().Be(0);
-
+            AssertRunPeVerify();
             AssertUnifiedMethod(weaver.LastWeavedMethod);
         }
 

@@ -42,8 +42,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.MultipleAspects.FailTests
             weaver.Weave(WeaveDll);
 
             // Arrange
-            var peVerifyResult = RunPeVerify();
-            peVerifyResult.Should().Be(0);
+            AssertRunPeVerify();
         }
     }
 }

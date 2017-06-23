@@ -121,8 +121,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests
 
         private void RunPeVerify()
         {
-            var result = PeVerifier.Verify(WeavedAssemblyPath);
-            result.Should().Be(0, "PeVerifier failed!");
+            Action action = () => PeVerifier.Verify(WeavedAssemblyPath);
+            action.ShouldNotThrow();
         }
     }
 }
