@@ -1,49 +1,17 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MethodBoundaryAspect.Fody</RootNamespace>
-    <AssemblyName>MethodBoundaryAspect.Fody</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <SccProjectName>SAK</SccProjectName>
-    <SccLocalPath>SAK</SccLocalPath>
-    <SccAuxPath>SAK</SccAuxPath>
-    <SccProvider>SAK</SccProvider>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <RestorePackages>true</RestorePackages>
-    <NuGetPackageImportStamp>252e3ece</NuGetPackageImportStamp>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
-    <SignAssembly>true</SignAssembly>
+    <!--<TargetFramework>net452</TargetFramework>-->
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>MethodBoundaryAspect.Fody.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Mono.Cecil, Version=0.10.0.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
+    <PackageReference Include="FodyCecil" Version="2.2.1" />
+    
+    <!--<Reference Include="Mono.Cecil, Version=0.10.0.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
       <HintPath>..\packages\FodyCecil.2.0.7\lib\net40\Mono.Cecil.dll</HintPath>
       <Private>True</Private>
     </Reference>
@@ -58,54 +26,12 @@
     <Reference Include="Mono.Cecil.Rocks, Version=0.10.0.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
       <HintPath>..\packages\FodyCecil.2.0.7\lib\net40\Mono.Cecil.Rocks.dll</HintPath>
       <Private>True</Private>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml" />
+    </Reference>-->
   </ItemGroup>
-  <ItemGroup>
-    <Compile Include="AspectMethods.cs" />
-    <Compile Include="Attributes\AspectDependencyAction.cs" />
-    <Compile Include="Attributes\AspectDependencyPosition.cs" />
-    <Compile Include="Attributes\AspectRoleDependencyAttribute.cs" />
-    <Compile Include="Attributes\MethodExecutionArgs.cs" />
-    <Compile Include="Attributes\OnMethodBoundaryAspect.cs" />
-    <Compile Include="Attributes\AspectSkipPropertiesAttributes.cs" />
-    <Compile Include="Attributes\ProvideAspectRoleAttribute.cs" />
-    <Compile Include="CecilExtensions.cs" />
-    <Compile Include="Ordering\AspectInfo.cs" />
-    <Compile Include="Ordering\AspectOrder.cs" />
-    <Compile Include="Ordering\AspectOrderer.cs" />
-    <Compile Include="InstructionBlock.cs" />
-    <Compile Include="InstructionBlockChain.cs" />
-    <Compile Include="InstructionBlockChainCreator.cs" />
-    <Compile Include="InstructionBlockCreator.cs" />
-    <Compile Include="MethodBodyPatcher.cs" />
-    <Compile Include="MethodWeaver.cs" />
-    <Compile Include="ModuleWeaver.cs" />
-    <Compile Include="FolderAssemblyResolver.cs" />
-    <Compile Include="NamedInstructionBlockChain.cs" />
-    <Compile Include="Ordering\DictionaryExtensions.cs" />
-    <Compile Include="Ordering\InvalidAspectConfigurationException.cs" />
-    <Compile Include="Ordering\RoleIndex.cs" />
-    <Compile Include="Ordering\RoleOrderComparer.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ReferenceFinder.cs" />
-  </ItemGroup>
+  
   <ItemGroup>
     <None Include="MethodBoundaryAspect.Fody.nuspec" />
     <None Include="MethodBoundaryAspect.Fody.snk" />
-    <None Include="packages.config">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="PublishNugetPackages.bat">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="_CreateNewNuGetPackage\Config.ps1" />
-    <None Include="_CreateNewNuGetPackage\DoNotModify\CreateNuGetPackage.ps1" />
-    <None Include="_CreateNewNuGetPackage\DoNotModify\New-NuGetPackage.ps1" />
-    <None Include="_CreateNewNuGetPackage\DoNotModify\UploadNuGetPackage.ps1" />
-    <None Include="_CreateNewNuGetPackage\RunMeToUploadNuGetPackage.cmd" />
   </ItemGroup>
   <ItemGroup>
     <None Include="FodyWeavers.xml">
@@ -114,26 +40,17 @@
     <None Include="IL Method body unifying.txt" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="_CreateNewNuGetPackage\DoNotModify\NuGet.exe" />
+    <Folder Include="Properties\" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Enable NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('$(SolutionDir)\.nuget\NuGet.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)\.nuget\NuGet.targets'))" />
-  </Target>
-  <PropertyGroup>
-    <PostBuildEvent>REM Create a NuGet package for this project and place the .nupkg file in the project's output directory.
-REM If you see this in Visual Studio's Error List window, check the Output window's Build tab for the actual error.
-ECHO Creating NuGet package in Post-Build event...
-PowerShell -NoProfile -ExecutionPolicy Bypass -Command "&amp; '$(ProjectDir)_CreateNewNuGetPackage\DoNotModify\CreateNuGetPackage.ps1' -ProjectFilePath '$(ProjectPath)' -OutputDirectory '$(TargetDir)' -BuildConfiguration '$(ConfigurationName)' -BuildPlatform '$(PlatformName)'"
 
-REM Create a NuGet package for this project and place the .nupkg file in the project's output directory.
-REM If you see this in Visual Studio's Error List window, check the Output window's Build tab for the actual error.
-ECHO Creating NuGet package in Post-Build event...
-PowerShell -NoProfile -ExecutionPolicy Bypass -Command "&amp; '$(ProjectDir)_CreateNewNuGetPackage\DoNotModify\CreateNuGetPackage.ps1' -ProjectFilePath '$(ProjectPath)' -OutputDirectory '$(TargetDir)' -BuildConfiguration '$(ConfigurationName)' -BuildPlatform '$(PlatformName)'"</PostBuildEvent>
+  <PropertyGroup>
+    <Authors>Ralf Kornelius, Marcell Spies</Authors>
+    <Company>VESCON GmbH</Company>
+    <Product>MethodBoundaryAspect.Fody</Product>
+    <Version>2.0.0</Version>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>MethodBoundaryAspect.Fody</PackageId>
+    <AssemblyVersion>2.0.0.0</AssemblyVersion>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

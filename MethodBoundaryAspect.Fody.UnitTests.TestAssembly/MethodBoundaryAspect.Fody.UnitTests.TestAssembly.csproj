@@ -34,6 +34,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="netstandard, Version=2.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
   </ItemGroup>
@@ -81,7 +82,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj">
-      <Project>{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}</Project>
+      <Project>{30ba4684-a95a-4ec3-8ea7-cde5b1f7e988}</Project>
       <Name>MethodBoundaryAspect.Fody</Name>
     </ProjectReference>
   </ItemGroup>
