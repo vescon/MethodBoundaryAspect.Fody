@@ -1,6 +1,7 @@
 # MethodBoundaryAspect.Fody
 
 [![Build status](https://ci.appveyor.com/api/projects/status/983caboro9uy91m9?svg=true)](https://ci.appveyor.com/project/marcells/methodboundaryaspect-fody)
+[![NuGet](https://img.shields.io/nuget/v/MethodBoundaryAspect.Fody.svg)](https://www.nuget.org/packages/MethodBoundaryAspect.Fody/)
 
 NuGet package https://www.nuget.org/packages/MethodBoundaryAspect.Fody/
 
