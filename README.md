@@ -3,7 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/v/MethodBoundaryAspect.Fody.svg)](https://www.nuget.org/packages/MethodBoundaryAspect.Fody/)
 
 ## MethodBoundaryAspect.Fody
-> A [Fody weaver](https://github.com/Fody/Fody) whichs injects custom code into the decorated method and provides information about the method parameters.
+> A [Fody weaver](https://github.com/Fody/Fody) which allows to decorate methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.
 
 You can easily write your own aspects for
 - transaction handling

@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 
 [assembly: AssemblyTitle("MethodBoundaryAspect.Fody")]
-[assembly: AssemblyDescription("Fody add-in to decorate arbitrary methods to run code before, after invocation and on exception")]
+[assembly: AssemblyDescription("A Fody weaver which allows to decorate methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("VESCON GmbH")]
 [assembly: AssemblyProduct("MethodBoundaryAspect.Fody")]
