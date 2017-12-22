@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata  minClientVersion="2.8">
+  <metadata minClientVersion="2.8">
     <id>MethodBoundaryAspect.Fody</id>
     <version>$version$</version>
     <title>MethodBoundaryAspect.Fody</title>
@@ -11,8 +11,8 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>$description$</description>
     <copyright>VESCON GmbH</copyright>
-    <imageUrl>https://github.com/vescon/MethodBoundaryAspect.Fody/raw/master/docs/images/NuGetIcon.png</imageUrl>
-    <tags>ILWeaving Fody Aspect AOP Method Invocation MethodBoundary</tags>
+    <iconUrl>https://github.com/vescon/MethodBoundaryAspect.Fody/raw/master/docs/images/NuGetIcon.png</iconUrl>
+    <tags>il weaving fody aspect aop method-invocation</tags>
     <summary>Fody add-in, which allows to decorate methods and hook into method start, method end and method exceptions.</summary>
     <dependencies>
       <dependency id="Fody" version="2.0.7" />
