@@ -100,5 +100,21 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 .WithInnerException<InvalidOperationException>()
                 .WithInnerMessage("This exception is expected");
         }
+
+        [Test]
+        public void IfStrangeMethodForIssue9_ThenTheAssemblyShouldBeValid()
+        {
+            // Arrange
+            const string testMethodName = "StrangeMethodForIssue9";
+            var testClassType = typeof(SpecialMethodBodies);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+            AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName, true);
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+        }
     }
 }

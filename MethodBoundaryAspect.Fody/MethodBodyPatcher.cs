@@ -257,7 +257,9 @@ namespace MethodBoundaryAspect.Fody
             _methodBody.OptimizeMacros();
 
             Trace.WriteLine("Method: " + _methodName);
-
+            Trace.WriteLine("EndsWithThrow: " + EndsWithThrow);
+            Trace.WriteLine("HasMultipleReturnAndEndsWithThrow: " + HasMultipleReturnAndEndsWithThrow);
+            
             Dump("_realBodyStart", _realBodyStart);
             Dump("_realBodyEnd", _realBodyEnd);
 
@@ -274,7 +276,7 @@ namespace MethodBoundaryAspect.Fody
             Dump("_markExceptionHandlerEnd", _markExceptionHandlerEnd);
         }
 
-        private Instruction AddCreateAspectInstance(NamedInstructionBlockChain createAspectInstance, Instruction current)
+        private Instruction AddCreateAspectInstance(InstructionBlockChain createAspectInstance, Instruction current)
         {
             if (_aspectInstanceCreated)
                 return current;
@@ -287,8 +289,8 @@ namespace MethodBoundaryAspect.Fody
         private void Dump(string name, Instruction instruction)
         {
             Trace.WriteLine(instruction == null
-                ? string.Format("{0} is not set", name)
-                : string.Format("{0} is at: {1}", name, _methodBody.Instructions.IndexOf(instruction)));
+                ? $"{name} is not set"
+                : $"{name} is at: {_methodBody.Instructions.IndexOf(instruction)}");
         }
     }
 }
