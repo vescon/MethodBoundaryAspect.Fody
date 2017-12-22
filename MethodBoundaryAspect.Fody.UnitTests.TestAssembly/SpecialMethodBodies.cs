@@ -59,7 +59,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
         /// </summary>
         /// <param name="value"></param>
         [OnlyOnEntrAndExityAspect]
-        public void StrangeMethodForIssue9(bool value)
+        public void StrangeMethodForIssue10(bool value)
         {
             if (!value)
                 return;

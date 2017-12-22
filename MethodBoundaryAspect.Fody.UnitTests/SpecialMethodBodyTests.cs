@@ -102,10 +102,10 @@ namespace MethodBoundaryAspect.Fody.UnitTests
         }
 
         [Test]
-        public void IfStrangeMethodForIssue9_ThenTheAssemblyShouldBeValid()
+        public void IfStrangeMethodForIssue10_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
-            const string testMethodName = "StrangeMethodForIssue9";
+            const string testMethodName = "StrangeMethodForIssue10";
             var testClassType = typeof(SpecialMethodBodies);
 
             // Act
