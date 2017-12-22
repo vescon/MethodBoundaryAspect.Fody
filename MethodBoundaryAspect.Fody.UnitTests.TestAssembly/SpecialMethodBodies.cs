@@ -5,9 +5,9 @@ using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Aspects;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
 {
-    [FirstAspect]
     public class SpecialMethodBodies
     {
+        [FirstAspect]
         public static void MethodBodyEndsWithBrtrueOpcode()
         {
             var x = new List<string>();
@@ -17,6 +17,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             }
         }
 
+        [FirstAspect]
         public static void MethodBodyWithBrtrueOpcodeEndsWithBrtrueOpcode()
         {
             var x = new List<string>();
@@ -31,6 +32,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             }
         }
 
+        [FirstAspect]
         public static void MethodBodyEndsWithBleOpcode()
         {
             var x = 5;
@@ -52,6 +54,33 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
                 default:
                     throw new InvalidOperationException("This exception is expected");
             }
+        }
+
+        private bool _resultField;
+        /// <summary>
+        /// from https://github.com/vescon/MethodBoundaryAspect.Fody/issues/9
+        /// </summary>
+        /// <param name="value"></param>
+        [OnlyOnEntrAndExityAspect]
+        public void StrangeMethodForIssue9(bool value)
+        {
+            if (value)
+                return;
+            
+            if (!Decide(value) || Decide(!value) )
+            {
+                _resultField = true;
+            }
+            else
+            {
+                _resultField = false;
+                SomeMethod();
+            }
+        }
+
+        private bool Decide(bool value)
+        {
+            return !value;
         }
 
         /// <summary>
