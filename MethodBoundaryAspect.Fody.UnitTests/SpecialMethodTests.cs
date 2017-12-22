@@ -6,7 +6,7 @@ using NUnit.Framework;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
-    public class WeaveSpecialMethodTests : MethodBoundaryAspectTestBase
+    public class SpecialMethodTests : MethodBoundaryAspectTestBase
     {
         [SetUp]
         public override void SetUp()
@@ -134,7 +134,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             // Assert
             Weaver.TotalWeavedMethods.Should().Be(1);
             Weaver.TotalWeavedTypes.Should().Be(1);
-            result.Should().Be(null);
+            result.Should().Be("");
         }
 
         [Test]
@@ -169,6 +169,42 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             // Assert
             Weaver.TotalWeavedMethods.Should().Be(1);
             Weaver.TotalWeavedTypes.Should().Be(1);
+        }
+
+        [Test]
+        public void IfMethodWithSwitchAndOnlyOnEntryAspectAndOptimizedCode_2_ThenTheAssemblyShouldBeValid()
+        {
+            // Arrange
+            const string testMethodName = "MethodWithSwitchAndOnlyOnEntryAspectAndOptimizedCode";
+            var testClassType = typeof(SpecialOperatorMethods);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName, 2);
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+            result.Should().Be("2");
+        }
+
+        [Test]
+        public void IfMethodWithSwitchAndOnlyOnEntryAspectAndOptimizedCode_3_ThenTheAssemblyShouldBeValid()
+        {
+            // Arrange
+            const string testMethodName = "MethodWithSwitchAndOnlyOnEntryAspectAndOptimizedCode";
+            var testClassType = typeof(SpecialOperatorMethods);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+            Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName, 3);
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+            call.ShouldThrow<TargetInvocationException>()
+                .WithInnerException<InvalidOperationException>()
+                .WithInnerMessage("This exception is expected");
         }
     }
 }

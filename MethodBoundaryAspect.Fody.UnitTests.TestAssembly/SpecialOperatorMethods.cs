@@ -104,5 +104,19 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
 
             return "";
         }
+
+        [OnlyOnEntryAspect]
+        public string MethodWithSwitchAndOnlyOnEntryAspectAndOptimizedCode(int number)
+        {
+            switch (number)
+            {
+                case 1:
+                    return "1";
+                case 2:
+                    return "2";
+                default:
+                    throw new InvalidOperationException("This exception is expected");
+            }
+        }
     }
 }

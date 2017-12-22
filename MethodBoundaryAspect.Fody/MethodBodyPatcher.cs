@@ -88,12 +88,13 @@ namespace MethodBoundaryAspect.Fody
             _markEnd1NewRealBodyEnd = _processor.Create(OpCodes.Nop);
             _markEnd2BeforeOnExitCall = _processor.Create(OpCodes.Nop);
             _markRetNew = EndsWithThrow ? _processor.Create(OpCodes.Throw) : _processor.Create(OpCodes.Ret);
+
+            HasMultipleReturnAndEndsWithThrow = EndsWithThrow && _methodBody.Instructions.Any(x => x.OpCode == OpCodes.Ret);
         }
 
-        public bool EndsWithThrow
-        {
-            get { return _realBodyEnd.OpCode.Code == Code.Throw; }
-        }
+        public bool EndsWithThrow => _realBodyEnd.OpCode.Code == Code.Throw;
+
+        public bool HasMultipleReturnAndEndsWithThrow { get; }
 
         public void Unify(
             NamedInstructionBlockChain saveReturnValue,NamedInstructionBlockChain loadReturnValue)
@@ -140,6 +141,12 @@ namespace MethodBoundaryAspect.Fody
 
             // then throw again
             _processor.InsertAfter(lastInstruction, _processor.Create(OpCodes.Throw));
+        }
+
+        public void ReplaceThrowAtEndOfRealBodyWithReturn()
+        {
+            var returnInstruction = _processor.Create(OpCodes.Ret);
+            _processor.Replace(_markRetNew, returnInstruction);
         }
 
         private void FixRealRetsToBranchToNewRealBodyEnd()

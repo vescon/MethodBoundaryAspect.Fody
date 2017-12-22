@@ -140,7 +140,7 @@
     <Compile Include="Unified\PeVerifyException.cs" />
     <Compile Include="Unified\UnifiedWeaverTestBase.cs" />
     <Compile Include="Unified\OnEntry\Tests.cs" />
-    <Compile Include="WeaveSpecialMethodTests.cs" />
+    <Compile Include="SpecialMethodTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config">

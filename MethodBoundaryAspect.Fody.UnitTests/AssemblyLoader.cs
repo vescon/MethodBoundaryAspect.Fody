@@ -33,7 +33,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             var resultClass = _assembly.GetType(resultClassName, true);
             var resultProperty = resultClass.GetProperty("Result");
             if (resultProperty == null)
-                return null;
+                return returnValue;
 
             var resultValue = resultProperty.GetValue(instance, new object[0]);
             return resultValue;
