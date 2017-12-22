@@ -39,5 +39,19 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
                 Console.WriteLine("test");
             }
         }
+
+        [OnlyOnEntryAspect]
+        public string MethodWhichEndsWithThrowAndHasMultipleReturns(int number)
+        {
+            switch (number)
+            {
+                case 1:
+                    return "1";
+                case 2:
+                    return "2";
+                default:
+                    throw new InvalidOperationException("This exception is expected");
+            }
+        }
     }
 }
