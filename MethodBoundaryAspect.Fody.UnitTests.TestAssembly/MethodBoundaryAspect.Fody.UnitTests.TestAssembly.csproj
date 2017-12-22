@@ -42,6 +42,8 @@
     <Compile Include="Aspects\AllowedValue.cs" />
     <Compile Include="Aspects\FirstAspect.cs" />
     <Compile Include="Aspects\OnlyOnEntryAspect.cs" />
+    <Compile Include="Aspects\OnlyOnExceptionAspect.cs" />
+    <Compile Include="Aspects\OnlyOnExitAspect.cs" />
     <Compile Include="Aspects\PropertyAspect.cs" />
     <Compile Include="Aspects\SecondAspect.cs" />
     <Compile Include="Aspects\SetArgumentValueAspect.cs" />
@@ -75,6 +77,7 @@
     <Compile Include="SetReturnValueAspectMethods.cs" />
     <Compile Include="MultipleAspectsMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SpecialAspectMethods.cs" />
     <Compile Include="SpecialMethodBodies.cs" />
     <Compile Include="ClassWithIndexer.cs" />
     <Compile Include="SpecialOperatorMethods.cs" />
