@@ -1,7 +1,7 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 14.00
-# Visual Studio 2015
-VisualStudioVersion = 14.0.22823.1
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody", "MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj", "{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}"
 EndProject
@@ -20,33 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{2A55FD
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects", "MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects\MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.csproj", "{1AC3CF01-711C-4C93-AB9C-010C0AD7D5D6}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0564AB89-550A-4700-8E48-C7091CE9A03C}"
-	ProjectSection(SolutionItems) = preProject
-		MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.nuspec = MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.nuspec
-	EndProjectSection
-EndProject
 Global
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 6
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = http://ft-tfs:8080/tfs/defaultcollection
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = MethodBoundaryAspect.Fody\\MethodBoundaryAspect.Fody.csproj
-		SccProjectName1 = MethodBoundaryAspect.Fody
-		SccLocalPath1 = MethodBoundaryAspect.Fody
-		SccProjectUniqueName2 = MethodBoundaryAspect.Fody.UnitTests\\MethodBoundaryAspect.Fody.UnitTests.csproj
-		SccProjectName2 = MethodBoundaryAspect.Fody.UnitTests
-		SccLocalPath2 = MethodBoundaryAspect.Fody.UnitTests
-		SccProjectUniqueName3 = MethodBoundaryAspect.Fody.UnitTests.TestAssembly\\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.csproj
-		SccProjectName3 = MethodBoundaryAspect.Fody.UnitTests.TestAssembly
-		SccLocalPath3 = MethodBoundaryAspect.Fody.UnitTests.TestAssembly
-		SccProjectUniqueName4 = MethodBoundaryAspect.Fody.UnitTests.TestProgram\\MethodBoundaryAspect.Fody.UnitTests.TestProgram.csproj
-		SccProjectName4 = MethodBoundaryAspect.Fody.UnitTests.TestProgram
-		SccLocalPath4 = MethodBoundaryAspect.Fody.UnitTests.TestProgram
-		SccProjectUniqueName5 = MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects\\MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.csproj
-		SccProjectName5 = MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects
-		SccLocalPath5 = MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects
-	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
@@ -75,5 +49,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FB998DBE-C57F-4D65-9109-301A30855645}
 	EndGlobalSection
 EndGlobal
