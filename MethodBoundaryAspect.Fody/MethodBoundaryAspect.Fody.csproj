@@ -2,29 +2,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
-    <SignAssembly>false</SignAssembly>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\MethodBoundaryAspect.Fody.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
-  <PropertyGroup>
-    <AssemblyOriginatorKeyFile>MethodBoundaryAspect.Fody.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
+      
   <ItemGroup>
     <PackageReference Include="FodyCecil" Version="2.3.5" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <None Include="MethodBoundaryAspect.Fody.nuspec" />
-    <None Include="MethodBoundaryAspect.Fody.snk" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="FodyWeavers.xml">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="IL Method body unifying.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
   </ItemGroup>
 
@@ -32,16 +15,9 @@
     <Authors>Ralf Kornelius, Marcell Spies</Authors>
     <Company>VESCON GmbH</Company>
     <Product>MethodBoundaryAspect.Fody</Product>
-    <Version>3.0.0</Version>
+    <Version>1.0.0</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>MethodBoundaryAspect.Fody</PackageId>
-    <AssemblyVersion>3.0.0.0</AssemblyVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
   </PropertyGroup>
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>
