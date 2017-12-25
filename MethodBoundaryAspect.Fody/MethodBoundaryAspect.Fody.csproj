@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <!--<TargetFramework>net452</TargetFramework>-->
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     <SignAssembly>false</SignAssembly>
   </PropertyGroup>
@@ -25,15 +24,18 @@
   <ItemGroup>
     <Folder Include="Properties\" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
+  </ItemGroup>
 
   <PropertyGroup>
     <Authors>Ralf Kornelius, Marcell Spies</Authors>
     <Company>VESCON GmbH</Company>
     <Product>MethodBoundaryAspect.Fody</Product>
-    <Version>2.0.0</Version>
+    <Version>3.0.0</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>MethodBoundaryAspect.Fody</PackageId>
-    <AssemblyVersion>2.0.0.0</AssemblyVersion>
+    <AssemblyVersion>3.0.0.0</AssemblyVersion>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
