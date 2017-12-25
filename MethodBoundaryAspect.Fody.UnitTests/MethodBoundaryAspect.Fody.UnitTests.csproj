@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentAssertions" Version="4.19.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.5.0" />
+    <PackageReference Include="NUnit" Version="3.9.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssembly\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.csproj" />
+    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestProgram\MethodBoundaryAspect.Fody.UnitTests.TestProgram.csproj" />
+    <ProjectReference Include="..\MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj" />
+    <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
+  </ItemGroup>
+
+</Project>

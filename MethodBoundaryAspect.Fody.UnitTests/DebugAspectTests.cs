@@ -8,7 +8,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
 {
     public class DebugAspectTests : MethodBoundaryAspectTestBase
     {
-        [Ignore]
+        [Ignore("Needs to be clarified")]
         [Test]
         public void IfWeavedTestProgramIsExecuted_ThenTheDebugSymbolsShouldWorkAndTheDebuggerShouldBeAttachable()
         {
@@ -26,7 +26,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             process.ExitCode.Should().Be(0);
         }
 
-        [Ignore]
+        [Ignore("Needs to be clarified")]
         [Test]
         public void IfAssemblyIsWeaved_ThenWeaverDebuggerShouldBePossible()
         {
