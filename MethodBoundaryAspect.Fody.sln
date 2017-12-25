@@ -1,14 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2009
+VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody", "MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj", "{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0564AB89-550A-4700-8E48-C7091CE9A03C}"
-	ProjectSection(SolutionItems) = preProject
-		MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.nuspec = MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.nuspec
-	EndProjectSection
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody", "MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj", "{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata minClientVersion="2.8">
     <id>MethodBoundaryAspect.Fody</id>
-    <version>1.0</version>
+    <version>4.0</version>
     <title>MethodBoundaryAspect.Fody</title>
     <authors>Ralf Kornelius, Marcell Spies</authors>
     <owners>VESCON GmbH</owners>
@@ -14,8 +14,8 @@
     <iconUrl>https://github.com/vescon/MethodBoundaryAspect.Fody/raw/master/docs/images/NuGetIcon.png</iconUrl>
     <tags>il weaving fody aspect aop method-invocation</tags>
     <dependencies>
-      <dependency id="Fody" version="2.0.7" />
-      <dependency id="FodyCecil" version="2.0.7"/>
+      <dependency id="Fody" version="2.3.5" />
+      <dependency id="FodyCecil" version="2.3.5"/>
     </dependencies>
   </metadata>
   <files>
