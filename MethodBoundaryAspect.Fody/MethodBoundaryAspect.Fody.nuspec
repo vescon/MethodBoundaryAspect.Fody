@@ -1,24 +1,28 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
-  <metadata  minClientVersion="2.8">
+  <metadata minClientVersion="2.8">
     <id>MethodBoundaryAspect.Fody</id>
-    <version>$version$</version>
+    <version>1.0</version>
     <title>MethodBoundaryAspect.Fody</title>
-    <authors>Ralf Kornelius</authors>
+    <authors>Ralf Kornelius, Marcell Spies</authors>
     <owners>VESCON GmbH</owners>
     <developmentDependency>true</developmentDependency>
     <projectUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>$description$</description>
-    <copyright>VESCON GmbH 2016</copyright>
-    <tags>ILWeaving Fody Aspect AOP Method Invocation MethodBoundary</tags>
+    <description>asdasd</description>
+    <copyright>VESCON GmbH</copyright>
+    <iconUrl>https://github.com/vescon/MethodBoundaryAspect.Fody/raw/master/docs/images/NuGetIcon.png</iconUrl>
+    <tags>il weaving fody aspect aop method-invocation</tags>
     <dependencies>
       <dependency id="Fody" version="2.0.7" />
       <dependency id="FodyCecil" version="2.0.7"/>
     </dependencies>
   </metadata>
   <files>
-    <file src="bin\Release\MethodBoundaryAspect.Fody.pdb" target="lib\net45\" />
-    <file src="bin\Release\MethodBoundaryAspect.Fody.dll" target="" />
+    <file src="bin\Release\net461\MethodBoundaryAspect.Fody.dll" target="lib\net461\" />
+    <file src="bin\Release\net461\MethodBoundaryAspect.Fody.pdb" target="lib\net461\" />
+    <file src="bin\Release\netstandard2.0\MethodBoundaryAspect.Fody.dll" target="lib\netstandard2.0\" />
+    <file src="bin\Release\netstandard2.0\MethodBoundaryAspect.Fody.pdb" target="lib\netstandard2.0\" />
+    <file src="bin\Release\net461\MethodBoundaryAspect.Fody.dll" target="" />
   </files>
 </package>

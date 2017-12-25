@@ -88,12 +88,13 @@ namespace MethodBoundaryAspect.Fody
             _markEnd1NewRealBodyEnd = _processor.Create(OpCodes.Nop);
             _markEnd2BeforeOnExitCall = _processor.Create(OpCodes.Nop);
             _markRetNew = EndsWithThrow ? _processor.Create(OpCodes.Throw) : _processor.Create(OpCodes.Ret);
+
+            HasMultipleReturnAndEndsWithThrow = EndsWithThrow && _methodBody.Instructions.Any(x => x.OpCode == OpCodes.Ret);
         }
 
-        public bool EndsWithThrow
-        {
-            get { return _realBodyEnd.OpCode.Code == Code.Throw; }
-        }
+        public bool EndsWithThrow => _realBodyEnd.OpCode.Code == Code.Throw;
+
+        public bool HasMultipleReturnAndEndsWithThrow { get; }
 
         public void Unify(
             NamedInstructionBlockChain saveReturnValue,NamedInstructionBlockChain loadReturnValue)
@@ -140,6 +141,12 @@ namespace MethodBoundaryAspect.Fody
 
             // then throw again
             _processor.InsertAfter(lastInstruction, _processor.Create(OpCodes.Throw));
+        }
+
+        public void ReplaceThrowAtEndOfRealBodyWithReturn()
+        {
+            var returnInstruction = _processor.Create(OpCodes.Ret);
+            _processor.Replace(_markRetNew, returnInstruction);
         }
 
         private void FixRealRetsToBranchToNewRealBodyEnd()
@@ -250,7 +257,9 @@ namespace MethodBoundaryAspect.Fody
             _methodBody.OptimizeMacros();
 
             Trace.WriteLine("Method: " + _methodName);
-
+            Trace.WriteLine("EndsWithThrow: " + EndsWithThrow);
+            Trace.WriteLine("HasMultipleReturnAndEndsWithThrow: " + HasMultipleReturnAndEndsWithThrow);
+            
             Dump("_realBodyStart", _realBodyStart);
             Dump("_realBodyEnd", _realBodyEnd);
 
@@ -267,7 +276,7 @@ namespace MethodBoundaryAspect.Fody
             Dump("_markExceptionHandlerEnd", _markExceptionHandlerEnd);
         }
 
-        private Instruction AddCreateAspectInstance(NamedInstructionBlockChain createAspectInstance, Instruction current)
+        private Instruction AddCreateAspectInstance(InstructionBlockChain createAspectInstance, Instruction current)
         {
             if (_aspectInstanceCreated)
                 return current;
@@ -280,8 +289,8 @@ namespace MethodBoundaryAspect.Fody
         private void Dump(string name, Instruction instruction)
         {
             Trace.WriteLine(instruction == null
-                ? string.Format("{0} is not set", name)
-                : string.Format("{0} is at: {1}", name, _methodBody.Instructions.IndexOf(instruction)));
+                ? $"{name} is not set"
+                : $"{name} is at: {_methodBody.Instructions.IndexOf(instruction)}");
         }
     }
 }

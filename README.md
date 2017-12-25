@@ -1,98 +1,80 @@
-# MethodBoundaryAspect.Fody
+[![Build status](https://img.shields.io/appveyor/ci/marcells/methodboundaryaspect-fody.svg)](https://ci.appveyor.com/project/marcells/methodboundaryaspect-fody)
+[![Tests](https://img.shields.io/appveyor/tests/marcells/methodboundaryaspect-fody.svg)](https://ci.appveyor.com/project/marcells/methodboundaryaspect-fody/build/tests)
+[![NuGet](https://img.shields.io/nuget/v/MethodBoundaryAspect.Fody.svg)](https://www.nuget.org/packages/MethodBoundaryAspect.Fody/)
 
-[![Build status](https://ci.appveyor.com/api/projects/status/983caboro9uy91m9?svg=true)](https://ci.appveyor.com/project/marcells/methodboundaryaspect-fody)
+## MethodBoundaryAspect.Fody
+> A [Fody weaver](https://github.com/Fody/Fody) which allows to decorate methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.
 
-NuGet package https://www.nuget.org/packages/MethodBoundaryAspect.Fody/
+You can easily write your own aspects for
+- transaction handling
+- logging
+- measuring method execution time
+- exception wrapping
+- displaying wait cursor
+- and much more ...
 
-## Introduction
-Allows decorated method to access some runtime properties before and after method execution.
+### Supported features
+- Hook into method start and end
+- Hook into raised exceptions in a method
+- Access method information like
+    - applied object instance
+    - the method itself ([System.Reflection.MethodBase](https://msdn.microsoft.com/en-us/library/system.reflection.methodbase))
+    - the passed method arguments
+    - the thrown exception
+    - some custom object, which can be set at the start of the method and accessed at the end (e.g. useful for transactions or timers)
+- Apply aspects at different levels
+    - globally in `AssemblyInfo.cs`
+    - on class
+    - on method
+
+Feel free to make a [Fork](https://github.com/vescon/MethodBoundaryAspect.Fody/fork) of this repository.
+
+### Quickstart
+
+1. Install the MethodBoundaryAspect.Fody NuGet package (`Install-Package MethodBoundaryAspect.Fody`)
+2. Create `FodyWeavers.xml` in your project and add the Weaver `MethodBoundaryAspect` to it ([further details](https://github.com/Fody/Fody))
+3. Write your custom aspects by deriving from `OnMethodBoundaryAspect` and decorate your methods (see sample below)
+
+### Sample
+
+Short sample how a transaction aspect could be implemented.
+
+#### The aspect code
+
 ```csharp
- public class MethodExecutionArgs
-  {
-    public object Instance { get; set; }
-    public MethodBase Method { get; set; }
-    public object[] Arguments { get; set; }
-    public object ReturnValue { get; set; }
-    public Exception Exception { get; set; }
-    public object MethodExecutionTag { get; set; }
-  }
-```
-### Your Code
-
-```csharp
-	public sealed class TransactionScopeAttribute : OnMethodBoundaryAspect
+public sealed class TransactionScopeAttribute : OnMethodBoundaryAspect
+{
+    public override void OnEntry(MethodExecutionArgs args)
     {
-        public int TimeoutInSeconds { get; set; }
-
-        public override void OnEntry(MethodExecutionArgs args)
-        {
-            var transactionScopeProvider = GlobalServiceLocator.ServiceLocator.GetInstance<ITransactionScopeProvider>();
-
-            if (TimeoutInSeconds != 0)
-                transactionScopeProvider.Timeout = TimeSpan.FromSeconds(TimeoutInSeconds);
-
-            var transactionScope = transactionScopeProvider.Create();
-            args.MethodExecutionTag = transactionScope;
-        }
-
-        public override void OnException(MethodExecutionArgs args)
-        {
-            FinishTransaction(args);
-        }
-
-        public override void OnExit(MethodExecutionArgs args)
-        {
-            FinishTransaction(args);
-        }
-
-        private static void FinishTransaction(MethodExecutionArgs args)
-        {
-            var transactionScope = (ITransactionScope)args.MethodExecutionTag;
-
-            try
-            {
-                if (args.Exception == null)
-                    transactionScope.Complete();
-            }
-            finally
-            {
-                if (transactionScope != null)
-                    transactionScope.Dispose();
-            }
-        }
+        args.MethodExecutionTag = new TransactionScope();
     }
 
-	public class Sample
-	{
-		[TransactionScope]
-		public void Method()
-		{
-		    Debug.WriteLine("Do some database stuff isolated in surrounding transaction");
-		}
-	}
+    public override void OnExit(MethodExecutionArgs args)
+    {
+        var transactionScope = (TransactionScope)args.MethodExecutionTag;
+        
+        transactionScope.Complete();
+        transactionScope.Dispose();
+    }
+
+    public override void OnException(MethodExecutionArgs args)
+    {
+        var transactionScope = (TransactionScope)args.MethodExecutionTag;
+        
+        transactionScope.Dispose();
+    }
+}
 ```
 
-License
--------
+#### The applied aspect
 
-The MIT License (MIT)
-
-Copyright (c) 2015 VESCON GmbH
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
+```csharp
+public class Sample
+{
+    [TransactionScope]
+    public void Method()
+    {
+        Debug.WriteLine("Do some database stuff isolated in surrounding transaction");
+    }
+}
+```

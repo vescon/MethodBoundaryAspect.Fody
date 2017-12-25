@@ -127,6 +127,7 @@
     <Compile Include="SetNamedArgumentAspectTests.cs" />
     <Compile Include="SetReturnValueAspectTests.cs" />
     <Compile Include="ClassWithIndexerTests.cs" />
+    <Compile Include="SpecialAspectTests.cs" />
     <Compile Include="SpecialMethodBodyTests.cs" />
     <Compile Include="TestDomain.cs" />
     <Compile Include="Unified\OnEntry\OnlyOnEntryAspect.cs" />
@@ -141,7 +142,7 @@
     <Compile Include="Unified\PeVerifyException.cs" />
     <Compile Include="Unified\UnifiedWeaverTestBase.cs" />
     <Compile Include="Unified\OnEntry\Tests.cs" />
-    <Compile Include="WeaveSpecialMethodTests.cs" />
+    <Compile Include="SpecialMethodTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config">

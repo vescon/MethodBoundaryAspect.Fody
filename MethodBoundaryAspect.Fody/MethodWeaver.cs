@@ -62,13 +62,15 @@ namespace MethodBoundaryAspect.Fody
                     setMethodExecutionArgsExceptionFromStack);
             }
 
-            if (_methodBodyChanger.EndsWithThrow)
+            if (_methodBodyChanger.HasMultipleReturnAndEndsWithThrow)
+                _methodBodyChanger.ReplaceThrowAtEndOfRealBodyWithReturn();
+            else if (_methodBodyChanger.EndsWithThrow)
             {
                 var saveThrownException = creator.SaveThrownException();
                 var loadThrownException = creator.LoadValueOnStack(saveThrownException);
                 var loadThrownException2 = creator.LoadValueOnStack(saveThrownException);
                 _methodBodyChanger.FixThrowAtEndOfRealBody(
-                    saveThrownException, 
+                    saveThrownException,
                     loadThrownException,
                     loadThrownException2);
             }

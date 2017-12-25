@@ -2,14 +2,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <!--<TargetFramework>net452</TargetFramework>-->
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
     <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>MethodBoundaryAspect.Fody.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="FodyCecil" Version="2.2.1" />
+    <PackageReference Include="FodyCecil" Version="2.3.5" />
     
     <!--<Reference Include="Mono.Cecil, Version=0.10.0.0, Culture=neutral, PublicKeyToken=50cebf1cceb9d05e, processorArchitecture=MSIL">
       <HintPath>..\packages\FodyCecil.2.0.7\lib\net40\Mono.Cecil.dll</HintPath>
@@ -48,7 +48,7 @@
     <Company>VESCON GmbH</Company>
     <Product>MethodBoundaryAspect.Fody</Product>
     <Version>2.0.0</Version>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>MethodBoundaryAspect.Fody</PackageId>
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
   </PropertyGroup>
