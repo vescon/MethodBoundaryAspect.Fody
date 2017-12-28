@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <IsPackable>false</IsPackable>
     <Authors>Ralf Kornelius, Marcell Spies</Authors>
     <Company>VESCON GmbH</Company>
     <Copyright>VESCON GmbH</Copyright>
