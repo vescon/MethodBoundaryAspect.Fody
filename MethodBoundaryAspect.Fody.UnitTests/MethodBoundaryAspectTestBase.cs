@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.Unified;
 using NUnit.Framework;
@@ -14,6 +15,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests
         [SetUp]
         public virtual void SetUp()
         {
+            var url = Path.GetDirectoryName(GetType().Assembly.CodeBase);
+            var path = url.Substring(@"file:\\".Length - 1);
+            Environment.CurrentDirectory = path;
         }
 
         [TearDown]
