@@ -8,10 +8,9 @@
   <PropertyGroup>
     <Authors>Ralf Kornelius, Marcell Spies</Authors>
     <Company>VESCON GmbH</Company>
-    <Product>MethodBoundaryAspect.Fody</Product>
+    <Copyright>VESCON GmbH</Copyright>
+    <Product>MethodBoundaryAspect</Product>
     <Version>1.0.0</Version>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <PackageId>MethodBoundaryAspect.Fody</PackageId>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
   </PropertyGroup>
 </Project>
