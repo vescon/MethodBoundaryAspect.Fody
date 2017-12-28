@@ -9,7 +9,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
     {
         public static void Verify(string assemblyPath)
         {
-            var peVerifyPath = GetPeVerifierPath();
+            var peVerifyPath = GetPeVerifyPath();
 
             var psi = new ProcessStartInfo
             {
@@ -29,7 +29,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
                 throw new PeVerifyException(processExitCode, output);
         }
 
-        private static string GetPeVerifierPath()
+        private static string GetPeVerifyPath()
         {
             var possiblePeVerifyPaths = new[]
             {
@@ -40,7 +40,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
             var peVerifyPath = possiblePeVerifyPaths.FirstOrDefault(File.Exists);
 
             if (peVerifyPath == null)
-                throw new InvalidOperationException("PeVerifier could not be found. Please install it with the Windows SDK.");
+                throw new InvalidOperationException("PeVerify.exe could not be found. Please install it with the Windows SDK.");
 
             return peVerifyPath;
         }
