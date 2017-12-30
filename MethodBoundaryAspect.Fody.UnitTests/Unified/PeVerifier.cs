@@ -14,7 +14,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
             var psi = new ProcessStartInfo
             {
                 FileName = peVerifyPath,
-                Arguments = assemblyPath,
+                Arguments = $"\"{assemblyPath}\"",
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
                 UseShellExecute = false
