@@ -2,27 +2,15 @@
 using System.Reflection;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
-using NUnit.Framework;
+using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
     public class SetExceptionValueAspectTests : MethodBoundaryAspectTestBase
     {
         private static readonly Type TestClassType = typeof (SetExceptionValueAspectMethods);
-
-        [SetUp]
-        public override void SetUp()
-        {
-            base.SetUp();
-        }
-
-        [TearDown]
-        public override void TearDown()
-        {
-            base.TearDown();
-        }
-
-        [Test]
+        
+        [Fact]
         public void IfStaticMethodIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
             // Arrange
@@ -41,7 +29,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             result.Should().BeOfType<InvalidOperationException>();
         }
 
-        [Test]
+        [Fact]
         public void IfInstanceMethodIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
             // Arrange

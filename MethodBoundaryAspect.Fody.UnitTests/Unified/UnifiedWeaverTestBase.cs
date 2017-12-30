@@ -4,11 +4,10 @@ using System.IO;
 using System.Reflection;
 using FluentAssertions;
 using Mono.Cecil.Cil;
-using NUnit.Framework;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.Unified
 {
-    public class UnifiedWeaverTestBase
+    public class UnifiedWeaverTestBase : IDisposable
     {
         protected static readonly List<OpCode> AllStLocOpCodes = new List<OpCode>
                 {
@@ -26,26 +25,74 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
                     OpCodes.Ldloc_2,
                     OpCodes.Ldloc_3
                 };
+        
+        protected AssemblyPaths Source { get; private set; }
+        protected AssemblyPaths Weave { get; private set; }
 
-        protected string WeaveDll { get; private set; }
-
-        [SetUp]
-        public virtual void Setup()
+        protected UnifiedWeaverTestBase()
         {
-            var sourceDll = Assembly.GetExecutingAssembly().CodeBase.Replace(@"file:///", string.Empty);
-            var targetDll = sourceDll.Replace(".DLL", "._Weaved.dll");
-            File.Copy(sourceDll, targetDll, true);
-            WeaveDll = targetDll;
+            var source = AssemblyPaths.OfExecutingAssembly();
+            var weave = AssemblyPaths.ForWeavedAssembly(source);
 
-            var sourcePdb = sourceDll.Replace(@".DLL", ".Pdb");
-            var targetPdb = sourcePdb.Replace(".Pdb", "._Weaved.Pdb");
-            File.Copy(sourcePdb, targetPdb, true);
+            TryCleanupWeavedFiles(weave);
+
+            File.Copy(source.DllPath, weave.DllPath, true);
+            File.Copy(source.PdbPath, weave.PdbPath, true);
+            
+            Source = source;
+            Weave = weave;
         }
 
         protected void AssertRunPeVerify()
         {
-            Action action = () => PeVerifier.Verify(WeaveDll);
+            Action action = () => PeVerifier.Verify(Weave.DllPath);
             action.ShouldNotThrow();
+        }
+
+        public void Dispose()
+        {
+            TryCleanupWeavedFiles(Weave);
+        }
+
+        private void TryCleanupWeavedFiles(AssemblyPaths assemblyPaths)
+        {
+            if (File.Exists(assemblyPaths.DllPath))
+                File.Delete(assemblyPaths.DllPath);
+
+            if (File.Exists(assemblyPaths.PdbPath))
+                File.Delete(assemblyPaths.PdbPath);
+        }
+
+        protected class AssemblyPaths
+        {
+            public AssemblyPaths()
+            {
+            }
+
+            private AssemblyPaths(string dllPath, string pdbPath)
+            {
+                DllPath = dllPath;
+                PdbPath = pdbPath;
+            }
+
+            public string DllPath { get; }
+            public string PdbPath { get; }
+
+            public static AssemblyPaths OfExecutingAssembly()
+            {
+                var dllPath = Assembly.GetExecutingAssembly().CodeBase.Replace(@"file:///", string.Empty);
+                var pdbPath = dllPath.Replace(@".DLL", ".Pdb");
+
+                return new AssemblyPaths(dllPath, pdbPath);
+            }
+
+            public static AssemblyPaths ForWeavedAssembly(AssemblyPaths unweavedAssemblyPaths)
+            {
+                var dllPath = unweavedAssemblyPaths.DllPath.Replace(".DLL", "._Weaved.dll");
+                var pdbPath = unweavedAssemblyPaths.PdbPath.Replace(".Pdb", "._Weaved.Pdb");
+
+                return new AssemblyPaths(dllPath, pdbPath);
+            }
         }
     }
 }

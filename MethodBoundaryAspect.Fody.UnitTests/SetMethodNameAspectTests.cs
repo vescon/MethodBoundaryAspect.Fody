@@ -1,7 +1,7 @@
 ﻿using System;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
-using NUnit.Framework;
+using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
@@ -11,20 +11,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests
 
         private static readonly Type TestClassType = typeof (ClassSetMethodNameAspect);
         private static readonly Type TestClassResultType = typeof (ClassSetMethodNameAspectResult);
-
-        [SetUp]
-        public override void SetUp()
-        {
-            base.SetUp();
-        }
-
-        [TearDown]
-        public override void TearDown()
-        {
-            base.TearDown();
-        }
-
-        [Test]
+        
+        [Fact]
         public void IfStaticMethodIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
             // Arrange
@@ -38,7 +26,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             result.Should().Be("StaticMethodCall");
         }
 
-        [Test]
+        [Fact]
         public void IfInstanceMethodIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
             // Arrange
@@ -52,7 +40,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             result.Should().Be("InstanceMethodCall");
         }
 
-        [Test]
+        [Fact]
         public void IfClassStaticMethodIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
             // Arrange
@@ -69,7 +57,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             result.Should().Be(testMethodName);
         }
 
-        [Test]
+        [Fact]
         public void IfClassInstanceMethodIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
             // Arrange

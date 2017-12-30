@@ -1,25 +1,13 @@
 ﻿using System;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
-using NUnit.Framework;
+using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
     public class SpecialAspectTests : MethodBoundaryAspectTestBase
     {
-        [SetUp]
-        public override void SetUp()
-        {
-            base.SetUp();
-        }
-
-        [TearDown]
-        public override void TearDown()
-        {
-            base.TearDown();
-        }
-
-        [Test]
+        [Fact]
         public void IfMethodWithAspectOnEntryOnlyIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -34,7 +22,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             call.ShouldNotThrow();
         }
 
-        [Test]
+        [Fact]
         public void IfMethodWithAspectOnExitOnlyIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -49,7 +37,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             call.ShouldNotThrow();
         }
 
-        [Test]
+        [Fact]
         public void IfMethodWithAspectOnExceptionOnlyIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange

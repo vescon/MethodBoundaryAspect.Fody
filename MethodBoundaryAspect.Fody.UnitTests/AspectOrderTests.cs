@@ -1,14 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using FluentAssertions;
 using MethodBoundaryAspect.Fody.Ordering;
-using NUnit.Framework;
+using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
     public class AspectOrderTests
     {
-        [Test]
+        [Fact]
         public void IfSorted_AfterAndBeforeAreEmpty_OrderShouldNotBeChanged()
         {
             // Arrange
@@ -26,7 +27,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             AssertArray(expectedOrders, orders);
         }
 
-        [Test]
+        [Fact]
         public void IfSorted_BeforeIsInAfter_OrderShouldBeCorrect()
         {
             // Arrange
@@ -44,7 +45,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             AssertArray(expectedOrders, orders);
         }
 
-        [Test]
+        [Fact]
         public void IfUnsorted_BeforeIsInAfter_OrderShouldBeCorrect()
         {
             // Arrange
@@ -71,9 +72,10 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             Debug.WriteLine("Dump actual:");
             DumpArray(actualArray);
 
-            Assert.AreEqual(expectedArray.Length, actualArray.Length);
+            expectedArray.Length.Should().Be(actualArray.Length);
+
             for (var i = 0; i < expectedArray.Length; i++)
-                Assert.AreEqual(expectedArray[i], actualArray[i]);
+                expectedArray[i].Should().Be(actualArray[i]);
         }
 
         private static void DumpArray(string[] array)

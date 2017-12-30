@@ -2,25 +2,13 @@
 using System.Reflection;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
-using NUnit.Framework;
+using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
     public class SpecialMethodTests : MethodBoundaryAspectTestBase
     {
-        [SetUp]
-        public override void SetUp()
-        {
-            base.SetUp();
-        }
-
-        [TearDown]
-        public override void TearDown()
-        {
-            base.TearDown();
-        }
-
-        [Test]
+        [Fact]
         public void IfExternMethodIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -35,7 +23,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             call.ShouldNotThrow();
         }
 
-        [Test]
+        [Fact]
         public void IfInterfaceMethodIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -49,7 +37,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             Weaver.TotalWeavedTypes.Should().Be(0);
         }
 
-        [Test]
+        [Fact]
         public void IfAnonymousMethodIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -66,7 +54,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             result.Should().Be(testMethodName);
         }
 
-        [Test]
+        [Fact]
         public void IfInstanceMethodCallWithTryCatchIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -85,7 +73,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 .WithInnerMessage(testMethodName);
         }
 
-        [Test]
+        [Fact]
         public void IfMethodWithTernaryOperatorAtTheEndAndTwoRetOpCodesIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -103,7 +91,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             result.Should().Be(null);
         }
 
-        [Test]
+        [Fact]
         public void IfMethodWithTryCatchAndUsingIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -120,7 +108,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             result.Should().Be(null);
         }
 
-        [Test]
+        [Fact]
         public void IfMethodWithParameterWithMultipleReturnIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -137,7 +125,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             result.Should().Be("");
         }
 
-        [Test]
+        [Fact]
         public void IfMethodWithThrowIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -156,7 +144,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 .WithInnerMessage("This is a test exception");
         }
 
-        [Test]
+        [Fact]
         public void IfClassWithGenericTypeIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange

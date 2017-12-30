@@ -1,27 +1,15 @@
 ﻿using System;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
-using NUnit.Framework;
+using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
     public class SetAspectNameResultAspectTests : MethodBoundaryAspectTestBase
     {
         private static readonly Type TestClassType = typeof (SetAspectNameResultAspectMethods);
-
-        [SetUp]
-        public override void SetUp()
-        {
-            base.SetUp();
-        }
-
-        [TearDown]
-        public override void TearDown()
-        {
-            base.TearDown();
-        }
-
-        [Test]
+        
+        [Fact]
         public void IfStaticMethodIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
             // Arrange
@@ -35,7 +23,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             result.Should().Be("SetAspectNameResultAspect");
         }
 
-        [Test]
+        [Fact]
         public void IfInstanceMethodIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
             // Arrange

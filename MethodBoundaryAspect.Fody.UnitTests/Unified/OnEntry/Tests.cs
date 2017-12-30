@@ -3,22 +3,15 @@ using System.Collections.Generic;
 using FluentAssertions;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using NUnit.Framework;
+using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnEntry
 {
-    [TestFixture]
     public class Tests : UnifiedWeaverTestBase
     {
         private readonly Type _testType = typeof (TestMethods);
-
-        [SetUp]
-        public override void Setup()
-        {
-            base.Setup();
-        }
-
-        [Test]
+        
+        [Fact]
         public void IfVoidEmptyMethodMethodIsWeaved_ThenPeVerifyShouldBeOk()
         {
             // Arrange
@@ -26,14 +19,14 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnEntry
             weaver.AddMethodFilter(_testType.FullName + ".VoidEmptyMethod");
 
             // Act
-            weaver.Weave(WeaveDll);
+            weaver.Weave(Weave.DllPath);
 
             // Arrange
             AssertRunPeVerify();
             AssertUnifiedMethod(weaver.LastWeavedMethod);
         }
 
-        [Test]
+        [Fact]
         public void IfIntMethodIsWeaved_ThenPeVerifyShouldBeOk()
         {
             // Arrange
@@ -41,14 +34,14 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnEntry
             weaver.AddMethodFilter(_testType.FullName + ".IntMethod");
 
             // Act
-            weaver.Weave(WeaveDll);
+            weaver.Weave(Weave.DllPath);
 
             // Arrange
             AssertRunPeVerify();
             AssertUnifiedMethod(weaver.LastWeavedMethod);
         }
 
-        [Test]
+        [Fact]
         public void IfVoidThrowMethodIsWeaved_ThenPeVerifyShouldBeOk()
         {
             // Arrange
@@ -56,14 +49,14 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnEntry
             weaver.AddMethodFilter(_testType.FullName + ".VoidThrowMethod");
 
             // Act
-            weaver.Weave(WeaveDll);
+            weaver.Weave(Weave.DllPath);
 
             // Arrange
             AssertRunPeVerify();
             AssertUnifiedMethod(weaver.LastWeavedMethod, true);
         }
 
-        [Test]
+        [Fact]
         public void IfIntMethodIntWithMultipleReturnIsWeaved_ThenPeVerifyShouldBeOk()
         {
             // Arrange
@@ -71,14 +64,14 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnEntry
             weaver.AddMethodFilter(typeof (TestMethods).FullName + ".IntMethodIntWithMultipleReturn");
 
             // Act
-            weaver.Weave(WeaveDll);
+            weaver.Weave(Weave.DllPath);
 
             // Arrange
             AssertRunPeVerify();
             AssertUnifiedMethod(weaver.LastWeavedMethod);
         }
 
-        [Test]
+        [Fact]
         public void IfVoidThrowMethodTryCatchIsWeaved_ThenPeVerifyShouldBeOk()
         {
             // Arrange
@@ -86,7 +79,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnEntry
             weaver.AddMethodFilter(typeof(TestMethods).FullName + ".VoidThrowMethodTryCatch");
 
             // Act
-            weaver.Weave(WeaveDll);
+            weaver.Weave(Weave.DllPath);
 
             // Arrange
             AssertRunPeVerify();

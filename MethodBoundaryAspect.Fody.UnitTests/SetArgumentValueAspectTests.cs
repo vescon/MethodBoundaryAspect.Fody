@@ -1,27 +1,15 @@
 ﻿using System;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
-using NUnit.Framework;
+using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
     public class SetArgumentValueAspectTests : MethodBoundaryAspectTestBase
     {
         private static readonly Type TestClassType = typeof (SetArgumentValueAspectMethods);
-
-        [SetUp]
-        public override void SetUp()
-        {
-            base.SetUp();
-        }
-
-        [TearDown]
-        public override void TearDown()
-        {
-            base.TearDown();
-        }
-
-        [Test]
+        
+        [Fact]
         public void IfStaticMethodWithValueTypeIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
             // Arrange
@@ -35,7 +23,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             result.Should().Be("i1: '142'");
         }
 
-        [Test]
+        [Fact]
         public void IfInstanceMethodWithValueTypeIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
             // Arrange
@@ -49,7 +37,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             result.Should().Be("i1: '143'");
         }
 
-        [Test]
+        [Fact]
         public void IfStaticMethodWithReferenceTypeIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
             // Arrange
@@ -63,7 +51,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             result.Should().Be("s1: '142'");
         }
 
-        [Test]
+        [Fact]
         public void IfInstanceMethodWithReferenceTypeIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
             // Arrange

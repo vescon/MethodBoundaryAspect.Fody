@@ -1,25 +1,13 @@
 ﻿using System;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
-using NUnit.Framework;
+using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
     public class ClassWithIndexerTests : MethodBoundaryAspectTestBase
     {
-        [SetUp]
-        public override void SetUp()
-        {
-            base.SetUp();
-        }
-
-        [TearDown]
-        public override void TearDown()
-        {
-            base.TearDown();
-        }
-
-        [Test]
+        [Fact]
         public void IfClassContainsIndexer_ThenTheAssemblyShouldBeValid()
         {
             // Arrange

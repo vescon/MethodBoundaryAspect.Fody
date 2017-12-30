@@ -81,6 +81,7 @@ namespace MethodBoundaryAspect.Fody
 
             var pdbPath = Path.ChangeExtension(assemblyPath, "pdb");
             var shadowPdbPath = CreateShadowAssemblyPath(pdbPath);
+
             if (File.Exists(pdbPath))
                 File.Copy(pdbPath, shadowPdbPath, true);
 

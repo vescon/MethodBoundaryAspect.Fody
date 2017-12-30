@@ -2,25 +2,13 @@
 using System.Reflection;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
-using NUnit.Framework;
+using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
     public class SpecialMethodBodyTests : MethodBoundaryAspectTestBase
     {
-        [SetUp]
-        public override void SetUp()
-        {
-            base.SetUp();
-        }
-
-        [TearDown]
-        public override void TearDown()
-        {
-            base.TearDown();
-        }
-
-        [Test]
+        [Fact]
         public void IfMethodBodyEndsWithBrtrueOpcode_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -35,7 +23,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             call.ShouldNotThrow();
         }
 
-        [Test]
+        [Fact]
         public void IfMethodBodyWithBrtrueOpcodeEndsWithBrtrueOpcode_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -50,7 +38,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             call.ShouldNotThrow();
         }
 
-        [Test]
+        [Fact]
         public void IfMethodBodyEndsWithBleOpcode_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -65,7 +53,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             call.ShouldNotThrow();
         }
 
-        [Test]
+        [Fact]
         public void IfMethodWhichEndsWithThrowAndHasMultipleReturns_2_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -82,7 +70,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             result.Should().Be("2");
         }
 
-        [Test]
+        [Fact]
         public void IfMethodWhichEndsWithThrowAndHasMultipleReturns_3_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -101,7 +89,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 .WithInnerMessage("This exception is expected");
         }
 
-        [Test]
+        [Fact]
         public void IfStrangeMethodForIssue9_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
@@ -117,7 +105,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             Weaver.TotalWeavedTypes.Should().Be(1);
         }
 
-        [Test]
+        [Fact]
         public void IfStrangeMethodForIssue10_ThenTheAssemblyShouldBeValid()
         {
             // Arrange

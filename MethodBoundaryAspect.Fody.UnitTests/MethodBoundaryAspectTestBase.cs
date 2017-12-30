@@ -2,26 +2,27 @@
 using System.IO;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.Unified;
-using NUnit.Framework;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
-    public class MethodBoundaryAspectTestBase
+    public class MethodBoundaryAspectTestBase : IDisposable
     {
         private TestDomain _testDomain;
 
-        protected AssemblyLoader AssemblyLoader { get; private set; }
-
-        [SetUp]
-        public virtual void SetUp()
+        public MethodBoundaryAspectTestBase()
         {
             var url = Path.GetDirectoryName(GetType().Assembly.CodeBase);
             var path = url.Substring(@"file:\\".Length - 1);
+
             Environment.CurrentDirectory = path;
         }
 
-        [TearDown]
-        public virtual void TearDown()
+        protected AssemblyLoader AssemblyLoader { get; private set; }
+        
+        protected static string WeavedAssemblyPath { get; private set; }
+        protected ModuleWeaver Weaver { get; set; }
+
+        public void Dispose()
         {
             AssemblyLoader = null;
 
@@ -30,10 +31,20 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 _testDomain.Dispose();
                 _testDomain = null;
             }
+
+            TryCleanupWeavedAssembly();
         }
 
-        protected static string WeavedAssemblyPath { get; private set; }
-        protected ModuleWeaver Weaver { get; set; }
+        private static void TryCleanupWeavedAssembly()
+        {
+            if (File.Exists(WeavedAssemblyPath))
+                File.Delete(WeavedAssemblyPath);
+
+            var pdbPath = Path.ChangeExtension(WeavedAssemblyPath, "pdb");
+
+            if (File.Exists(pdbPath))
+                File.Delete(pdbPath);
+        }
 
         protected void WeaveAssemblyClassAndLoad(Type type)
         {
