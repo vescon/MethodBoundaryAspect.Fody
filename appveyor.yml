@@ -1,0 +1,32 @@
+version: 1.0.{build}
+image: Visual Studio 2017
+configuration: Release
+platform: Any CPU
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: '{version}'
+  package_version: '{version}'
+  assembly_version: '{version}'
+  file_version: '{version}'
+  informational_version: '{version}'
+before_build:
+- cmd: dotnet restore
+build:
+  verbosity: minimal
+after_build:
+- cmd: dotnet pack MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj /p:NuspecFile=MethodBoundaryAspect.Fody.nuspec /p:NuspecProperties="version=%APPVEYOR_BUILD_VERSION%"
+test_script:
+- cmd: dotnet test MethodBoundaryAspect.Fody.UnitTests --configuration Release
+artifacts:
+- path: MethodBoundaryAspect.Fody\bin\$(configuration)
+  name: Binaries
+- path: '**\*.nupkg'
+  name: Packages
+deploy:
+- provider: NuGet
+  api_key:
+    secure: qP4lObisvUwAbvxVFPtBwaTC25bTgpJA8MaQu7xXqZS09uosIhhdaxrW2znYzOCQ
+  skip_symbols: true
+  on:
+    branch: master
