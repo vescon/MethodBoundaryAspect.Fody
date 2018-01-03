@@ -225,6 +225,8 @@ namespace MethodBoundaryAspect.Fody
                     if (overriddenAspectMethods == AspectMethods.None)
                         continue;
 
+                    
+
                     methodWeaver.Weave(method, aspectInfo.AspectAttribute, overriddenAspectMethods, module);
                 }
 
@@ -297,6 +299,9 @@ namespace MethodBoundaryAspect.Fody
             var fullName = method.DeclaringType.FullName;
             var name = method.Name;
 
+            if (IsIgnoredByWeaving(method))
+                return false;
+
             if (IsUserFiltered(fullName, name))
                 return false;
 
@@ -335,6 +340,11 @@ namespace MethodBoundaryAspect.Fody
             }
 
             return false;
+        }
+
+        private static bool IsIgnoredByWeaving(ICustomAttributeProvider method)
+        {
+            return method.CustomAttributes.Any(x => x.AttributeType.FullName == typeof(DisableWeavingAttribute).FullName);
         }
     }
 }
