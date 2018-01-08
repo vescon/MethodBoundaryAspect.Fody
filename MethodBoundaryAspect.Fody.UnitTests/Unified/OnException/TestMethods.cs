@@ -40,5 +40,30 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnException
 
             return 2;
         }
+
+        private static ValueType2 SwitchCaseMethodWithReturnValueAndThrowAsDefaultValue(ValueType1 input)
+        {
+            switch (input)
+            {
+                case ValueType1.A: return ValueType2.A;
+                case ValueType1.B: return ValueType2.B;
+                case ValueType1.C: return ValueType2.C;
+                default: throw new ArgumentOutOfRangeException(nameof(input), input, null);
+            }
+        }
+    }
+
+    public enum ValueType1
+    {
+        A,
+        B,
+        C
+    }
+
+    public enum ValueType2
+    {
+        A,
+        B,
+        C
     }
 }

@@ -86,21 +86,6 @@ namespace MethodBoundaryAspect.Fody.UnitTests.MultipleAspects
             AssertUnifiedMethod(weaver.LastWeavedMethod);
         }
 
-        [Fact]
-        public void IfSwitchCaseMethodWithReturnValueAndThrowAsDefaultValueIsWeaved_ThenPeVerifyShouldBeOk()
-        {
-            // Arrange
-            var weaver = new ModuleWeaver();
-            weaver.AddMethodFilter(typeof(TestMethods).FullName + ".SwitchCaseMethodWithReturnValueAndThrowAsDefaultValue");
-
-            // Act
-            weaver.Weave(Weave.DllPath);
-
-            // Arrange
-            AssertRunPeVerify();
-            AssertUnifiedMethod(weaver.LastWeavedMethod);
-        }
-
         private static void AssertUnifiedMethod(MethodDefinition method)
         {
             AssertUnifiedMethod(method, false);
