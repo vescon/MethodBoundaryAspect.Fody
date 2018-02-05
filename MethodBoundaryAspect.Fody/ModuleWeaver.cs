@@ -57,6 +57,7 @@ namespace MethodBoundaryAspect.Fody
         public int TotalWeavedPropertyMethods { get; private set; }
 
         public MethodDefinition LastWeavedMethod { get; private set; }
+        public List<string> MethodFilters => _methodFilters;
 
         public void Execute()
         {

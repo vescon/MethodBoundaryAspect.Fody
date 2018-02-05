@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using FluentAssertions;
 using Mono.Cecil.Cil;
@@ -9,6 +11,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
 {
     public class UnifiedWeaverTestBase : IDisposable
     {
+        private const bool ShouldRunIlSpyOnPeVerifyError = false;
+
         protected static readonly List<OpCode> AllStLocOpCodes = new List<OpCode>
                 {
                     OpCodes.Stloc_S,
@@ -26,9 +30,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
                     OpCodes.Ldloc_3
                 };
         
-        protected AssemblyPaths Source { get; private set; }
-        protected AssemblyPaths Weave { get; private set; }
-
+        protected AssemblyPaths Source { get; }
+        protected AssemblyPaths Weave { get; }
+        
         protected UnifiedWeaverTestBase()
         {
             var source = AssemblyPaths.OfExecutingAssembly();
@@ -43,9 +47,22 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
             Weave = weave;
         }
 
-        protected void AssertRunPeVerify()
+        protected void AssertRunPeVerify(ModuleWeaver weaver = null)
         {
-            Action action = () => PeVerifier.Verify(Weave.DllPath);
+            Action action = () =>
+            {
+                try
+                {
+                    PeVerifier.Verify(Weave.DllPath);
+                }
+                catch (Exception)
+                {
+                    var methodName = weaver?.MethodFilters.Single();
+                    RunIlSpy(methodName, Weave.DllPath);
+                    RunIlSpy(methodName, Source.DllPath);
+                    throw;
+                }
+            };
             action.ShouldNotThrow();
         }
 
@@ -54,13 +71,35 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
             TryCleanupWeavedFiles(Weave);
         }
 
-        private void TryCleanupWeavedFiles(AssemblyPaths assemblyPaths)
+        private static void TryCleanupWeavedFiles(AssemblyPaths assemblyPaths)
         {
             if (File.Exists(assemblyPaths.DllPath))
                 File.Delete(assemblyPaths.DllPath);
 
             if (File.Exists(assemblyPaths.PdbPath))
                 File.Delete(assemblyPaths.PdbPath);
+        }
+
+        private void RunIlSpy(string methodName, string assemblyPath)
+        {
+            if (!ShouldRunIlSpyOnPeVerifyError)
+                return;
+
+            if (methodName == null)
+                return;
+            
+            var args = new[] {assemblyPath, "/separate", "/clearList", "/language:IL", "/navigateTo:M:" + methodName};
+            var arg = string.Join(" ", args);
+
+            var currentDirectory = Environment.CurrentDirectory+ @"\..\..\..\..\Tools\ILSpy";
+            var psi = new ProcessStartInfo
+            {
+                WorkingDirectory = currentDirectory ,
+                FileName = currentDirectory + @"\ILSpy.exe",
+                Arguments = arg
+            };
+
+            Process.Start(psi);
         }
 
         protected class AssemblyPaths
@@ -88,8 +127,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
 
             public static AssemblyPaths ForWeavedAssembly(AssemblyPaths unweavedAssemblyPaths)
             {
-                var dllPath = unweavedAssemblyPaths.DllPath.Replace(".DLL", "._Weaved.dll");
-                var pdbPath = unweavedAssemblyPaths.PdbPath.Replace(".Pdb", "._Weaved.Pdb");
+                var dllPath = unweavedAssemblyPaths.DllPath.Replace(".DLL", ".Weaved.dll");
+                var pdbPath = unweavedAssemblyPaths.PdbPath.Replace(".Pdb", ".Weaved.Pdb");
 
                 return new AssemblyPaths(dllPath, pdbPath);
             }
