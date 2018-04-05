@@ -5,9 +5,9 @@ using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
-    public class SetMethodExecutionTagValueAspectTests : MethodBoundaryAspectTestBase
+    public class SetMethodExecutionTagValueOnExitAspectTests : MethodBoundaryAspectTestBase
     {
-        private static readonly Type TestClassType = typeof(SetMethodExecutionTagValueAspectMethods);
+        private static readonly Type TestClassType = typeof(SetMethodExecutionTagValueOnExitAspectMethods);
         
         [Fact]
         public void IfStaticMethodWithValueTypeIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
@@ -20,7 +20,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
 
             // Assert
-            result.Should().Be("MethodExecutionTag");
+            result.Should().Be("MethodExecutionTag1");
         }
 
         [Fact]
@@ -34,7 +34,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
 
             // Assert
-            result.Should().Be("MethodExecutionTag");
+            result.Should().Be("MethodExecutionTag1");
         }
     }
 }

@@ -1,35 +1,14 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using FluentAssertions;
-using Mono.Cecil.Cil;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.Unified
 {
     public class UnifiedWeaverTestBase : IDisposable
     {
-        private const bool ShouldRunIlSpyOnPeVerifyError = false;
-
-        protected static readonly List<OpCode> AllStLocOpCodes = new List<OpCode>
-                {
-                    OpCodes.Stloc_S,
-                    OpCodes.Stloc_0,
-                    OpCodes.Stloc_1,
-                    OpCodes.Stloc_2,
-                    OpCodes.Stloc_3,
-                };
-        protected static readonly List<OpCode> AllLdLocOpCodes = new List<OpCode>
-                {
-                    OpCodes.Ldloc_S,
-                    OpCodes.Ldloc_0,
-                    OpCodes.Ldloc_1,
-                    OpCodes.Ldloc_2,
-                    OpCodes.Ldloc_3
-                };
-        
         protected AssemblyPaths Source { get; }
         protected AssemblyPaths Weave { get; }
         
@@ -51,16 +30,25 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
         {
             Action action = () =>
             {
+                var runIlSpy = false;
                 try
                 {
                     PeVerifier.Verify(Weave.DllPath);
                 }
                 catch (Exception)
                 {
-                    var methodName = weaver?.MethodFilters.Single();
-                    RunIlSpy(methodName, Weave.DllPath);
-                    RunIlSpy(methodName, Source.DllPath);
+                    runIlSpy = true;
                     throw;
+                }
+                finally
+                {
+                    if (runIlSpy)
+                    {
+                        var methodName = weaver?.MethodFilters.Single();
+                        RunIlSpy(methodName, Weave.DllPath);
+                        RunIlSpy(methodName, Source.DllPath);
+                        Thread.Sleep(TimeSpan.FromSeconds(2)); // wait until ILSpy is started because weaved dll will be deleted when unittests exits -> TryCleanupWeavedFiles()
+                    }
                 }
             };
             action.ShouldNotThrow();
@@ -80,26 +68,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
                 File.Delete(assemblyPaths.PdbPath);
         }
 
-        private void RunIlSpy(string methodName, string assemblyPath)
+        private static void RunIlSpy(string methodName, string assemblyPath)
         {
-            if (!ShouldRunIlSpyOnPeVerifyError)
-                return;
-
-            if (methodName == null)
-                return;
-            
-            var args = new[] {assemblyPath, "/separate", "/clearList", "/language:IL", "/navigateTo:M:" + methodName};
-            var arg = string.Join(" ", args);
-
-            var currentDirectory = Environment.CurrentDirectory+ @"\..\..\..\..\Tools\ILSpy";
-            var psi = new ProcessStartInfo
-            {
-                WorkingDirectory = currentDirectory ,
-                FileName = currentDirectory + @"\ILSpy.exe",
-                Arguments = arg
-            };
-
-            Process.Start(psi);
+            IlSpy.Run(methodName, assemblyPath);
         }
 
         protected class AssemblyPaths

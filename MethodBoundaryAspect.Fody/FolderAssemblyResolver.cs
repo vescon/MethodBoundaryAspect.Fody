@@ -15,7 +15,7 @@ namespace MethodBoundaryAspect.Fody
             Folder = folder;
         }
 
-        public List<string> Folder { get; private set; }
+        public List<string> Folder { get; }
 
         public AssemblyDefinition Resolve(AssemblyNameReference name)
         {
@@ -31,17 +31,17 @@ namespace MethodBoundaryAspect.Fody
 
         public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public AssemblyDefinition Resolve(string fullName)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
         public AssemblyDefinition Resolve(string fullName, ReaderParameters parameters)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException();
         }
 
 		public void Dispose()

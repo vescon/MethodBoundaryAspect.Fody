@@ -6,17 +6,10 @@ namespace MethodBoundaryAspect.Fody
 {
     public class InstructionBlockChain
     {
-        public List<InstructionBlock> InstructionBlocks { get; private set; }
+        public List<InstructionBlock> InstructionBlocks { get; }
 
-        public Instruction First
-        {
-            get { return InstructionBlocks.First().First; }
-        }
-
-        public Instruction Last
-        {
-            get { return InstructionBlocks.Last().Last; }
-        }
+        public Instruction First => InstructionBlocks.First().First;
+        public Instruction Last => InstructionBlocks.Last().Last;
 
         public InstructionBlockChain()
         {
@@ -41,6 +34,13 @@ namespace MethodBoundaryAspect.Fody
                 currentInstruction = newInstructionBlock.InsertAfter(currentInstruction, processor);
 
             return currentInstruction;
+        }
+
+        public void Append(ILProcessor processor)
+        {
+            foreach (var newInstructionBlock in InstructionBlocks)
+            foreach (var instruction in newInstructionBlock.Instructions)
+                processor.Append(instruction);
         }
     }
 }

@@ -58,6 +58,7 @@ namespace MethodBoundaryAspect.Fody
 
         public MethodDefinition LastWeavedMethod { get; private set; }
         public List<string> MethodFilters => _methodFilters;
+        public List<string> TypeFilters => _classFilters;
 
         public void Execute()
         {
@@ -153,7 +154,10 @@ namespace MethodBoundaryAspect.Fody
                 WeaveType(module, type, assemblyMethodBoundaryAspects);
         }
 
-        private void WeaveType(ModuleDefinition module, TypeDefinition type, Collection<CustomAttribute> assemblyMethodBoundaryAspects)
+        private void WeaveType(
+            ModuleDefinition module, 
+            TypeDefinition type, 
+            Collection<CustomAttribute> assemblyMethodBoundaryAspects)
         {
             var classMethodBoundaryAspects = type.CustomAttributes;
 
@@ -166,7 +170,7 @@ namespace MethodBoundaryAspect.Fody
                 .ToDictionary(x => x.SetMethod);
 
             var weavedAtLeastOneMethod = false;
-            foreach (var method in type.Methods)
+            foreach (var method in type.Methods.ToList())
             {
                 if (!IsWeavableMethod(method))
                     continue;
@@ -205,35 +209,14 @@ namespace MethodBoundaryAspect.Fody
             List<AspectInfo> aspectInfos)
         {
             aspectInfos = AspectOrderer.Order(aspectInfos);
-            aspectInfos.Reverse(); // last aspect has to be weaved in first
+            var aspectInfosWithMethods = aspectInfos
+                .Where(x => !x.SkipProperties || (!method.IsGetter && !method.IsSetter))
+                .ToList();
 
-            using (var methodWeaver = new MethodWeaver())
-            {
-                foreach (var aspectInfo in aspectInfos)
-                {
-                    ////var log = string.Format("Weave OnMethodBoundaryAspect '{0}' in method '{1}' from class '{2}'",
-                    ////    attributeTypeDefinition.Name,
-                    ////    method.Name,
-                    ////    method.DeclaringType.FullName);
-                    ////LogWarning(log);
-
-                    if (aspectInfo.SkipProperties && (method.IsGetter || method.IsSetter))
-                        continue;
-
-                    var aspectTypeDefinition = aspectInfo.AspectAttribute.AttributeType;
-
-                    var overriddenAspectMethods = GetUsedAspectMethods(aspectTypeDefinition);
-                    if (overriddenAspectMethods == AspectMethods.None)
-                        continue;
-
-                    
-
-                    methodWeaver.Weave(method, aspectInfo.AspectAttribute, overriddenAspectMethods, module);
-                }
-
-                if (methodWeaver.WeaveCounter == 0)
-                    return false;
-            }
+            var methodWeaver = new MethodWeaver();
+            methodWeaver.Weave(module, method, aspectInfosWithMethods);
+            if (methodWeaver.WeaveCounter == 0)
+                return false;
 
             if (method.IsGetter || method.IsSetter)
                 TotalWeavedPropertyMethods++;
@@ -242,38 +225,6 @@ namespace MethodBoundaryAspect.Fody
 
             LastWeavedMethod = method;
             return true;
-        }
-
-        private AspectMethods GetUsedAspectMethods(TypeReference aspectTypeDefinition)
-        {
-            var overloadedMethods = new Dictionary<string, MethodDefinition>();
-
-            var currentType = aspectTypeDefinition;
-            do
-            {
-                var typeDefinition = currentType.Resolve();
-                var methods = typeDefinition.Methods
-                    .Where(x => x.IsVirtual)
-                    .ToList();
-                foreach (var method in methods)
-                {
-                    if (overloadedMethods.ContainsKey(method.Name))
-                        continue;
-
-                    overloadedMethods.Add(method.Name, method);
-                }
-
-                currentType = typeDefinition.BaseType;
-            } while (currentType.FullName != typeof(OnMethodBoundaryAspect).FullName);
-
-            var aspectMethods = AspectMethods.None;
-            if (overloadedMethods.ContainsKey("OnEntry"))
-                aspectMethods |= AspectMethods.OnEntry;
-            if (overloadedMethods.ContainsKey("OnExit"))
-                aspectMethods |= AspectMethods.OnExit;
-            if (overloadedMethods.ContainsKey("OnException"))
-                aspectMethods |= AspectMethods.OnException;
-            return aspectMethods;
         }
 
         private bool IsMethodBoundaryAspect(TypeDefinition attributeTypeDefinition)

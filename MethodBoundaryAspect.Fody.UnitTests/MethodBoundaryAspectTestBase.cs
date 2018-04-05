@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using System.Threading;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.Unified;
 
@@ -20,8 +22,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests
         protected AssemblyLoader AssemblyLoader { get; private set; }
         
         protected static string WeavedAssemblyPath { get; private set; }
+        protected Type WeavedType { get; private set; }
         protected ModuleWeaver Weaver { get; set; }
-
+        
         public void Dispose()
         {
             AssemblyLoader = null;
@@ -41,7 +44,6 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 File.Delete(WeavedAssemblyPath);
 
             var pdbPath = Path.ChangeExtension(WeavedAssemblyPath, "pdb");
-
             if (File.Exists(pdbPath))
                 File.Delete(pdbPath);
         }
@@ -62,10 +64,43 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyAndVerifyAndLoad(type, null, propertyName);
         }
 
+        protected void RunIlSpy()
+        {
+            var originalPath = GetDllAssemblyPath();
+
+            var methodName = Weaver?.MethodFilters.SingleOrDefault();
+            if (methodName != null)
+            {
+                IlSpy.Run(methodName, WeavedAssemblyPath);
+                IlSpy.Run(methodName, originalPath);
+            }
+            else
+            {
+                var typeName = Weaver?.TypeFilters.SingleOrDefault();
+                if (typeName != null)
+                {
+                    IlSpy.OpenType(typeName, WeavedAssemblyPath);
+                    IlSpy.OpenType(typeName, originalPath);
+                }
+                else
+                    return;
+            }
+
+            // wait until ILSpy is started because weaved dll will be deleted when unittests exits -> TryCleanupWeavedFiles()
+            var wait = TimeSpan.FromSeconds(2);
+            Thread.Sleep(wait); 
+        }
+
+        private string GetDllAssemblyPath()
+        {
+            return WeavedType.Assembly.CodeBase.Replace(@"file:///", string.Empty);
+        }
+
         private void WeaveAssemblyAndVerifyAndLoad(Type type, string methodName, string propertyName)
         {
+            WeavedType = type;
             Weaver = new ModuleWeaver();
-
+            
             if (propertyName != null)
             {
                 var fullPropertyName = CreateFullPropertyName(type, propertyName);
@@ -111,32 +146,44 @@ namespace MethodBoundaryAspect.Fody.UnitTests
         {
             var methodInfo = type.GetMethod(methodName);
             if (methodInfo == null)
-                throw new InvalidOperationException(string.Format(
-                    "Method '{0}' not found in type '{1}'",
-                    methodName,
-                    type.FullName));
+                throw new InvalidOperationException($"Method '{methodName}' not found in type '{type.FullName}'");
 
-            return string.Format("{0}.{1}", type.FullName, methodInfo.Name);
+            return $"{type.FullName}.{methodInfo.Name}";
         }
 
         private Tuple<string,string> CreateFullPropertyName(Type type, string propertyName)
         {
             var propertyInfo = type.GetProperty(propertyName);
             if (propertyInfo == null)
-                throw new InvalidOperationException(string.Format(
-                    "Property '{0}' not found in type '{1}'",
-                    propertyName,
-                    type.FullName));
+                throw new InvalidOperationException($"Property '{propertyName}' not found in type '{type.FullName}'");
 
 
             return new Tuple<string, string>(
-                string.Format("{0}.{1}", type.FullName, propertyInfo.SetMethod.Name),
-                string.Format("{0}.{1}", type.FullName, propertyInfo.GetMethod.Name));
+                $"{type.FullName}.{propertyInfo.SetMethod.Name}",
+                $"{type.FullName}.{propertyInfo.GetMethod.Name}");
         }
 
         private void RunPeVerify()
         {
-            Action action = () => PeVerifier.Verify(WeavedAssemblyPath);
+            Action action = () =>
+            {
+                var runIlSpy = false;
+                try
+                {
+                    PeVerifier.Verify(WeavedAssemblyPath);
+                }
+                catch (Exception)
+                {
+                    runIlSpy = true;
+                    throw;
+                }
+                finally
+                {
+                    if (runIlSpy)
+                        RunIlSpy();
+                }
+                
+            };
             action.ShouldNotThrow();
         }
     }

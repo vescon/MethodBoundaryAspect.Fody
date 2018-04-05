@@ -31,14 +31,14 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
 
         private static string GetPeVerifyPath()
         {
+            var folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
             var possiblePeVerifyPaths = new[]
             {
-                $@"{Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\peverify.exe",
-                $@"{Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86)}\Microsoft SDKs\Windows\v8.1A\bin\NETFX 4.5.1 Tools\peverify.exe"
+                $@"{folderPath}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\peverify.exe",
+                $@"{folderPath}\Microsoft SDKs\Windows\v8.1A\bin\NETFX 4.5.1 Tools\peverify.exe"
             };
 
             var peVerifyPath = possiblePeVerifyPaths.FirstOrDefault(File.Exists);
-
             if (peVerifyPath == null)
                 throw new InvalidOperationException("PeVerify.exe could not be found. Please install it with the Windows SDK.");
 

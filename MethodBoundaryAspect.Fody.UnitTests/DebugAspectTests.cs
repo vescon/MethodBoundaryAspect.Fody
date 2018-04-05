@@ -28,12 +28,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests
         [Fact(Skip = "Needs to be clarified")]
         public void IfAssemblyIsWeaved_ThenWeaverDebuggerShouldBePossible()
         {
-            const string assemblyPath = @"C:\Dev\So\Main\Source\Vescon.So\Vescon.So.Server.Business\bin\Debug\Vescon.So.Server.Business.dll";
-
             // Arrange
+            var assemblyPath = @"c:\???";
+
             Weaver = new ModuleWeaver();
-            Weaver.AddClassFilter("Vescon.So.Server.Business.Services.Layout.CommandHandlerBase");
-            //Weaver.AddMethodFilter("Vescon.So.Server.Services.Layout.PageIncrementalService.HandleSaveAttributeValuesCommand");
+            Weaver.AddClassFilter("???");
             Weaver.AddAdditionalAssemblyResolveFolder(Path.GetDirectoryName(assemblyPath));
             Weaver.WeaveToShadowFile(assemblyPath);
         }

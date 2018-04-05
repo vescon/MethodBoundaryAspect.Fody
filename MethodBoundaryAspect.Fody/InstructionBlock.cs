@@ -6,18 +6,11 @@ namespace MethodBoundaryAspect.Fody
 {
     public class InstructionBlock
     {
-        public string Name { get; set; }
-        public Instruction[] Instructions { get; private set; }
+        public string Name { get; }
+        public Instruction[] Instructions { get; }
 
-        public Instruction First
-        {
-            get { return Instructions.First(); }
-        }
-
-        public Instruction Last
-        {
-            get { return Instructions.Last(); }
-        }
+        public Instruction First => Instructions.First();
+        public Instruction Last => Instructions.Last();
 
         public InstructionBlock(string name, List<Instruction> instructions)
             :this(name, instructions.ToArray())

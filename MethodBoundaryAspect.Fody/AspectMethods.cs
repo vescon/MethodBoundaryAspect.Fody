@@ -3,11 +3,11 @@ using System;
 namespace MethodBoundaryAspect.Fody
 {
     [Flags]
-    internal enum AspectMethods
+    public enum AspectMethods
     {
         None = 0,
-        OnEntry = 1,
-        OnExit = 2,
-        OnException = 4
+        OnEntry = 1 << 0,
+        OnExit = 1 << 1,
+        OnException = 1 << 2
     }
 }

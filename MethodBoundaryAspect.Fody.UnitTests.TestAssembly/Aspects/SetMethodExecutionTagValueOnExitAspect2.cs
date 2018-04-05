@@ -2,16 +2,16 @@
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Aspects
 {
-    public class SetMethodExecutionTagValueAspect : OnMethodBoundaryAspect
+    public class SetMethodExecutionTagValueOnExitAspect2 : OnMethodBoundaryAspect
     {
         public override void OnEntry(MethodExecutionArgs arg)
         {
-            arg.MethodExecutionTag = "MethodExecutionTag";
+            arg.MethodExecutionTag = "MethodExecutionTag2";
         }
 
         public override void OnExit(MethodExecutionArgs arg)
         {
-            SetMethodExecutionTagValueAspectMethods.Result = arg.MethodExecutionTag;
+            SetMethodExecutionTagValueOnExitAspectMethods.Result = arg.MethodExecutionTag;
         }
     }
 }

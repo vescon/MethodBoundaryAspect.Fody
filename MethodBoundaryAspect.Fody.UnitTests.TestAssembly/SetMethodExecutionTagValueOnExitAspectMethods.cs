@@ -2,16 +2,18 @@
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
 {
-    public class SetMethodExecutionTagValueAspectMethods
+    public class SetMethodExecutionTagValueOnExitAspectMethods
     {
         public static object Result { get; set; }
 
-        [SetMethodExecutionTagValueAspect]
+        [SetMethodExecutionTagValueOnExitAspect1]
+        [SetMethodExecutionTagValueOnExitAspect2]
         public static void StaticMethodCall()
         {
         }
 
-        [SetMethodExecutionTagValueAspect]
+        [SetMethodExecutionTagValueOnExitAspect1]
+        [SetMethodExecutionTagValueOnExitAspect2]
         public void InstanceMethodCall()
         {
         }

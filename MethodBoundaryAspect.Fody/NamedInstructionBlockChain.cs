@@ -5,8 +5,8 @@ namespace MethodBoundaryAspect.Fody
 {
     public class NamedInstructionBlockChain : InstructionBlockChain
     {
-        public VariableDefinition Variable { get; private set; }
-        public TypeReference TypeReference { get; private set; }
+        public VariableDefinition Variable { get; }
+        public TypeReference TypeReference { get; }
 
         public NamedInstructionBlockChain(VariableDefinition variable, TypeReference typeReference)
         {

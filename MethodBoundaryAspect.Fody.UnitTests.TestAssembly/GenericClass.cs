@@ -2,7 +2,7 @@
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
 {
-    public class ClassWithGenericType<T>
+    public class GenericClass<T>
     {
         [SetInstanceValueAspect]
         public void DoIt()
@@ -11,6 +11,12 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
 
         public void DoItNotWeaved()
         {
+        }
+
+        public void CallOther()
+        {
+            var thisRef = this;
+            DoIt();
         }
     }
 }

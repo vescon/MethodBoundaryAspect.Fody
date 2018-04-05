@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Collections.Generic;
 
 namespace MethodBoundaryAspect.Fody
 {
@@ -21,17 +22,7 @@ namespace MethodBoundaryAspect.Fody
             _referenceFinder = referenceFinder;
             _processor = _method.Body.GetILProcessor();
         }
-
-        public bool HasReturnValue()
-        {
-            return !IsVoid(_method.ReturnType);
-        }
-
-        public bool HasThrowAsReturn()
-        {
-            return _method.Body.Instructions.Last().OpCode.Code == Code.Throw;
-        }
-
+        
         public VariableDefinition CreateVariable(TypeReference variableTypeReference)
         {
             if (IsVoid(variableTypeReference))
@@ -53,7 +44,7 @@ namespace MethodBoundaryAspect.Fody
             var storeThisInstruction = _processor.Create(OpCodes.Stloc, instanceVariable);
 
             return new InstructionBlock(
-                "Static method call: " + _method.Name,
+                "Store instance for: " + _method.Name,
                 loadThisInstruction,
                 castInstruction,
                 storeThisInstruction);
@@ -81,30 +72,22 @@ namespace MethodBoundaryAspect.Fody
         public InstructionBlock NewObject(
             VariableDefinition newInstance,
             TypeReference instanceTypeReference,
-            ModuleDefinition module,
-            int aspectCounter)
+            ModuleDefinition module)
         {
-
-            return NewObject(newInstance, instanceTypeReference, module, null, aspectCounter);
+            return NewObject(newInstance, instanceTypeReference, module, null);
         }
         
-        public static string CreateVariableName(string name, int aspectCounter, int index)
-        {
-            return string.Format("__fody${0}${1}${2}", aspectCounter, name, index);
-        }
-
         public InstructionBlock NewObject(
             VariableDefinition newInstance,
             TypeReference instanceTypeReference,
             ModuleDefinition module,
-            CustomAttribute aspect,
-            int aspectCounter)
+            CustomAttribute aspect)
         {
             var typeDefinition = instanceTypeReference.Resolve();
             var constructor = typeDefinition.Methods
                 .Where(x => x.IsConstructor)
                 .Where(x => !x.IsStatic)
-                .SingleOrDefault(x => x.Parameters.Count == (aspect == null ? 0 : aspect.Constructor.Parameters.Count));
+                .SingleOrDefault(x => x.Parameters.Count == (aspect?.Constructor.Parameters.Count ?? 0));
 
             if (constructor == null)
                 throw new InvalidOperationException(string.Format("Didn't found matching constructor on type '{0}'",
@@ -135,7 +118,7 @@ namespace MethodBoundaryAspect.Fody
                     var assignVariableInstructionBlock = AssignValueFromStack(valueVariable);
 
                     var methodRef = _referenceFinder.GetMethodReference(instanceTypeReference, md => md.Name == "set_" + propertyCopy.Name);
-                    var setPropertyInstructionBlock = CallVoidInstanceMethod(newInstance,methodRef, valueVariable);
+                    var setPropertyInstructionBlock = CallVoidInstanceMethod(methodRef, newInstance, valueVariable);
 
                     loadSetConstValuesToAspect.AddRange(loadOnStackInstruction);
                     loadSetConstValuesToAspect.AddRange(assignVariableInstructionBlock.Instructions);
@@ -180,40 +163,40 @@ namespace MethodBoundaryAspect.Fody
         }
 
         public InstructionBlock CallVoidInstanceMethod(
-            VariableDefinition callInstanceVariable,
             MethodReference methodReference,
+            VariableDefinition callInstanceVariable,
             params VariableDefinition[] argumentVariables)
         {
-            var instructions = CreateInstanceMethodCallInstructions(callInstanceVariable, null, methodReference,
-                argumentVariables);
+            var instructions = CreateInstanceMethodCallInstructions(methodReference,
+                callInstanceVariable, null, argumentVariables);
             return new InstructionBlock("CallVoidInstanceMethod: " + methodReference.Name, instructions);
         }
 
         public InstructionBlock CallStaticMethod(
             MethodReference methodReference,
-            VariableDefinition resultVariable,
+            VariableDefinition returnValue,
             params VariableDefinition[] argumentVariables)
         {
-            var instructions = CreateInstanceMethodCallInstructions(null, resultVariable, methodReference,
-                argumentVariables);
+            var instructions = CreateInstanceMethodCallInstructions(methodReference,
+                null, returnValue, argumentVariables);
             return new InstructionBlock("CallStaticMethod: " + methodReference.Name, instructions);
         }
 
         public InstructionBlock CallInstanceMethod(
+            MethodReference methodReference,
             VariableDefinition callerInstance,
             VariableDefinition returnValue,
-            MethodReference methodReference,
             params VariableDefinition[] arguments)
         {
-            var instructions = CreateInstanceMethodCallInstructions(callerInstance, returnValue, methodReference,
-                arguments);
+            var instructions = CreateInstanceMethodCallInstructions(methodReference,
+                callerInstance, returnValue, arguments);
             return new InstructionBlock("CallInstanceMethod: " + methodReference.Name, instructions);
         }
 
         private List<Instruction> CreateInstanceMethodCallInstructions(
+            MethodReference methodReference,
             VariableDefinition callerInstance,
             VariableDefinition returnValue,
-            MethodReference methodReference,
             params VariableDefinition[] arguments)
         {
             Instruction loadVariableInstruction = null;
@@ -221,7 +204,7 @@ namespace MethodBoundaryAspect.Fody
                 loadVariableInstruction = _processor.Create(OpCodes.Ldloc, callerInstance);
 
             var loadArgumentsInstructions = new List<Instruction>();
-            int parameterCount = 0;
+            var parameterCount = 0;
             foreach (var argument in arguments)
             {
                 loadArgumentsInstructions.Add(_processor.Create(OpCodes.Ldloc, argument));
@@ -292,6 +275,16 @@ namespace MethodBoundaryAspect.Fody
             throw new NotSupportedException("Parametertype: " + parameterType);
         }
 
+        public IList<Instruction> LoadValueOnStackFromArguments(int index)
+        {
+            var instructions = new List<Instruction>
+            {
+                _processor.Create(OpCodes.Ldarg_S, (byte)index)
+            };
+
+            return instructions;
+        }
+
         private Instruction LoadPrimitiveConstOnStack(MetadataType type, object value)
         {
             switch (type)
@@ -311,19 +304,17 @@ namespace MethodBoundaryAspect.Fody
 
         private static TypeReference GetEnumUnderlyingType(TypeDefinition self)
         {
-            var fields = self.Fields;
-
-            for (int i = 0; i < fields.Count; i++)
+            foreach (var field in self.Fields)
             {
-                var field = fields[i];
                 if (field.Name == "value__")
                     return field.FieldType;
             }
 
             throw new ArgumentException();
-        } 
+        }
 
-        private static IEnumerable<Instruction> BoxArguments(ParameterDefinition parameterDefinition,
+        private static IEnumerable<Instruction> BoxArguments(
+            ParameterDefinition parameterDefinition,
             VariableDefinition paramsArray)
         {
 
@@ -465,9 +456,14 @@ namespace MethodBoundaryAspect.Fody
             yield return Instruction.Create(OpCodes.Stelem_Ref);
         }
 
-        private static bool IsVoid(TypeReference type)
+        public static bool IsVoid(TypeReference type)
         {
             return type.Name == VoidType;
+        }
+
+        public Instruction CreateReturn()
+        {
+            return _processor.Create(OpCodes.Ret);
         }
     }
 }

@@ -41,7 +41,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnException
             return 2;
         }
 
-        private static ValueType2 SwitchCaseMethodWithReturnValueAndThrowAsDefaultValue(ValueType1 input)
+        public static ValueType2 SwitchCaseMethodWithReturnValueAndThrowAsDefaultValue(ValueType1 input)
         {
             switch (input)
             {
@@ -49,6 +49,53 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnException
                 case ValueType1.B: return ValueType2.B;
                 case ValueType1.C: return ValueType2.C;
                 default: throw new ArgumentOutOfRangeException(nameof(input), input, null);
+            }
+        }
+
+        public static ValueType2 IfMethodWithReturnValueAndThrowAsDefaultValue(ValueType1 input)
+        {
+            if (input == ValueType1.A)
+                return ValueType2.A;
+            else if (input == ValueType1.B)
+            {
+                return ValueType2.B;
+            }
+            else if (input == ValueType1.C)
+            {
+                return ValueType2.C;
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(input), input, null);
+            }
+        }
+
+        public static void SwitchCaseMethodWithoutReturnValueAndThrowAsDefaultValue(ValueType1 input)
+        {
+            switch (input)
+            {
+                case ValueType1.A: return;
+                case ValueType1.B: return;
+                case ValueType1.C: return;
+                default: throw new ArgumentOutOfRangeException(nameof(input), input, null);
+            }
+        }
+
+        public static void IfMethodWithoutReturnValueAndThrowAsDefaultValue(ValueType1 input)
+        {
+            if (input == ValueType1.A)
+                return;
+            else if (input == ValueType1.B)
+            {
+                return;
+            }
+            else if (input == ValueType1.C)
+            {
+                return;
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException(nameof(input), input, null);
             }
         }
     }

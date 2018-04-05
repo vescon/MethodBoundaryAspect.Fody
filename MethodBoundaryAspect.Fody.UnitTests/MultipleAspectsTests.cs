@@ -34,6 +34,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
 
             // Assert
+            RunIlSpy();
             result.Should().Be("[FirstAspect_OnEntry][SecondAspect_OnEntry][SecondAspect_OnExit][FirstAspect_OnExit]");
         }
     }

@@ -145,11 +145,41 @@ namespace MethodBoundaryAspect.Fody.UnitTests
         }
 
         [Fact]
-        public void IfClassWithGenericTypeIsWeaved_ThenTheAssemblyShouldBeValid()
+        public void IfGenericClassIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange
             const string testMethodName = "DoIt";
-            var testClassType = typeof(ClassWithGenericType<>);
+            var testClassType = typeof(GenericClass<>);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+        }
+
+        [Fact]
+        public void IfClassWithGenericMethodIsWeaved_ThenTheAssemblyShouldBeValid()
+        {
+            // Arrange
+            const string testMethodName = "DoIt";
+            var testClassType = typeof(ClassWithGenericMethod);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+        } 
+        
+        [Fact]
+        public void IfGenericClassWithGenericMethodIsWeaved_ThenTheAssemblyShouldBeValid()
+        {
+            // Arrange
+            const string testMethodName = "DoIt";
+            var testClassType = typeof(GenericClassWithGenericMethod<>);
 
             // Act
             WeaveAssemblyMethodAndLoad(testClassType, testMethodName);

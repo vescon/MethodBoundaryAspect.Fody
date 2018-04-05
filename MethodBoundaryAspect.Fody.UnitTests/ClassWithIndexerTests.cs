@@ -19,6 +19,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName);
 
             // Assert
+            RunIlSpy();
             call.ShouldNotThrow();
         }
     }

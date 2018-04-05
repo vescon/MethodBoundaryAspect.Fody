@@ -21,10 +21,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests
         public AssemblyLoader CreateAssemblyLoader()
         {
             var assemblyLoaderType = typeof (AssemblyLoader);
-            return
-                (AssemblyLoader)
-                    _appDomain.CreateInstanceAndUnwrap(assemblyLoaderType.Assembly.FullName,
-                        assemblyLoaderType.FullName);
+            return (AssemblyLoader) _appDomain.CreateInstanceAndUnwrap(
+                assemblyLoaderType.Assembly.FullName,
+                assemblyLoaderType.FullName);
         }
 
         public void Dispose()
