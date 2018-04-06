@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Mono.Collections.Generic;
 
 namespace MethodBoundaryAspect.Fody
 {
@@ -104,7 +103,7 @@ namespace MethodBoundaryAspect.Fody
                 // ctor parameters
                 var loadInstructions = aspect.Constructor.Parameters
                     .Zip(aspect.ConstructorArguments, (p, v) => new {Parameter = p, Value = v})
-                    .SelectMany(x => LoadValueOnStack(x.Parameter.ParameterType, x.Value.Value, module))
+                    .SelectMany(x => LoadValueOnStack(x.Parameter.ParameterType, x.Value.Value))
                     .ToList();
                 loadConstValuesOnStack.AddRange(loadInstructions);
 
@@ -113,7 +112,7 @@ namespace MethodBoundaryAspect.Fody
                 {
                     var propertyCopy = property;
 
-                    var loadOnStackInstruction = LoadValueOnStack(propertyCopy.Argument.Type, propertyCopy.Argument.Value, module);
+                    var loadOnStackInstruction = LoadValueOnStack(propertyCopy.Argument.Type, propertyCopy.Argument.Value);
                     var valueVariable = CreateVariable(propertyCopy.Argument.Type);
                     var assignVariableInstructionBlock = AssignValueFromStack(valueVariable);
 
@@ -244,7 +243,7 @@ namespace MethodBoundaryAspect.Fody
             return instructions;
         }
 
-        private IList<Instruction> LoadValueOnStack(TypeReference parameterType, object value, ModuleDefinition module)
+        private IList<Instruction> LoadValueOnStack(TypeReference parameterType, object value)
         {
             if (parameterType.IsPrimitive || (parameterType.FullName == "System.String"))
                 return new List<Instruction> {LoadPrimitiveConstOnStack(parameterType.MetadataType, value)};
@@ -257,9 +256,7 @@ namespace MethodBoundaryAspect.Fody
 
             if (parameterType.FullName == "System.Type")
             {
-                var typeName = value.ToString();
-                var typeReference = module.GetType(typeName, true);
-
+                var typeReference = (TypeReference) value;
                 var typeTypeRef = _referenceFinder.GetTypeReference(typeof (Type));
                 var methodReference = _referenceFinder.GetMethodReference(typeTypeRef, md => md.Name == "GetTypeFromHandle");
                 

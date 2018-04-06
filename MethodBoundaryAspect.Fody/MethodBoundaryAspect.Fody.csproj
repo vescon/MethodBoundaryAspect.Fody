@@ -6,7 +6,7 @@
   </PropertyGroup>
       
   <ItemGroup>
-    <PackageReference Include="FodyCecil" Version="2.3.5" />
+    <PackageReference Include="FodyCecil" Version="3.0.1" />
     <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
   </ItemGroup>
 

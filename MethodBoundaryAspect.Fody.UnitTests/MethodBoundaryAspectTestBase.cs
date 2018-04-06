@@ -184,7 +184,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 }
                 
             };
-            action.ShouldNotThrow();
+            action.Should().NotThrow();
         }
     }
 }

@@ -21,7 +21,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.MultipleAspects.FailTests
             Action call = () => weaver.Weave(Weave.DllPath);
 
             // Arrange
-            call.ShouldThrow<InvalidAspectConfigurationException>();
+            call.Should().Throw<InvalidAspectConfigurationException>();
         }
 
         [Fact]

@@ -21,9 +21,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             Action call = () => AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
 
             // Assert
-            call.ShouldThrow<TargetInvocationException>()
+            call.Should().Throw<TargetInvocationException>()
                 .WithInnerException<InvalidOperationException>()
-                .WithInnerMessage(testMethodName);
+                .WithMessage(testMethodName);
 
             var result = AssemblyLoader.GetLastResult(TestClassType.FullName);
             result.Should().BeOfType<InvalidOperationException>();
@@ -40,9 +40,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             Action call = () => AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
 
             // Assert
-            call.ShouldThrow<TargetInvocationException>()
+            call.Should().Throw<TargetInvocationException>()
                 .WithInnerException<InvalidOperationException>()
-                .WithInnerMessage(testMethodName);
+                .WithMessage(testMethodName);
 
             var result = AssemblyLoader.GetLastResult(TestClassType.FullName);
             result.Should().BeOfType<InvalidOperationException>();

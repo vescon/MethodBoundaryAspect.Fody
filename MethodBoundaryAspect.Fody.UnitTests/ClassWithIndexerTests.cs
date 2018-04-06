@@ -20,7 +20,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
 
             // Assert
             RunIlSpy();
-            call.ShouldNotThrow();
+            call.Should().NotThrow();
         }
     }
 }

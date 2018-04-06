@@ -51,7 +51,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
                     }
                 }
             };
-            action.ShouldNotThrow();
+            action.Should().NotThrow();
         }
 
         public void Dispose()

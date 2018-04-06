@@ -17,7 +17,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             Action call = () => WeaveAssemblyClassAndLoad(testClassType);
 
             // Assert
-            call.ShouldNotThrow();
+            call.Should().NotThrow();
         }
     }
 }

@@ -20,7 +20,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName);
 
             // Assert
-            call.ShouldNotThrow();
+            call.Should().NotThrow();
         }
 
         [Fact]
@@ -35,7 +35,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName);
 
             // Assert
-            call.ShouldNotThrow();
+            call.Should().NotThrow();
         }
 
         [Fact]
@@ -50,7 +50,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName);
 
             // Assert
-            call.ShouldNotThrow();
+            call.Should().NotThrow();
         }
 
         [Fact]
@@ -84,9 +84,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             // Assert
             Weaver.TotalWeavedMethods.Should().Be(1);
             Weaver.TotalWeavedTypes.Should().Be(1);
-            call.ShouldThrow<TargetInvocationException>()
+            call.Should().Throw<TargetInvocationException>()
                 .WithInnerException<InvalidOperationException>()
-                .WithInnerMessage("This exception is expected");
+                .WithMessage("This exception is expected");
         }
 
         [Fact]
