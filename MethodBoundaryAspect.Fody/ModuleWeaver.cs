@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -7,7 +6,6 @@ using Fody;
 using MethodBoundaryAspect.Fody.Attributes;
 using MethodBoundaryAspect.Fody.Ordering;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
 using Mono.Cecil.Pdb;
 using Mono.Collections.Generic;
 
@@ -34,33 +32,20 @@ namespace MethodBoundaryAspect.Fody
     /// </summary>
     public class ModuleWeaver : BaseModuleWeaver
     {
-        public readonly List<string> AdditionalAssemblyResolveFolders = new List<string>();
-
-        private readonly List<string> _classFilters = new List<string>();
-        private readonly List<string> _methodFilters = new List<string>();
-        private readonly List<string> _propertyFilter = new List<string>();
-
+        private readonly List<string> _additionalAssemblyResolveFolders = new List<string>();
+        
         public ModuleWeaver()
         {
             InitLogging();
         }
-
-        public ModuleDefinition ModuleDefinition { get; set; }
-
-        public Action<string> LogDebug { get; set; }
-        public Action<string> LogInfo { get; set; }
-        public Action<string> LogWarning { get; set; }
-        public Action<string, SequencePoint> LogWarningPoint { get; set; }
-        public Action<string> LogError { get; set; }
-        public Action<string, SequencePoint> LogErrorPoint { get; set; }
-
+        
         public int TotalWeavedTypes { get; private set; }
         public int TotalWeavedMethods { get; private set; }
-        public int TotalWeavedPropertyMethods { get; private set; }
+        public int TotalWeavedProperties { get; private set; }
 
-        public MethodDefinition LastWeavedMethod { get; private set; }
-        public List<string> MethodFilters => _methodFilters;
-        public List<string> TypeFilters => _classFilters;
+        public List<string> PropertyFilter { get; } = new List<string>();
+        public List<string> MethodFilters { get; } = new List<string>();
+        public List<string> TypeFilters { get; } = new List<string>();
 
         public override void Execute()
         {
@@ -112,8 +97,8 @@ namespace MethodBoundaryAspect.Fody
 				ReadWrite = true,
             };
 
-            if (AdditionalAssemblyResolveFolders.Any())
-                readerParameters.AssemblyResolver = new FolderAssemblyResolver(AdditionalAssemblyResolveFolders);
+            if (_additionalAssemblyResolveFolders.Any())
+                readerParameters.AssemblyResolver = new FolderAssemblyResolver(_additionalAssemblyResolveFolders);
 
 			using (var assemblyDefinition = AssemblyDefinition.ReadAssembly(assemblyPath, readerParameters))
 			{
@@ -131,21 +116,21 @@ namespace MethodBoundaryAspect.Fody
 
         public void AddClassFilter(string classFilter)
         {
-            _classFilters.Add(classFilter);
+            TypeFilters.Add(classFilter);
         }
 
         public void AddMethodFilter(string methodFilter)
         {
-            _methodFilters.Add(methodFilter);
+            MethodFilters.Add(methodFilter);
         }
 
         public void AddPropertyFilter(string propertyFilter)
         {
-            _propertyFilter.Add(propertyFilter);
+            PropertyFilter.Add(propertyFilter);
         }
         public void AddAdditionalAssemblyResolveFolder(string folderName)
         {
-            AdditionalAssemblyResolveFolders.Add(folderName);
+            _additionalAssemblyResolveFolders.Add(folderName);
         }
 
         private void InitLogging()
@@ -231,11 +216,10 @@ namespace MethodBoundaryAspect.Fody
                 return false;
 
             if (method.IsGetter || method.IsSetter)
-                TotalWeavedPropertyMethods++;
+                TotalWeavedProperties++;
             else
                 TotalWeavedMethods++;
 
-            LastWeavedMethod = method;
             return true;
         }
 
@@ -277,28 +261,28 @@ namespace MethodBoundaryAspect.Fody
 
         private bool IsUserFiltered(string fullName, string name)
         {
-            if (_classFilters.Any())
+            if (TypeFilters.Any())
             {
                 var classFullName = fullName;
-                var matched = _classFilters.Contains(classFullName);
+                var matched = TypeFilters.Contains(classFullName);
                 if (!matched)
                     return true;
             }
 
-            if (_methodFilters.Any())
+            if (MethodFilters.Any())
             {
-                var methodFullName = string.Format("{0}.{1}", fullName, name);
-                var matched = _methodFilters.Contains(methodFullName);
+                var methodFullName = $"{fullName}.{name}";
+                var matched = MethodFilters.Contains(methodFullName);
                 if (!matched)
                     return true;
             }
 
-            if (_propertyFilter.Any())
+            if (PropertyFilter.Any())
             {
-                var propertySetterFullName = string.Format("{0}.{1}", fullName, name);
-                var propertyGetterFullName = string.Format("{0}.{1}", fullName, name);
-                var matched = _propertyFilter.Contains(propertySetterFullName) ||
-                              _methodFilters.Contains(propertyGetterFullName);
+                var propertySetterFullName = $"{fullName}.{name}";
+                var propertyGetterFullName = $"{fullName}.{name}";
+                var matched = PropertyFilter.Contains(propertySetterFullName) ||
+                              MethodFilters.Contains(propertyGetterFullName);
                 if (!matched)
                     return true;
             }
