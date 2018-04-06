@@ -35,7 +35,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.MultipleAspects.FailTests
             weaver.Weave(Weave.DllPath);
 
             // Arrange
-            AssertRunPeVerify();
+            AssertRunPeVerify(weaver);
         }
     }
 }

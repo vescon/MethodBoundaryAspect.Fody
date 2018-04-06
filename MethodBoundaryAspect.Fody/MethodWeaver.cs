@@ -201,6 +201,11 @@ namespace MethodBoundaryAspect.Fody
                 });
             }
 
+            // add DebuggerStepThrough attribute to avoid compiler searching for
+            // non existing soure code for weaved il code
+            var attributeCtor = creator.GetDebuggerStepThroughAttributeCtorReference();
+            method.CustomAttributes.Add(new CustomAttribute(attributeCtor));
+
             method.Body.InitLocals = true;
             method.Body.Optimize();
             Catel.Fody.CecilExtensions.UpdateDebugInfo(method);
@@ -227,7 +232,7 @@ namespace MethodBoundaryAspect.Fody
                 ExplicitThis = method.ExplicitThis,
                 CallingConvention = method.CallingConvention
             };
-
+            
             foreach (var parameter in method.Parameters)
                 clonedMethod.Parameters.Add(parameter);
 

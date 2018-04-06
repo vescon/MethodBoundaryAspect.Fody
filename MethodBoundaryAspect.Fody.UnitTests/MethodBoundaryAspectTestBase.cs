@@ -71,16 +71,16 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             var methodName = Weaver?.MethodFilters.SingleOrDefault();
             if (methodName != null)
             {
-                IlSpy.Run(methodName, WeavedAssemblyPath);
-                IlSpy.Run(methodName, originalPath);
+                IlSpy.ShowMethod(methodName, WeavedAssemblyPath);
+                IlSpy.ShowMethod(methodName, originalPath);
             }
             else
             {
                 var typeName = Weaver?.TypeFilters.SingleOrDefault();
                 if (typeName != null)
                 {
-                    IlSpy.OpenType(typeName, WeavedAssemblyPath);
-                    IlSpy.OpenType(typeName, originalPath);
+                    IlSpy.ShowType(typeName, WeavedAssemblyPath);
+                    IlSpy.ShowType(typeName, originalPath);
                 }
                 else
                     return;
@@ -179,7 +179,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 }
                 finally
                 {
-                    if (runIlSpy)
+                    if (runIlSpy|| IlSpy.AlwaysRunIlSpy)
                         RunIlSpy();
                 }
                 

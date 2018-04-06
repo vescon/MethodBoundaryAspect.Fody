@@ -18,7 +18,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnEntry
             weaver.Weave(Weave.DllPath);
 
             // Arrange
-            AssertRunPeVerify();
+            AssertRunPeVerify(weaver);
         }
 
         [Fact]
@@ -32,7 +32,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnEntry
             weaver.Weave(Weave.DllPath);
 
             // Arrange
-            AssertRunPeVerify();
+            AssertRunPeVerify(weaver);
         }
 
         [Fact]
@@ -46,7 +46,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnEntry
             weaver.Weave(Weave.DllPath);
 
             // Arrange
-            AssertRunPeVerify();
+            AssertRunPeVerify(weaver);
         }
 
         [Fact]
@@ -60,7 +60,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnEntry
             weaver.Weave(Weave.DllPath);
 
             // Arrange
-            AssertRunPeVerify();
+            AssertRunPeVerify(weaver);
         }
 
         [Fact]

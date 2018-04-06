@@ -5,22 +5,24 @@ namespace MethodBoundaryAspect.Fody.UnitTests
 {
     public class IlSpy
     {
+        public const bool AlwaysRunIlSpy = false;
         private const bool ShouldRunIlSpyOnPeVerifyError = false;
 
-        public static void Run(string methodName, string assemblyPath)
+        public static void ShowMethod(string methodName, string assemblyPath)
         {
             RunInternal(assemblyPath, "/navigateTo:M:" + methodName);
         }
 
-        public static void OpenType(string typeName, string assemblyPath)
+        public static void ShowType(string typeName, string assemblyPath)
         {
             RunInternal(assemblyPath, "/navigateTo:T:" + typeName);
         }
 
         private static void RunInternal(string assemblyPath, string navigateTo)
         {
-            if (!ShouldRunIlSpyOnPeVerifyError)
-                return;
+            if(!AlwaysRunIlSpy)
+                if (!ShouldRunIlSpyOnPeVerifyError)
+                    return;
             
             var args = new[]
             {

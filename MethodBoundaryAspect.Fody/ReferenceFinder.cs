@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Mono.Cecil;
+using Mono.Cecil.Rocks;
 
 namespace MethodBoundaryAspect.Fody
 {
@@ -29,6 +30,13 @@ namespace MethodBoundaryAspect.Fody
                 typeDefinition = typeDefinition.BaseType?.Resolve();
             } while (methodDefinition == null && typeDefinition != null);
 
+            return _moduleDefinition.ImportReference(methodDefinition);
+        }
+
+        public MethodReference GetConstructorReference(TypeReference typeReference, Func<MethodDefinition, bool> predicate)
+        {
+            var typeDefinition = typeReference.Resolve();
+            var methodDefinition = typeDefinition.GetConstructors().FirstOrDefault(predicate);
             return _moduleDefinition.ImportReference(methodDefinition);
         }
 

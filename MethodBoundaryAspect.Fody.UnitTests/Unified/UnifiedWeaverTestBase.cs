@@ -26,7 +26,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
             Weave = weave;
         }
 
-        protected void AssertRunPeVerify(ModuleWeaver weaver = null)
+        protected void AssertRunPeVerify(ModuleWeaver weaver)
         {
             Action action = () =>
             {
@@ -42,11 +42,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
                 }
                 finally
                 {
-                    if (runIlSpy)
+                    if (runIlSpy || IlSpy.AlwaysRunIlSpy)
                     {
                         var methodName = weaver?.MethodFilters.Single();
-                        RunIlSpy(methodName, Weave.DllPath);
-                        RunIlSpy(methodName, Source.DllPath);
+                        IlSpy.ShowMethod(methodName, Weave.DllPath);
+                        IlSpy.ShowMethod(methodName, Source.DllPath);
                         Thread.Sleep(TimeSpan.FromSeconds(2)); // wait until ILSpy is started because weaved dll will be deleted when unittests exits -> TryCleanupWeavedFiles()
                     }
                 }
@@ -68,17 +68,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified
                 File.Delete(assemblyPaths.PdbPath);
         }
 
-        private static void RunIlSpy(string methodName, string assemblyPath)
-        {
-            IlSpy.Run(methodName, assemblyPath);
-        }
-
         protected class AssemblyPaths
         {
-            public AssemblyPaths()
-            {
-            }
-
             private AssemblyPaths(string dllPath, string pdbPath)
             {
                 DllPath = dllPath;

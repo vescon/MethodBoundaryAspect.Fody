@@ -46,7 +46,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnException
             weaver.Weave(Weave.DllPath);
 
             // Arrange
-            AssertRunPeVerify();
+            AssertRunPeVerify(weaver);
         }
 
         [Fact]
@@ -116,7 +116,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnException
             weaver.Weave(Weave.DllPath);
 
             // Arrange
-            AssertRunPeVerify();
+            AssertRunPeVerify(weaver);
         }
     }
 }

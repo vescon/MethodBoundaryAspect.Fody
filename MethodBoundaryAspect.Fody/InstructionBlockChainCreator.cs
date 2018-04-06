@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
 
 namespace MethodBoundaryAspect.Fody
 {
@@ -42,6 +43,12 @@ namespace MethodBoundaryAspect.Fody
         public TypeReference GetExceptionTypeReference()
         {
             return _referenceFinder.GetTypeReference(typeof (Exception));
+        }
+
+        public MethodReference GetDebuggerStepThroughAttributeCtorReference()
+        {
+            var typeReference = _referenceFinder.GetTypeReference(typeof (System.Diagnostics.DebuggerStepThroughAttribute));
+            return _referenceFinder.GetConstructorReference(typeReference, x => true);
         }
 
         public NamedInstructionBlockChain CreateMethodArgumentsArray()
