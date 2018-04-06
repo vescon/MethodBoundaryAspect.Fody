@@ -12,7 +12,7 @@
     <description>A Fody weaver which allows to decorate methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.</description>
     <copyright>VESCON GmbH</copyright>
     <iconUrl>https://github.com/vescon/MethodBoundaryAspect.Fody/raw/master/docs/images/NuGetIcon.png</iconUrl>
-    <tags>il weaving fody aspect aop method-invocation</tags>
+    <tags>il weaving fody aspect aop method-invocation method boundary</tags>
     <dependencies>
       <dependency id="Fody" version="3.0.1" />
       <dependency id="FodyCecil" version="3.0.1"/>

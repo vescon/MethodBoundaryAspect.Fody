@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Fody;
 using MethodBoundaryAspect.Fody.Attributes;
 using MethodBoundaryAspect.Fody.Ordering;
 using Mono.Cecil;
@@ -29,8 +30,9 @@ namespace MethodBoundaryAspect.Fody
     /// Optimize weaving: Dont generate code of "OnXXX()" method is empty or not used -> ok
     /// Optimize weaving: remove runtime dependency on "MethodBoundaryAspect.Attributes" assembly
     /// Optimize weaving: only put arguments in MethodExecutionArgs if they are accessed in "OnXXX()" method
+    /// Optimize weaving: store GetCurrentMethod() result in static Dictionary in MethodBoundaryAspect with generated id for lookup to prevent reflection penalty
     /// </summary>
-    public class ModuleWeaver
+    public class ModuleWeaver : BaseModuleWeaver
     {
         public readonly List<string> AdditionalAssemblyResolveFolders = new List<string>();
 
@@ -60,9 +62,19 @@ namespace MethodBoundaryAspect.Fody
         public List<string> MethodFilters => _methodFilters;
         public List<string> TypeFilters => _classFilters;
 
-        public void Execute()
+        public override void Execute()
         {
             Execute(ModuleDefinition);
+        }
+
+        public override IEnumerable<string> GetAssembliesForScanning()
+        {
+            yield return "mscorlib";
+            yield return "System";
+            yield return "System.Runtime";
+            yield return "System.Reflection";
+            yield return "System.Diagnostics";
+            yield return "netstandard";
         }
 
         public string CreateShadowAssemblyPath(string assemblyPath)
