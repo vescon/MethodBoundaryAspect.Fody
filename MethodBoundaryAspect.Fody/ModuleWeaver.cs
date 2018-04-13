@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -63,12 +64,13 @@ namespace MethodBoundaryAspect.Fody
             yield return "netstandard";
         }
 
-        public string CreateShadowAssemblyPath(string assemblyPath)
+        private string CreateShadowAssemblyPath(string assemblyPath, string prefix)
         {
             var fileInfoSource = new FileInfo(assemblyPath);
             return
                 fileInfoSource.DirectoryName
                 + Path.DirectorySeparatorChar
+                + "_" + prefix + "_"
                 + Path.GetFileNameWithoutExtension(fileInfoSource.Name)
                 + "_Weaved_"
                 + fileInfoSource.Extension.ToLower();
@@ -76,11 +78,12 @@ namespace MethodBoundaryAspect.Fody
 
         public string WeaveToShadowFile(string assemblyPath)
         {
-            var shadowAssemblyPath = CreateShadowAssemblyPath(assemblyPath);
+            var prefix = Environment.TickCount.ToString();
+            var shadowAssemblyPath = CreateShadowAssemblyPath(assemblyPath, prefix);
             File.Copy(assemblyPath, shadowAssemblyPath, true);
 
             var pdbPath = Path.ChangeExtension(assemblyPath, "pdb");
-            var shadowPdbPath = CreateShadowAssemblyPath(pdbPath);
+            var shadowPdbPath = CreateShadowAssemblyPath(pdbPath, prefix);
 
             if (File.Exists(pdbPath))
                 File.Copy(pdbPath, shadowPdbPath, true);

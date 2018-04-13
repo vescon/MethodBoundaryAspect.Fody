@@ -25,7 +25,7 @@
     <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
   </ItemGroup>
 
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="del &quot;$(OutDir)*.Weaved.dll&quot;" />
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="del &quot;$(OutDir)*_Weaved_.*&quot;" />
   </Target>
 </Project>
