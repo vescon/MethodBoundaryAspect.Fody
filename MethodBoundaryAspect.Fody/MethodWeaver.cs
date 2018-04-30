@@ -232,7 +232,7 @@ namespace MethodBoundaryAspect.Fody
                 ExplicitThis = method.ExplicitThis,
                 CallingConvention = method.CallingConvention
             };
-            
+
             foreach (var parameter in method.Parameters)
                 clonedMethod.Parameters.Add(parameter);
 
@@ -252,6 +252,13 @@ namespace MethodBoundaryAspect.Fody
                     clonedMethod.GenericParameters.Add(new GenericParameter(parameter.Name, clonedMethod));
             }
 
+            if (method.DebugInformation.HasSequencePoints)
+            {
+                foreach (var sequencePoint in method.DebugInformation.SequencePoints)
+                    clonedMethod.DebugInformation.SequencePoints.Add(sequencePoint);
+            }
+
+            clonedMethod.DebugInformation.Scope = new ScopeDebugInformation(method.Body.Instructions.First(), method.Body.Instructions.Last());
             return clonedMethod;
         }
 
