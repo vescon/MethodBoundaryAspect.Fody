@@ -20,7 +20,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
 
             // Assert
-            result.Should().Be("Value: 43, BoolValue: True, AllowedValue: Value2");
+            result.Should().Be("Value: 43, BoolValue: True, AllowedValue: Value2, Field: test, IntField: 10");
         }
 
         [Fact]
@@ -34,7 +34,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
 
             // Assert
-            result.Should().Be("Value: 43, BoolValue: True, AllowedValue: Value2");
+            result.Should().Be("Value: 43, BoolValue: True, AllowedValue: Value2, Field: test, IntField: 10");
         }
     }
 }

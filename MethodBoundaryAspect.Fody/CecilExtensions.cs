@@ -8,11 +8,11 @@
 // ReSharper disable once CheckNamespace
 namespace Catel.Fody
 {
-    using System.Linq;
-    using System.Reflection;
     using Mono.Cecil;
     using Mono.Cecil.Cil;
     using Mono.Collections.Generic;
+    using System.Linq;
+    using System.Reflection;
 
     /// <summary>
     /// taken from https://github.com/Catel/Catel.Fody/blob/develop/src/Catel.Fody/Extensions/CecilExtensions.debuginfo.cs#L23
@@ -97,6 +97,41 @@ namespace Catel.Fody
             // Step 3: update the scopes by setting the indices
             scope.Start = new InstructionOffset(instructions.First());
             scope.End = new InstructionOffset(instructions.Last());
+        }
+    }
+}
+namespace MethodBoundaryAspect.Fody
+{
+    using Mono.Cecil;
+    using Mono.Cecil.Cil;
+
+    public static class CecilExtensions
+    {
+        public static OpCode GetStElemCode(this MetadataType type)
+        {
+            switch (type)
+            {
+                case MetadataType.Boolean:
+                case MetadataType.Int32:
+                case MetadataType.UInt32:
+                    return OpCodes.Stelem_I4;
+                case MetadataType.Byte:
+                case MetadataType.SByte:
+                    return OpCodes.Stelem_I1;
+                case MetadataType.Char:
+                case MetadataType.Int16:
+                case MetadataType.UInt16:
+                    return OpCodes.Stelem_I2;
+                case MetadataType.Double:
+                    return OpCodes.Stelem_R8;
+                case MetadataType.Int64:
+                case MetadataType.UInt64:
+                    return OpCodes.Stelem_I8;
+                case MetadataType.Single:
+                    return OpCodes.Stelem_R4;
+                default:
+                    return OpCodes.Stelem_Ref;
+            }
         }
     }
 }
