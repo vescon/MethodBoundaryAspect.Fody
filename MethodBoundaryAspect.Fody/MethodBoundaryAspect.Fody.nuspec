@@ -18,12 +18,12 @@
       <dependency id="FodyCecil" version="3.0.1"/>
     </dependencies>
   </metadata>
-  <!-- <files>
-    <file src="..\MethodBoundaryAspect\bin\Release\net452\MethodBoundaryAspect.dll" target="lib\net452\" />
-    <file src="..\MethodBoundaryAspect\bin\Release\net452\MethodBoundaryAspect.pdb" target="lib\net452\" />
+  <files>
+    <file src="..\MethodBoundaryAspect\bin\Release\net461\MethodBoundaryAspect.dll" target="lib\net452\" />
+    <file src="..\MethodBoundaryAspect\bin\Release\net461\MethodBoundaryAspect.pdb" target="lib\net452\" />
     <file src="..\MethodBoundaryAspect\bin\Release\netstandard2.0\MethodBoundaryAspect.dll" target="lib\netstandard2.0\" />
     <file src="..\MethodBoundaryAspect\bin\Release\netstandard2.0\MethodBoundaryAspect.pdb" target="lib\netstandard2.0\" />
-    <file src="bin\Release\net461\MethodBoundaryAspect.Fody.dll" target="" />
-    <file src="bin\Release\net452\MethodBoundaryAspect.dll" target="" />
-  </files> -->
+    <file src="bin\Release\net461\MethodBoundaryAspect.Fody.dll" target="" developmentDependency="true" />
+    <file src="bin\Release\net461\MethodBoundaryAspect.dll" target="" developmentDependency="true" />
+  </files>
 </package>
