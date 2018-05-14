@@ -83,10 +83,12 @@ namespace MethodBoundaryAspect.Fody
             CustomAttribute aspect)
         {
             var typeDefinition = instanceTypeReference.Resolve();
-            var constructor = typeDefinition.Methods
-                .Where(x => x.IsConstructor)
-                .Where(x => !x.IsStatic)
-                .SingleOrDefault(x => x.Parameters.Count == (aspect?.Constructor.Parameters.Count ?? 0));
+            var constructor = typeDefinition
+                .Methods
+                .SingleOrDefault(x => x.IsConstructor &&
+                            !x.IsStatic &&
+                            x.Parameters.Select(p => p.ParameterType)
+                                .SequenceEqual(aspect?.ConstructorArguments.Select(a => a.Type) ?? new TypeReference[0]));
 
             if (constructor == null)
                 throw new InvalidOperationException(string.Format("Didn't found matching constructor on type '{0}'",
@@ -122,6 +124,21 @@ namespace MethodBoundaryAspect.Fody
                     loadSetConstValuesToAspect.AddRange(loadOnStackInstruction);
                     loadSetConstValuesToAspect.AddRange(assignVariableInstructionBlock.Instructions);
                     loadSetConstValuesToAspect.AddRange(setPropertyInstructionBlock.Instructions);
+                }
+
+                foreach (var field in aspect.Fields)
+                {
+                    var fieldCopy = field;
+
+                    var loadInstanceOnStackInstruction = _processor.Create(OpCodes.Ldloc, newInstance);
+                    var loadOnStackInstruction = LoadValueOnStack(fieldCopy.Argument.Type, fieldCopy.Argument.Value);
+
+                    var fieldRef = instanceTypeReference.Resolve().Fields.First(f => f.Name == fieldCopy.Name);
+                    var loadFieldInstructionBlock = _processor.Create(OpCodes.Stfld, fieldRef);
+
+                    loadSetConstValuesToAspect.Add(loadInstanceOnStackInstruction);
+                    loadSetConstValuesToAspect.AddRange(loadOnStackInstruction);
+                    loadSetConstValuesToAspect.Add(loadFieldInstructionBlock);
                 }
             }
 
@@ -267,6 +284,46 @@ namespace MethodBoundaryAspect.Fody
                 };
 
                 return instructions;
+            }
+
+            if (parameterType.FullName == typeof(Object).FullName && value is CustomAttributeArgument arg)
+            {
+                var valueType = _referenceFinder.GetTypeReference(arg.Value.GetType());
+                if (arg.Value is TypeReference)
+                    valueType = _referenceFinder.GetTypeReference(typeof(Type));
+                var instructions = LoadValueOnStack(valueType, arg.Value);
+                instructions.Add(_processor.Create(OpCodes.Box, valueType));
+                return instructions;
+            }
+
+            if (parameterType.IsArray && value is CustomAttributeArgument[] args)
+            {
+                var array = CreateVariable(parameterType);
+                var elementType = ((ArrayType)parameterType).ElementType;
+                var createArrayInstructions = new List<Instruction>()
+                {
+                    _processor.Create(OpCodes.Ldc_I4, args.Length),
+                    _processor.Create(OpCodes.Newarr, elementType),
+                    _processor.Create(OpCodes.Stloc, array)
+                };
+
+                OpCode stelem;
+                if (elementType.IsValueType)
+                    stelem = elementType.MetadataType.GetStElemCode();
+                else
+                    stelem = OpCodes.Stelem_Ref;
+
+                for (int i = 0; i < args.Length; ++i)
+                {
+                    var parameter = args[i];
+                    createArrayInstructions.Add(_processor.Create(OpCodes.Ldloc, array));
+                    createArrayInstructions.Add(_processor.Create(OpCodes.Ldc_I4, i));
+                    createArrayInstructions.AddRange(LoadValueOnStack(elementType, parameter.Value));
+                    createArrayInstructions.Add(_processor.Create(stelem));
+                }
+
+                createArrayInstructions.Add(_processor.Create(OpCodes.Ldloc, array));
+                return createArrayInstructions;
             }
 
             throw new NotSupportedException("Parametertype: " + parameterType);
