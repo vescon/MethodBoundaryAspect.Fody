@@ -9,7 +9,15 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
         {
         }
 
-        public void DoItNotWeaved<T2>()
+        [SetInstanceValueAspect]
+        public T2 DoItWithReturn<T2>()
+        {
+            T2 t2 = default(T2);
+            DoItNotWeaved<T2>(t2);
+            return t2;
+        }
+
+        public void DoItNotWeaved<T2>(T2 t2)
         {
         }
 

@@ -309,7 +309,7 @@ namespace MethodBoundaryAspect.Fody
             }
 
             var type = FixTypeReference(targetMethod.DeclaringType);
-            var targetMethodReference = FixMethodReference(targetMethod, type);
+            var targetMethodReference = FixMethodReference(targetMethod);
             var call = caller == null
                 ? _creator.CallStaticMethod(targetMethodReference, resultVariable, variables.ToArray())
                 : _creator.CallInstanceMethod(targetMethodReference, caller, resultVariable, variables.ToArray());
@@ -339,17 +339,15 @@ namespace MethodBoundaryAspect.Fody
             return typeReference.MakeGenericType(genericParameters);
         }
 
-        private static MethodReference FixMethodReference(MethodReference targetMethod, IGenericParameterProvider type)
+        private static MethodReference FixMethodReference(MethodReference targetMethod)
         {
-            if (!type.HasGenericParameters) 
+            if (!targetMethod.HasGenericParameters) 
                 return targetMethod;
 
-            // workaround for method in generic type
+            // workaround for method in generic type (slightly modified, shorter and better :)
             // https://stackoverflow.com/questions/4968755/mono-cecil-call-generic-base-class-method-from-other-assembly
-            var genericParameters = type.GenericParameters
-                .Select(x => x.GetElementType())
-                .ToArray();
-            return targetMethod.MakeGeneric(genericParameters);
+
+            return targetMethod.MakeGeneric();
         }
     }
 }
