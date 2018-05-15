@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata minClientVersion="2.8">
+    <id>MethodBoundaryAspect</id>
+    <version>$version$</version>
+    <title>MethodBoundaryAspect</title>
+    <authors>Ralf Kornelius, Marcell Spies</authors>
+    <owners>VESCON GmbH</owners>
+    <developmentDependency>true</developmentDependency>
+    <projectUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A Fody weaver which allows to decorate methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.</description>
+    <copyright>VESCON GmbH</copyright>
+    <iconUrl>https://github.com/vescon/MethodBoundaryAspect.Fody/raw/master/docs/images/NuGetIcon.png</iconUrl>
+    <tags>il weaving fody aspect aop method-invocation method boundary</tags>
+  </metadata>
+  <files>
+    <file src="..\MethodBoundaryAspect\bin\Release\net452\MethodBoundaryAspect.dll" target="lib\net452\" />
+    <file src="..\MethodBoundaryAspect\bin\Release\net452\MethodBoundaryAspect.pdb" target="lib\net452\" />
+    <file src="..\MethodBoundaryAspect\bin\Release\netstandard2.0\MethodBoundaryAspect.dll" target="lib\netstandard2.0\" />
+    <file src="..\MethodBoundaryAspect\bin\Release\netstandard2.0\MethodBoundaryAspect.pdb" target="lib\netstandard2.0\" />
+    <file src="bin\Release\net452\MethodBoundaryAspect.dll" target="" />
+  </files>
+</package>
