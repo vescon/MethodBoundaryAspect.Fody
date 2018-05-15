@@ -17,6 +17,7 @@ build:
 after_build:
 - cmd: >-
     dotnet pack MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj /p:NuspecFile=MethodBoundaryAspect.Fody.nuspec /p:NuspecProperties="version=%APPVEYOR_BUILD_VERSION%"
+    
     dotnet pack MethodBoundaryAspect\MethodBoundaryAspect.csproj /p:NuspecFile=MethodBoundaryAspect.nuspec /p:NuspecProperties="version=%APPVEYOR_BUILD_VERSION%"
 test_script:
 - cmd: dotnet test MethodBoundaryAspect.Fody.UnitTests --configuration Release
