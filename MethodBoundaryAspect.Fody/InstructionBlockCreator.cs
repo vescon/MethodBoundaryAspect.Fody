@@ -228,7 +228,7 @@ namespace MethodBoundaryAspect.Fody
                 var parameter = methodReference.Parameters[parameterCount];
                 if (parameter.ParameterType != argument.VariableType)
                 {
-                    if (argument.VariableType.IsValueType)
+                    if (argument.VariableType.IsValueType || argument.VariableType.IsGenericParameter)
                         loadArgumentsInstructions.Add(_processor.Create(OpCodes.Box, argument.VariableType));
                 }
                 parameterCount++;

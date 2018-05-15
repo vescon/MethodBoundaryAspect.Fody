@@ -188,5 +188,20 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             Weaver.TotalWeavedMethods.Should().Be(1);
             Weaver.TotalWeavedTypes.Should().Be(1);
         }
+
+        [Fact]
+        public void IfGenericClassWithGenericMethodWithReturnIsWeaved_ThenTheAssemblyShouldBeValid()
+        {
+            // Arrange
+            const string testMethodName = "DoItWithReturn";
+            var testClassType = typeof(GenericClassWithGenericMethod<>);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+        }
     }
 }
