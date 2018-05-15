@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects\MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.csproj" />
+    <!-- <PackageReference Include="MethodBoundaryAspect" Version="1.0.26" /> -->
     <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
   </ItemGroup>
 

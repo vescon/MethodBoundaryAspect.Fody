@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- <PackageReference Include="MethodBoundaryAspect" Version="1.0.26" /> -->
     <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
   </ItemGroup>
 
