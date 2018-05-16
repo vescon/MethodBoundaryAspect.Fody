@@ -87,8 +87,8 @@ namespace MethodBoundaryAspect.Fody
                 .Methods
                 .SingleOrDefault(x => x.IsConstructor &&
                             !x.IsStatic &&
-                            x.Parameters.Select(p => p.ParameterType)
-                                .SequenceEqual(aspect?.ConstructorArguments.Select(a => a.Type) ?? new TypeReference[0]));
+                            x.Parameters.Select(p => p.ParameterType.FullName)
+                                .SequenceEqual(aspect?.ConstructorArguments.Select(a => a.Type.FullName) ?? new string[0]));
 
             if (constructor == null)
                 throw new InvalidOperationException(string.Format("Didn't found matching constructor on type '{0}'",
