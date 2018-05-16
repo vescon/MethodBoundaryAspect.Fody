@@ -22,6 +22,6 @@
     <file src="..\MethodBoundaryAspect\bin\Release\net452\MethodBoundaryAspect.pdb" target="lib\net452\" />
     <file src="..\MethodBoundaryAspect\bin\Release\netstandard2.0\MethodBoundaryAspect.dll" target="lib\netstandard2.0\" />
     <file src="..\MethodBoundaryAspect\bin\Release\netstandard2.0\MethodBoundaryAspect.pdb" target="lib\netstandard2.0\" />
-    <file src="bin\Release\net461\*.pdb" target="" />
+    <file src="bin\Release\net461\*" target="" />
   </files>
 </package>
