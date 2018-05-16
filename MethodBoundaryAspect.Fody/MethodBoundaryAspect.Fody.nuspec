@@ -15,11 +15,11 @@
     <tags>il weaving fody aspect aop method-invocation method boundary</tags>
     <dependencies>
       <dependency id="Fody" version="3.0.1" />
-      <dependency id="FodyCecil" version="3.0.1" />
       <dependency id="MethodBoundaryAspect" version="1.0.26" />
     </dependencies>
   </metadata>
   <files>
     <file src="bin\Release\net461\MethodBoundaryAspect.Fody.dll" target="" />
+    <file src="bin\Release\net461\*.dll" target="" />
   </files>
 </package>
