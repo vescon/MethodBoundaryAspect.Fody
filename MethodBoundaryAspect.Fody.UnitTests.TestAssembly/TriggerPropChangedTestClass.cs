@@ -9,10 +9,10 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
         [TriggerPropChangedAspect("a")]
         public string TestProp { get; set; }
 
-        [Aspects.TriggerPropChangedAspect("expectedResult")]
+        [TestAssemblyAspects.TriggerPropChangedAspect("expectedResult")]
         public string TestPropCrossDll { get; set; }
 
-        [Aspects.TriggerPropChangedAspect(typeof(string), typeof(object))]
+        [TestAssemblyAspects.TriggerPropChangedAspect(typeof(string), typeof(object))]
         public string TestTypeArrayCrossDll { get; set; }
     }
 
