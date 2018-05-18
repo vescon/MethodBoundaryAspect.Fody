@@ -91,7 +91,7 @@ namespace MethodBoundaryAspect.Fody
                                 .SequenceEqual(aspect?.ConstructorArguments.Select(a => a.Type.FullName) ?? new string[0]));
 
             if (constructor == null)
-                throw new InvalidOperationException(string.Format("Didn't found matching constructor on type '{0}'",
+                throw new InvalidOperationException(string.Format("Didn't find matching constructor on type '{0}'",
                     typeDefinition.FullName));
 
             var ctorRef = module.ImportReference(constructor);
@@ -262,44 +262,12 @@ namespace MethodBoundaryAspect.Fody
 
         private IList<Instruction> LoadValueOnStack(TypeReference parameterType, object value)
         {
-            if (parameterType.IsPrimitive || (parameterType.FullName == "System.String"))
-                return new List<Instruction> {LoadPrimitiveConstOnStack(parameterType.MetadataType, value)};
-
-            if (parameterType.IsValueType) // enum
+            if (parameterType.IsArray(out var elementType) && value is CustomAttributeArgument[] args)
             {
-                var enumUnderlyingType = GetEnumUnderlyingType(parameterType.Resolve());
-                return new List<Instruction> {LoadPrimitiveConstOnStack(enumUnderlyingType.MetadataType, value)};
-            }
-
-            if (parameterType.FullName == "System.Type")
-            {
-                var typeReference = (TypeReference) value;
-                var typeTypeRef = _referenceFinder.GetTypeReference(typeof (Type));
-                var methodReference = _referenceFinder.GetMethodReference(typeTypeRef, md => md.Name == "GetTypeFromHandle");
+                elementType = elementType.CleanEnumsInTypeRef();
+                parameterType = parameterType.CleanEnumsInTypeRef();
                 
-                var instructions = new List<Instruction>
-                {
-                    _processor.Create(OpCodes.Ldtoken, typeReference),
-                    _processor.Create(OpCodes.Call, methodReference)
-                };
-
-                return instructions;
-            }
-
-            if (parameterType.FullName == typeof(Object).FullName && value is CustomAttributeArgument arg)
-            {
-                var valueType = _referenceFinder.GetTypeReference(arg.Value.GetType());
-                if (arg.Value is TypeReference)
-                    valueType = _referenceFinder.GetTypeReference(typeof(Type));
-                var instructions = LoadValueOnStack(valueType, arg.Value);
-                instructions.Add(_processor.Create(OpCodes.Box, valueType));
-                return instructions;
-            }
-
-            if (parameterType.IsArray && value is CustomAttributeArgument[] args)
-            {
                 var array = CreateVariable(parameterType);
-                var elementType = ((ArrayType)parameterType).ElementType;
                 var createArrayInstructions = new List<Instruction>()
                 {
                     _processor.Create(OpCodes.Ldc_I4, args.Length),
@@ -307,11 +275,7 @@ namespace MethodBoundaryAspect.Fody
                     _processor.Create(OpCodes.Stloc, array)
                 };
 
-                OpCode stelem;
-                if (elementType.IsValueType)
-                    stelem = elementType.MetadataType.GetStElemCode();
-                else
-                    stelem = OpCodes.Stelem_Ref;
+                OpCode stelem = elementType.GetStElemCode();
 
                 for (int i = 0; i < args.Length; ++i)
                 {
@@ -324,6 +288,45 @@ namespace MethodBoundaryAspect.Fody
 
                 createArrayInstructions.Add(_processor.Create(OpCodes.Ldloc, array));
                 return createArrayInstructions;
+            }
+            
+            if (parameterType.IsEnum(out var enumUnderlyingType))
+            {
+                enumUnderlyingType = enumUnderlyingType.CleanEnumsInTypeRef();
+                return new List<Instruction>(LoadPrimitiveConstOnStack(enumUnderlyingType.MetadataType, value));
+            }
+            
+            if (parameterType.IsPrimitive || (parameterType.FullName == typeof(String).FullName))
+                return new List<Instruction>(LoadPrimitiveConstOnStack(parameterType.MetadataType, value));
+
+            if (parameterType.FullName == typeof(Type).FullName)
+            {
+                var typeVal = (TypeReference)value;
+                var typeReference = typeVal.CleanEnumsInTypeRef();
+
+                var typeTypeRef = _referenceFinder.GetTypeReference(typeof(Type));
+                var methodReference = _referenceFinder.GetMethodReference(typeTypeRef, md => md.Name == nameof(Type.GetTypeFromHandle));
+
+                var instructions = new List<Instruction>
+                {
+                    _processor.Create(OpCodes.Ldtoken, typeReference),
+                    _processor.Create(OpCodes.Call, methodReference)
+                };
+
+                return instructions;
+            }
+
+            if (parameterType.FullName == typeof(Object).FullName && value is CustomAttributeArgument arg)
+            {
+                var valueType = arg.Type;
+                if (arg.Value is TypeReference)
+                    valueType = _referenceFinder.GetTypeReference(typeof(Type));
+                bool isEnum = valueType.IsEnum(out _);
+                valueType = valueType.CleanEnumsInTypeRef();
+                var instructions = LoadValueOnStack(valueType, arg.Value);
+                if (valueType.IsValueType || (!valueType.IsArray && isEnum))
+                    instructions.Add(_processor.Create(OpCodes.Box, valueType));
+                return instructions;
             }
 
             throw new NotSupportedException("Parametertype: " + parameterType);
@@ -339,32 +342,49 @@ namespace MethodBoundaryAspect.Fody
             return instructions;
         }
 
-        private Instruction LoadPrimitiveConstOnStack(MetadataType type, object value)
+        private IEnumerable<Instruction> LoadPrimitiveConstOnStack(MetadataType type, object value)
         {
             switch (type)
             {
+                case MetadataType.String when (value == null):
+                    return new[] { _processor.Create(OpCodes.Ldnull) };
                 case MetadataType.String:
-                    return _processor.Create(OpCodes.Ldstr, (string) value);
+                    return new[] { _processor.Create(OpCodes.Ldstr, (string)value) };
+                case MetadataType.Byte:
+                    return new[] { _processor.Create(OpCodes.Ldc_I4, (int)(byte)value) };
+                case MetadataType.SByte:
+                    return new[] { _processor.Create(OpCodes.Ldc_I4, (int)(sbyte)value) };
+                case MetadataType.Int16:
+                    return new[] { _processor.Create(OpCodes.Ldc_I4, (int)(short)value) };
+                case MetadataType.UInt16:
+                    return new[] { _processor.Create(OpCodes.Ldc_I4, (int)(ushort)value) };
                 case MetadataType.Int32:
-                    return _processor.Create(OpCodes.Ldc_I4, (int) value);
+                    return new[] { _processor.Create(OpCodes.Ldc_I4, (int)value) };
+                case MetadataType.UInt32:
+                    return new[] { _processor.Create(OpCodes.Ldc_I4, (int)(uint)value) };
                 case MetadataType.Int64:
-                    return _processor.Create(OpCodes.Ldc_I8, (long) value);
+                    long longVal = (long)value;
+                    if (longVal <= Int32.MaxValue && longVal >= Int32.MinValue)
+                        return new[]
+                        {
+                            _processor.Create(OpCodes.Ldc_I4, (int)longVal),
+                            _processor.Create(OpCodes.Conv_I8)
+                        };
+                    return new[] { _processor.Create(OpCodes.Ldc_I8, longVal) };
+                case MetadataType.UInt64:
+                    ulong ulongVal = (ulong)value;
+                    if (ulongVal <= Int32.MaxValue)
+                        return new[]
+                        {
+                            _processor.Create(OpCodes.Ldc_I4, (int)ulongVal),
+                            _processor.Create(OpCodes.Conv_I8)
+                        };
+                    return new[] { _processor.Create(OpCodes.Ldc_I8, (long)ulongVal) };
                 case MetadataType.Boolean:
-                    return _processor.Create(OpCodes.Ldc_I4, (bool) value ? 1 : 0);
+                    return new[] { _processor.Create(OpCodes.Ldc_I4, (bool)value ? 1 : 0) };
             }
 
             throw new NotSupportedException("Not a supported primitve parameter type: " + type);
-        }
-
-        private static TypeReference GetEnumUnderlyingType(TypeDefinition self)
-        {
-            foreach (var field in self.Fields)
-            {
-                if (field.Name == "value__")
-                    return field.FieldType;
-            }
-
-            throw new ArgumentException();
         }
 
         private static IEnumerable<Instruction> BoxArguments(

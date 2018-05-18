@@ -104,10 +104,69 @@ namespace MethodBoundaryAspect.Fody
 {
     using Mono.Cecil;
     using Mono.Cecil.Cil;
+    using System.Linq;
 
     public static class CecilExtensions
     {
-        public static OpCode GetStElemCode(this MetadataType type)
+        public static TypeReference CleanEnumsInTypeRef(this TypeReference type)
+        {
+            if (type.IsArray(out TypeReference elementType))
+            {
+                elementType = CleanEnumsInTypeRef(elementType);
+                return new ArrayType(elementType);
+            }
+
+            if (type.IsEnum(out _))
+            {
+                if (!type.IsValueType)
+                    type.IsValueType = true;
+                return type;
+            }
+
+            if (type is GenericInstanceType gen)
+            {
+                for (int i = 0; i < gen.GenericArguments.Count; ++i)
+                    gen.GenericArguments[i] = CleanEnumsInTypeRef(gen.GenericArguments[i]);
+                return gen;
+            }
+
+            return type;
+        }
+
+        public static bool IsArray(this TypeReference typeRef, out TypeReference elementType)
+        {
+            elementType = null;
+            if (!typeRef.IsArray)
+                return false;
+
+            elementType = ((ArrayType)typeRef).ElementType;
+            return true;
+        }
+
+        public static bool IsEnum(this TypeReference typeRef, out TypeReference underlyingType)
+        {
+            var typeDef = typeRef.Resolve();
+            if (typeDef.IsEnum)
+            {
+                underlyingType = typeDef.Fields.FirstOrDefault(f => f.Name == "value__").FieldType;
+                return true;
+            }
+
+            underlyingType = null;
+            return false;
+        }
+
+        public static OpCode GetStElemCode(this TypeReference typeRef)
+        {
+            var typeDef = typeRef.Resolve();
+            if (typeDef.IsEnum(out TypeReference underlying))
+                return underlying.MetadataType.GetStElemCode();
+            if (typeRef.IsValueType)
+                return typeRef.MetadataType.GetStElemCode();
+            return OpCodes.Stelem_Ref;
+        }
+
+        static OpCode GetStElemCode(this MetadataType type)
         {
             switch (type)
             {
