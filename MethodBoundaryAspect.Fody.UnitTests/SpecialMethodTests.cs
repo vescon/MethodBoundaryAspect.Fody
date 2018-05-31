@@ -172,8 +172,25 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             // Assert
             Weaver.TotalWeavedMethods.Should().Be(1);
             Weaver.TotalWeavedTypes.Should().Be(1);
-        } 
-        
+        }
+
+        [Fact]
+        public void IfClassWithGenericMethodWithConstraintIsWeaved_ThenTheAssemblyShouldBeValid()
+        {
+            // Arrange
+            const string testMethodName = "DoIt";
+            var testClassType = typeof(ClassWithGenericMethodWithConstraint);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+            Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName);
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+            //call.Should().NotThrow<TargetInvocationException>();
+        }
+
         [Fact]
         public void IfGenericClassWithGenericMethodIsWeaved_ThenTheAssemblyShouldBeValid()
         {

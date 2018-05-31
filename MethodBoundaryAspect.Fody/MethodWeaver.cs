@@ -249,7 +249,17 @@ namespace MethodBoundaryAspect.Fody
             if (method.HasGenericParameters)
             {
                 foreach (var parameter in method.GenericParameters)
-                    clonedMethod.GenericParameters.Add(new GenericParameter(parameter.Name, clonedMethod));
+                {
+                    var clonedparameter = new GenericParameter(parameter.Name, clonedMethod);
+                    if (parameter.HasConstraints)
+                    {
+                        foreach (var parameterConstraint in parameter.Constraints)
+                        {
+                            clonedparameter.Constraints.Add(parameterConstraint);
+                        }
+                    }
+                    clonedMethod.GenericParameters.Add(clonedparameter);
+                }
             }
 
             if (method.DebugInformation.HasSequencePoints)
