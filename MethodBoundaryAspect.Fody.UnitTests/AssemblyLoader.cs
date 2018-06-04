@@ -51,6 +51,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             return _assembly.GetTypes().FirstOrDefault(x => x.Name == name);
         }
 
+        public object CreateClassFromWeavedAssembly(string name)
+        {
+            return _assembly.CreateInstance(GetTypeFromWeavedAssembly(name).FullName);
+        }
+
         private object InvokeMethodWithResultClass(
             string resultClassName,
             string className,
