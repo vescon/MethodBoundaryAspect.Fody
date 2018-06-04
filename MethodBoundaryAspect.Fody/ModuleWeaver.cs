@@ -95,7 +95,6 @@ namespace MethodBoundaryAspect.Fody
                 ReadSymbols = true,
                 SymbolReaderProvider = new PdbReaderProvider(),
 				ReadWrite = true,
-                ReadingMode = ReadingMode.Immediate
             };
 
             if (_additionalAssemblyResolveFolders.Any())

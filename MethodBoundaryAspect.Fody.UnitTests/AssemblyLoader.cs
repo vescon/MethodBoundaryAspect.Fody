@@ -1,5 +1,5 @@
 ﻿using System;
-using System.IO;
+using System.Linq;
 using System.Reflection;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
@@ -10,7 +10,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
 
         public void Load(string assemblyPath)
         {
-            _assembly = Assembly.Load(File.ReadAllBytes(assemblyPath));
+            _assembly = Assembly.LoadFrom(assemblyPath);
         }
 
         public object InvokeMethodWithResultClass(
@@ -41,6 +41,16 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             return resultValue;
         }
 
+        /// <summary>
+        /// Gets the requested type from the just created weaved assembly
+        /// </summary>
+        /// <param name="name">Name of the type to return.</param>
+        /// <returns></returns>
+        public Type GetTypeFromWeavedAssembly(string name)
+        {
+            return _assembly.GetTypes().FirstOrDefault(x => x.Name == name);
+        }
+
         private object InvokeMethodWithResultClass(
             string resultClassName,
             string className,
@@ -53,6 +63,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             if (methodInfo == null)
                 throw new MissingMethodException(
                     $"Method '{methodName}' in class '{className}' in assembly '{_assembly.FullName}' not found.");
+            if (methodInfo.IsGenericMethod)
+            {
+                var types = arguments.Select(x => x.GetType()).ToArray();
+                methodInfo = methodInfo.MakeGenericMethod(types);
+            }
 
             var instance = Activator.CreateInstance(type);
             object returnValue = null;

@@ -29,7 +29,6 @@ namespace MethodBoundaryAspect.Fody
                 return;
 
             var hasMultipleAspects = usableAspects.Count > 1;
-
             var clonedMethod = CloneMethod(method);
             method.DeclaringType.Methods.Add(clonedMethod);
 
@@ -230,7 +229,7 @@ namespace MethodBoundaryAspect.Fody
                 AggressiveInlining = true, // try to get rid of additional stack frame
                 HasThis = method.HasThis,
                 ExplicitThis = method.ExplicitThis,
-                CallingConvention = method.CallingConvention
+                CallingConvention = method.CallingConvention,
             };
 
             foreach (var parameter in method.Parameters)
@@ -248,6 +247,22 @@ namespace MethodBoundaryAspect.Fody
 
             if (method.HasGenericParameters)
             {
+                //Contravariant:
+                //  The generic type parameter is contravariant. A contravariant type parameter can appear as a parameter type in method signatures.  
+                //Covariant:
+                //  The generic type parameter is covariant. A covariant type parameter can appear as the result type of a method, the type of a read-only field, a declared base type, or an implemented interface. 
+                //DefaultConstructorConstraint:
+                //  A type can be substituted for the generic type parameter only if it has a parameterless constructor. 
+                //None:
+                //  There are no special flags. 
+                //NotNullableValueTypeConstraint:
+                //  A type can be substituted for the generic type parameter only if it is a value type and is not nullable. 
+                //ReferenceTypeConstraint:
+                //  A type can be substituted for the generic type parameter only if it is a reference type. 
+                //SpecialConstraintMask:
+                //  Selects the combination of all special constraint flags. This value is the result of using logical OR to combine the following flags: DefaultConstructorConstraint, ReferenceTypeConstraint, and NotNullableValueTypeConstraint. 
+                //VarianceMask:
+                //  Selects the combination of all variance flags. This value is the result of using logical OR to combine the following flags: Contravariant and Covariant. 
                 foreach (var parameter in method.GenericParameters)
                 {
                     var clonedparameter = new GenericParameter(parameter.Name, clonedMethod);
@@ -255,9 +270,29 @@ namespace MethodBoundaryAspect.Fody
                     {
                         foreach (var parameterConstraint in parameter.Constraints)
                         {
+                            clonedparameter.Attributes = parameter.Attributes;
                             clonedparameter.Constraints.Add(parameterConstraint);
                         }
                     }
+
+                    if (parameter.HasReferenceTypeConstraint)
+                    {
+                        clonedparameter.Attributes |= GenericParameterAttributes.ReferenceTypeConstraint;
+                        clonedparameter.HasReferenceTypeConstraint = true;
+                    }
+
+                    if (parameter.HasNotNullableValueTypeConstraint)
+                    {
+                        clonedparameter.Attributes |= GenericParameterAttributes.NotNullableValueTypeConstraint;
+                        clonedparameter.HasNotNullableValueTypeConstraint = true;
+                    }
+
+                    if (parameter.HasDefaultConstructorConstraint)
+                    {
+                        clonedparameter.Attributes |= GenericParameterAttributes.DefaultConstructorConstraint;
+                        clonedparameter.HasDefaultConstructorConstraint = true;
+                    }
+
                     clonedMethod.GenericParameters.Add(clonedparameter);
                 }
             }

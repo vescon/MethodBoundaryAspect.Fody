@@ -51,7 +51,6 @@ namespace MethodBoundaryAspect.Fody.UnitTests
         protected void WeaveAssemblyClassAndLoad(Type type)
         {
             WeaveAssemblyAndVerifyAndLoad(type, null, null);
-
         }
 
         protected void WeaveAssemblyMethodAndLoad(Type type, string methodName)
