@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 
@@ -10,7 +11,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
 
         public void Load(string assemblyPath)
         {
-            _assembly = Assembly.LoadFrom(assemblyPath);
+            _assembly = Assembly.Load(File.ReadAllBytes(assemblyPath));
         }
 
         public object InvokeMethodWithResultClass(
