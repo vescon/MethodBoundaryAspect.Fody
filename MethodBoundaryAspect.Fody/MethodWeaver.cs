@@ -29,6 +29,7 @@ namespace MethodBoundaryAspect.Fody
                 return;
 
             var hasMultipleAspects = usableAspects.Count > 1;
+
             var clonedMethod = CloneMethod(method);
             method.DeclaringType.Methods.Add(clonedMethod);
 
@@ -229,7 +230,7 @@ namespace MethodBoundaryAspect.Fody
                 AggressiveInlining = true, // try to get rid of additional stack frame
                 HasThis = method.HasThis,
                 ExplicitThis = method.ExplicitThis,
-                CallingConvention = method.CallingConvention,
+                CallingConvention = method.CallingConvention
             };
 
             foreach (var parameter in method.Parameters)
