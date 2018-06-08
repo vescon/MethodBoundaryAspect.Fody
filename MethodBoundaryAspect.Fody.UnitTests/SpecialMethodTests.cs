@@ -172,8 +172,114 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             // Assert
             Weaver.TotalWeavedMethods.Should().Be(1);
             Weaver.TotalWeavedTypes.Should().Be(1);
-        } 
-        
+        }
+
+        [Fact]
+        public void IfClassWithGenericMethodWithImplementedConstraintIsWeaved_ThenTheAssemblyShouldBeValid()
+        {
+            // Arrange
+            const string testMethodName = "DoItWithImplementedConstraint";
+            var testClassType = typeof(ClassWithGenericMethodWithConstraint);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+            var argument = AssemblyLoader.CreateInstance(nameof(TestClass));
+            var result = AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName, argument);
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+            result.Should().Be("Test succeeded");
+        }
+
+        [Fact]
+        public void IfClassWithGenericMethodWithImplementedConstraintIsWeaved_ThenTheAssemblyShouldBeValid_InvalidClass()
+        {
+            // Arrange
+            const string testMethodName = "DoItWithImplementedConstraint";
+            var testClassType = typeof(ClassWithGenericMethodWithConstraint);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+            Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName, new InvalidTestClass("test"));
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+            call.Should().Throw<ArgumentException>();
+        }
+
+        [Fact]
+        public void IfClassWithGenericMethodWithClassConstraintIsWeaved_ThenTheAssemblyShouldBeValid()
+        {
+            // Arrange
+            const string testMethodName = "DoItWithClassConstraint";
+            var testClassType = typeof(ClassWithGenericMethodWithConstraint);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+            var argument = AssemblyLoader.CreateInstance(nameof(TestClass));
+            Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName, argument);
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+            call.Should().NotThrow<Exception>();
+        }
+
+        [Fact]
+        public void IfClassWithGenericMethodWithStructConstraintIsWeaved_ThenTheAssemblyShouldBeValid()
+        {
+            // Arrange
+            const string testMethodName = "DoItWithStructConstraint";
+            var testClassType = typeof(ClassWithGenericMethodWithConstraint);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+            var argument = AssemblyLoader.CreateInstance(nameof(TestStruct));
+            Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName, argument);
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+            call.Should().NotThrow<Exception>();
+        }
+
+        [Fact]
+        public void IfClassWithGenericMethodWithNewConstraintIsWeaved_ThenTheAssemblyShouldBeValid()
+        {
+            // Arrange
+            const string testMethodName = "DoItWithNewConstraint";
+            var testClassType = typeof(ClassWithGenericMethodWithConstraint);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+            var argument = AssemblyLoader.CreateInstance(nameof(TestClass));
+            Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName, argument);
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+            call.Should().NotThrow<Exception>();
+        }
+
+        [Fact]
+        public void IfClassWithGenericMethodWithNewConstraintIsWeaved_ThenTheAssemblyShouldBeValid_WithInvalidTestClass()
+        {
+            // Arrange
+            const string testMethodName = "DoItWithNewConstraint";
+            var testClassType = typeof(ClassWithGenericMethodWithConstraint);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, testMethodName);
+            Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName, new InvalidTestClass("Test"));
+
+            // Assert
+            Weaver.TotalWeavedMethods.Should().Be(1);
+            Weaver.TotalWeavedTypes.Should().Be(1);
+            call.Should().Throw<ArgumentException>();
+        }
+
         [Fact]
         public void IfGenericClassWithGenericMethodIsWeaved_ThenTheAssemblyShouldBeValid()
         {
