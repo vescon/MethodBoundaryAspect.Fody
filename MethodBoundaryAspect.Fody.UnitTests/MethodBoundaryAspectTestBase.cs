@@ -138,6 +138,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             _testDomain = new TestDomain();
 
             AssemblyLoader = _testDomain.CreateAssemblyLoader();
+            AssemblyLoader.SetDomain(_testDomain.AppDomain);
             AssemblyLoader.Load(WeavedAssemblyPath);
         }
 

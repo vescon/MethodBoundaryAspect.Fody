@@ -1,17 +1,25 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Remoting;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
     public class AssemblyLoader : MarshalByRefObject
     {
         private Assembly _assembly;
+        private AppDomain _domain;
+        private string _assemblyPath;
+
+        public void SetDomain(AppDomain domain)
+        {
+            _domain = domain;
+        }
 
         public void Load(string assemblyPath)
         {
-            _assembly = Assembly.Load(File.ReadAllBytes(assemblyPath));
+            _assemblyPath = assemblyPath;
+            _assembly = Assembly.UnsafeLoadFrom(assemblyPath);
         }
 
         public object InvokeMethodWithResultClass(
@@ -47,14 +55,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests
         /// </summary>
         /// <param name="name">Name of the type to return.</param>
         /// <returns></returns>
-        public Type GetTypeFromWeavedAssembly(string name)
+        public object CreateInstance(string name)
         {
-            return _assembly.GetTypes().FirstOrDefault(x => x.Name == name);
-        }
-
-        public object CreateClassFromWeavedAssembly(string name)
-        {
-            return _assembly.CreateInstance(GetTypeFromWeavedAssembly(name).FullName);
+            var type = _assembly.GetTypes().Single(x => x.Name == name);
+            var instance = _domain.CreateInstanceFrom(_assemblyPath, type.FullName);
+            return instance;
         }
 
         private object InvokeMethodWithResultClass(
@@ -69,10 +74,19 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             if (methodInfo == null)
                 throw new MissingMethodException(
                     $"Method '{methodName}' in class '{className}' in assembly '{_assembly.FullName}' not found.");
+
+            // unwrap object handles
+            arguments = arguments
+                .Select(x => x is ObjectHandle handle ? handle.Unwrap() : x)
+                .ToArray();
+
             if (methodInfo.IsGenericMethod)
             {
-                var types = arguments.Select(x => x.GetType()).ToArray();
-                methodInfo = methodInfo.MakeGenericMethod(types);
+                var argumentTypes = arguments
+                    .Select(x => x.GetType())
+                    .ToArray();
+
+                methodInfo = methodInfo.MakeGenericMethod(argumentTypes);
             }
 
             var instance = Activator.CreateInstance(type);

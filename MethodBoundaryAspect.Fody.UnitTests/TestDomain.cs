@@ -5,8 +5,6 @@ namespace MethodBoundaryAspect.Fody.UnitTests
 {
     public class TestDomain : IDisposable
     {
-        private readonly AppDomain _appDomain;
-
         public TestDomain()
         {
             var appSetup = new AppDomainSetup {ApplicationBase = Environment.CurrentDirectory};
@@ -15,20 +13,22 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             var baseEvidence = AppDomain.CurrentDomain.Evidence;
             var evidence = new Evidence(baseEvidence);
 
-            _appDomain = AppDomain.CreateDomain("TestDomain", evidence, appSetup);
+            AppDomain = AppDomain.CreateDomain("TestDomain", evidence, appSetup);
         }
+
+        public AppDomain AppDomain { get; }
 
         public AssemblyLoader CreateAssemblyLoader()
         {
             var assemblyLoaderType = typeof (AssemblyLoader);
-            return (AssemblyLoader) _appDomain.CreateInstanceAndUnwrap(
+            return (AssemblyLoader) AppDomain.CreateInstanceAndUnwrap(
                 assemblyLoaderType.Assembly.FullName,
                 assemblyLoaderType.FullName);
         }
 
         public void Dispose()
         {
-            AppDomain.Unload(_appDomain);
+            AppDomain.Unload(AppDomain);
         }
     }
 }
