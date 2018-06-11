@@ -46,7 +46,7 @@ namespace MethodBoundaryAspect.Fody
 
         public MethodReference GetDebuggerStepThroughAttributeCtorReference()
         {
-            var typeReference = _referenceFinder.GetTypeReference(typeof (System.Diagnostics.DebuggerStepThroughAttribute));
+            var typeReference = _referenceFinder.GetTypeReference(typeof (System.Diagnostics.DebuggerStepThroughAttribute), "System.Diagnostics.Debug");
             return _referenceFinder.GetConstructorReference(typeReference, x => true);
         }
 
