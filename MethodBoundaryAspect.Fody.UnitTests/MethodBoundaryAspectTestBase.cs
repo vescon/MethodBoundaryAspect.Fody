@@ -1,9 +1,11 @@
-﻿using System;
+﻿using FluentAssertions;
+using MethodBoundaryAspect.Fody.UnitTests.Unified;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
-using FluentAssertions;
-using MethodBoundaryAspect.Fody.UnitTests.Unified;
 
 namespace MethodBoundaryAspect.Fody.UnitTests
 {
@@ -115,7 +117,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             }
 
             WeaveAssembly(type, Weaver);
-            RunPeVerify();
+            var ignores = type.Assembly.GetCustomAttributes<UnverifiableTestAssembly.Attributes.IgnorePEVerifyCode>();
+            RunPeVerify(ignores.Select(a => a.ErrorCode));
             LoadWeavedAssembly();
         }
 
@@ -163,14 +166,14 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 $"{type.FullName}.{propertyInfo.GetMethod.Name}");
         }
 
-        private void RunPeVerify()
+        private void RunPeVerify(IEnumerable<string> ignoreErrorCodes)
         {
             Action action = () =>
             {
                 var runIlSpy = false;
                 try
                 {
-                    PeVerifier.Verify(WeavedAssemblyPath);
+                    PeVerifier.Verify(WeavedAssemblyPath, ignoreErrorCodes);
                 }
                 catch (Exception)
                 {
