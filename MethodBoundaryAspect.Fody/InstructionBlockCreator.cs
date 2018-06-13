@@ -32,20 +32,17 @@ namespace MethodBoundaryAspect.Fody
             return variableDefinition;
         }
 
-        public InstructionBlock CreateThisVariable(VariableDefinition instanceVariable,
-            TypeReference objectTypeReference)
+        public InstructionBlock CreateThisVariable(VariableDefinition instanceVariable)
         {
             if (_method.IsStatic)
                 return new InstructionBlock("Static method call: " + _method.Name, _processor.Create(OpCodes.Nop));
-
+            
             var loadThisInstruction = _processor.Create(OpCodes.Ldarg_0);
-            var castInstruction = _processor.Create(OpCodes.Castclass, objectTypeReference);
             var storeThisInstruction = _processor.Create(OpCodes.Stloc, instanceVariable);
 
             return new InstructionBlock(
                 "Store instance for: " + _method.Name,
                 loadThisInstruction,
-                castInstruction,
                 storeThisInstruction);
         }
 

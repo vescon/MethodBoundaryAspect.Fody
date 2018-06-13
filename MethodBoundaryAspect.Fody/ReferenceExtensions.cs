@@ -12,8 +12,9 @@ namespace MethodBoundaryAspect.Fody
         {
             if (self.GenericParameters.Count != arguments.Length)
                 throw new ArgumentException ();
-
+           
             var instance = new GenericInstanceType (self);
+
             foreach (var argument in arguments)
                 instance.GenericArguments.Add (argument);
 

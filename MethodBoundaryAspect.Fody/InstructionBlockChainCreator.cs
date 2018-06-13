@@ -77,7 +77,7 @@ namespace MethodBoundaryAspect.Fody
             typeReference = FixTypeReference(typeReference);
 
             var instanceVariable = _creator.CreateVariable(typeReference);
-            var block = _creator.CreateThisVariable(instanceVariable, typeReference);
+            var block = _creator.CreateThisVariable(instanceVariable);
             var result = new NamedInstructionBlockChain(instanceVariable, typeReference);
             result.InstructionBlocks.Add(block);
             return result;
