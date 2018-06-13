@@ -30,7 +30,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be(GetExpectedResult(testMethodName));

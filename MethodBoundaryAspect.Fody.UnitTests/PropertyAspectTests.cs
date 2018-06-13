@@ -17,7 +17,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyPropertyAndLoad(TestClassType, "StaticProperty");
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be("[set_StaticProperty][get_StaticProperty]");
@@ -31,7 +31,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyPropertyAndLoad(TestClassType, "InstanceProperty");
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be("[set_InstanceProperty][get_InstanceProperty]");

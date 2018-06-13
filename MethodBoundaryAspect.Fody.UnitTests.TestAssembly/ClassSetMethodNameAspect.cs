@@ -2,9 +2,11 @@
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
 {
-    [SetClassNameAspect]
+    [ClassSetMethodNameAspectAspect]
     public class ClassSetMethodNameAspect
     {
+        public static object Result { get; set; }
+
         public static void ClassStaticMethodCall()
         {
         }

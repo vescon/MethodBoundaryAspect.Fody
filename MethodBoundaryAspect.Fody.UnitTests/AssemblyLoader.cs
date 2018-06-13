@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Runtime.Remoting;
 
@@ -22,23 +23,14 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             _assembly = Assembly.UnsafeLoadFrom(assemblyPath);
         }
 
-        public object InvokeMethodWithResultClass(
-            string resultClassName,
-            string className,
-            string methodName,
-            params object[] arguments)
+        public object InvokeMethod(TypeInfo typeInfo, string methodName, params object[] arguments)
         {
-            return InvokeMethodWithResultClass(resultClassName, className, methodName, false, arguments);
+            return InvokeMethodInternal(typeInfo, methodName, false, arguments);
         }
 
-        public object InvokeMethod(string className, string methodName, params object[] arguments)
+        public object InvokeMethodSwallowException(TypeInfo typeInfo, string methodName, params object[] arguments)
         {
-            return InvokeMethodWithResultClass(className, className, methodName, arguments);
-        }
-
-        public object InvokeMethodSwallowException(string className, string methodName, params object[] arguments)
-        {
-            return InvokeMethodWithResultClass(className, className, methodName, true, arguments);
+            return InvokeMethodInternal(typeInfo, methodName, true, arguments);
         }
 
         public object GetLastResult(string className)
@@ -61,19 +53,24 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             var instance = _domain.CreateInstanceFrom(_assemblyPath, type.FullName);
             return instance;
         }
-
-        private object InvokeMethodWithResultClass(
-            string resultClassName,
-            string className,
+        
+        private object InvokeMethodInternal(
+            TypeInfo typeInfo,
             string methodName,
             bool swallowException,
             params object[] arguments)
         {
-            var type = _assembly.GetType(className, true);
+            var type = _assembly.GetType(typeInfo.ClassName, true);
+            if (type.IsGenericType)
+            {
+                var genericTypeArguments = typeInfo.GenericTypeParameterNames.Select(x => _assembly.GetType(x, true)).ToArray();
+                type = type.MakeGenericType(genericTypeArguments);
+            }
+
             var methodInfo = type.GetMethod(methodName);
             if (methodInfo == null)
                 throw new MissingMethodException(
-                    $"Method '{methodName}' in class '{className}' in assembly '{_assembly.FullName}' not found.");
+                    $"Method '{methodName}' in class '{typeInfo.ClassName}' in assembly '{_assembly.FullName}' not found.");
 
             // unwrap object handles
             arguments = arguments
@@ -104,7 +101,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                     throw;
             }
 
-            var resultClass = _assembly.GetType(resultClassName, true);
+            var resultClass = _assembly.GetType(typeInfo.ClassName, true);
             var resultProperty = resultClass.GetProperty("Result");
             if (resultProperty == null)
                 return returnValue;

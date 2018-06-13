@@ -2,7 +2,7 @@
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
 {
-    [SetClassNameAspect]
+    [OnlyOnEntryAspect]
     public interface IInterfaceMethods
     {
         void DoSomething();

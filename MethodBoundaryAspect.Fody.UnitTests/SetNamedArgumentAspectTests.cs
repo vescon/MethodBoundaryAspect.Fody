@@ -17,7 +17,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be("Value: 43, BoolValue: True, AllowedValue: Value2, Field: test, IntField: 10");
@@ -31,7 +31,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be("Value: 43, BoolValue: True, AllowedValue: Value2, Field: test, IntField: 10");

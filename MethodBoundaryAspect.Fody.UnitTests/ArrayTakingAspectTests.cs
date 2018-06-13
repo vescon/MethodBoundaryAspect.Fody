@@ -17,7 +17,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             int[] args = result.Should().BeOfType<int[]>().Subject;

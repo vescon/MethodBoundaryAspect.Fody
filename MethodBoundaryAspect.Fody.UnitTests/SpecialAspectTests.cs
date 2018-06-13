@@ -16,7 +16,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
 
             // Act
             WeaveAssemblyClassAndLoad(testClassType);
-            Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName);
+            Action call = () => AssemblyLoader.InvokeMethod(testClassType.TypeInfo(), testMethodName);
 
             // Assert
             call.Should().NotThrow();
@@ -31,7 +31,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
 
             // Act
             WeaveAssemblyClassAndLoad(testClassType);
-            Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName);
+            Action call = () => AssemblyLoader.InvokeMethod(testClassType.TypeInfo(), testMethodName);
 
             // Assert
             call.Should().NotThrow();
@@ -46,7 +46,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
 
             // Act
             WeaveAssemblyClassAndLoad(testClassType);
-            Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName);
+            Action call = () => AssemblyLoader.InvokeMethod(testClassType.TypeInfo(), testMethodName);
 
             // Assert
             call.Should().NotThrow();

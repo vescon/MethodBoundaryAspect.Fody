@@ -13,10 +13,10 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             // Arrange
             const string testMethodName = "DummyMethod";
             var testClassType = typeof(ClassWithIndexer);
-
+            
             // Act
             WeaveAssemblyClassAndLoad(testClassType);
-            Action call = () => AssemblyLoader.InvokeMethod(testClassType.FullName, testMethodName);
+            Action call = () => AssemblyLoader.InvokeMethod(testClassType.TypeInfo(), testMethodName);
 
             // Assert
             RunIlSpy();

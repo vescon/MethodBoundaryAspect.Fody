@@ -8,9 +8,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
     public class SetMethodNameAspectTests : MethodBoundaryAspectTestBase
     {
         private static readonly Type TestMethodsType = typeof (SetMethodNameAspectMethods);
-
         private static readonly Type TestClassType = typeof (ClassSetMethodNameAspect);
-        private static readonly Type TestClassResultType = typeof (ClassSetMethodNameAspectResult);
         
         [Fact]
         public void IfStaticMethodIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
@@ -20,7 +18,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyMethodAndLoad(TestMethodsType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestMethodsType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(TestMethodsType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be("StaticMethodCall");
@@ -34,7 +32,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyMethodAndLoad(TestMethodsType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestMethodsType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(TestMethodsType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be("InstanceMethodCall");
@@ -48,9 +46,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethodWithResultClass(
-                TestClassResultType.FullName,
-                TestClassType.FullName,
+            var result = AssemblyLoader.InvokeMethod(
+                TestClassType.TypeInfo(),
                 testMethodName);
 
             // Assert
@@ -65,9 +62,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethodWithResultClass(
-                TestClassResultType.FullName,
-                TestClassType.FullName,
+            var result = AssemblyLoader.InvokeMethod(
+                TestClassType.TypeInfo(),
                 testMethodName);
 
             // Assert

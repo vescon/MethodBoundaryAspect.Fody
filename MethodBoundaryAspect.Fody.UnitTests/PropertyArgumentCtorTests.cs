@@ -17,7 +17,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be("a");
@@ -31,7 +31,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be("expectedResult");
@@ -45,7 +45,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be("System.String;System.Object");

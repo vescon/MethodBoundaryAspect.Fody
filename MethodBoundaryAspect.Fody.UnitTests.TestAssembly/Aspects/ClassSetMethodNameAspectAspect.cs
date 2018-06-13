@@ -2,11 +2,11 @@
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Aspects
 {
-    public class SetClassNameAspect : OnMethodBoundaryAspect
+    public class ClassSetMethodNameAspectAspect : OnMethodBoundaryAspect
     {
         public override void OnEntry(MethodExecutionArgs arg)
         {
-            ClassSetMethodNameAspectResult.Result =
+            ClassSetMethodNameAspect.Result =
                 arg.Method == null
                     ? "No method info found"
                     : arg.Method.Name;

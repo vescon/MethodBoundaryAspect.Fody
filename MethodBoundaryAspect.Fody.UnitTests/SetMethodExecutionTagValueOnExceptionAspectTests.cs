@@ -17,7 +17,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethodSwallowException(TestClassType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethodSwallowException(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be("MethodExecutionTag1");
@@ -31,7 +31,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethodSwallowException(TestClassType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethodSwallowException(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be("MethodExecutionTag1");

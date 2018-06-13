@@ -17,7 +17,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyClassAndLoad(TestClassType);
 
             // Act
-            var result = (string[])AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName, "System.Int32");
+            var result = (string[])AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName, "System.Int32");
 
             // Assert
             result[0].Should().Be(TestClassType.FullName);
@@ -31,7 +31,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyClassAndLoad(TestClassType);
 
             // Act
-            var result = (string[])AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
+            var result = (string[])AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             result[0].Should().Be("ExpectedResult");
