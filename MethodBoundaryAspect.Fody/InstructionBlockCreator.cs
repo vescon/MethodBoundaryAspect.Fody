@@ -224,12 +224,18 @@ namespace MethodBoundaryAspect.Fody
             foreach (var argument in arguments)
             {
                 loadArgumentsInstructions.Add(_processor.Create(OpCodes.Ldloc, argument));
+                TypeReference varType = argument.VariableType;
+                if (argument.VariableType.IsByReference)
+                {
+                    varType = ((ByReferenceType)argument.VariableType).ElementType;
+                    loadArgumentsInstructions.Add(_processor.Create(OpCodes.Ldobj, varType));
+                }
 
                 var parameter = methodReference.Parameters[parameterCount];
-                if (parameter.ParameterType != argument.VariableType)
+                if (parameter.ParameterType != varType)
                 {
-                    if (argument.VariableType.IsValueType || argument.VariableType.IsGenericParameter)
-                        loadArgumentsInstructions.Add(_processor.Create(OpCodes.Box, argument.VariableType));
+                    if (varType.IsValueType || varType.IsGenericParameter)
+                        loadArgumentsInstructions.Add(_processor.Create(OpCodes.Box, varType));
                 }
                 parameterCount++;
             }
