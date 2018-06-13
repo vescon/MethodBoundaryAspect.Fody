@@ -17,7 +17,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyClassAndLoad(TestClassType);
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be(10);
@@ -31,7 +31,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             WeaveAssemblyClassAndLoad(TestClassType);
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestClassType.FullName, testMethodName);
+            var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
             result.Should().Be("overwritten");
