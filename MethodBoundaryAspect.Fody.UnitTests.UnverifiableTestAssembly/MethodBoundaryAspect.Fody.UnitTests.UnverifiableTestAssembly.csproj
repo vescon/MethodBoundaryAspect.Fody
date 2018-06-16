@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects\MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects.csproj" />
     <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
   </ItemGroup>
 

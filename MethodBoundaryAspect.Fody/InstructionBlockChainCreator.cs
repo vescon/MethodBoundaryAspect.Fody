@@ -308,7 +308,7 @@ namespace MethodBoundaryAspect.Fody
             }
 
             var type = FixTypeReference(targetMethod.DeclaringType);
-            var targetMethodReference = FixMethodReference(targetMethod);
+            var targetMethodReference = FixMethodReference(type, targetMethod);
             var call = caller == null
                 ? _creator.CallStaticMethod(targetMethodReference, resultVariable, variables.ToArray())
                 : _creator.CallInstanceMethod(targetMethodReference, caller, resultVariable, variables.ToArray());
@@ -338,15 +338,32 @@ namespace MethodBoundaryAspect.Fody
             return typeReference.MakeGenericType(genericParameters);
         }
 
-        private static MethodReference FixMethodReference(MethodReference targetMethod)
+        private static MethodReference FixMethodReference(TypeReference declaringType, MethodReference targetMethod)
         {
-            if (!targetMethod.HasGenericParameters) 
-                return targetMethod;
-
-            // workaround for method in generic type (slightly modified, shorter and better :)
+            // Taken and adapted from
             // https://stackoverflow.com/questions/4968755/mono-cecil-call-generic-base-class-method-from-other-assembly
+            if (targetMethod is MethodDefinition)
+            {
+                var newTargetMethod = new MethodReference(targetMethod.Name, targetMethod.ReturnType, declaringType)
+                {
+                    HasThis = targetMethod.HasThis,
+                    ExplicitThis = targetMethod.ExplicitThis,
+                    CallingConvention = targetMethod.CallingConvention
+                };
+                foreach (var p in targetMethod.Parameters)
+                    newTargetMethod.Parameters.Add(new ParameterDefinition(p.Name, p.Attributes, p.ParameterType));
+                foreach (var gp in targetMethod.GenericParameters)
+                    newTargetMethod.GenericParameters.Add(new GenericParameter(gp.Name, newTargetMethod));
+                
+                targetMethod = newTargetMethod;
+            }
+            else
+                targetMethod.DeclaringType = declaringType;
 
-            return targetMethod.MakeGeneric();
+            if (targetMethod.HasGenericParameters)
+                return targetMethod.MakeGeneric();
+            
+            return targetMethod;
         }
     }
 }

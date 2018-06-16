@@ -151,7 +151,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             if (methodInfo == null)
                 throw new InvalidOperationException($"Method '{methodName}' not found in type '{type.FullName}'");
 
-            return $"{type.FullName}.{methodInfo.Name}";
+            return $"{type.FullName.Replace('+','/')}.{methodInfo.Name}";
         }
 
         private Tuple<string,string> CreateFullPropertyName(Type type, string propertyName)

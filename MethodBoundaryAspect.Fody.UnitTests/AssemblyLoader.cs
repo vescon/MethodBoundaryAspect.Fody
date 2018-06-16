@@ -23,14 +23,18 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             _assembly = Assembly.UnsafeLoadFrom(assemblyPath);
         }
 
+        public object InvokeGenericMethod(TypeInfo typeInfo, string methodName, Type[] typeArguments, params object[] arguments)
+        {
+            return InvokeMethodInternal(typeInfo, methodName, false, typeArguments, arguments);
+        }
         public object InvokeMethod(TypeInfo typeInfo, string methodName, params object[] arguments)
         {
-            return InvokeMethodInternal(typeInfo, methodName, false, arguments);
+            return InvokeMethodInternal(typeInfo, methodName, false, null, arguments);
         }
 
         public object InvokeMethodSwallowException(TypeInfo typeInfo, string methodName, params object[] arguments)
         {
-            return InvokeMethodInternal(typeInfo, methodName, true, arguments);
+            return InvokeMethodInternal(typeInfo, methodName, true, null, arguments);
         }
 
         public object GetLastResult(string className)
@@ -53,15 +57,16 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             var instance = _domain.CreateInstanceFrom(_assemblyPath, type.FullName);
             return instance;
         }
-        
+
         private object InvokeMethodInternal(
             TypeInfo typeInfo,
             string methodName,
             bool swallowException,
+            Type[] argumentTypes,
             params object[] arguments)
         {
             var type = _assembly.GetType(typeInfo.ClassName, true);
-            if (type.IsGenericType)
+            if (type.IsGenericTypeDefinition)
             {
                 var genericTypeArguments = typeInfo.GenericTypeParameterNames.Select(x => _assembly.GetType(x, true)).ToArray();
                 type = type.MakeGenericType(genericTypeArguments);
@@ -79,9 +84,10 @@ namespace MethodBoundaryAspect.Fody.UnitTests
 
             if (methodInfo.IsGenericMethod)
             {
-                var argumentTypes = arguments
-                    .Select(x => x.GetType())
-                    .ToArray();
+                if (argumentTypes == null)
+                    argumentTypes = arguments
+                        .Select(x => x.GetType())
+                        .ToArray();
 
                 methodInfo = methodInfo.MakeGenericMethod(argumentTypes);
             }
@@ -101,8 +107,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                     throw;
             }
 
-            var resultClass = _assembly.GetType(typeInfo.ClassName, true);
-            var resultProperty = resultClass.GetProperty("Result");
+            var resultProperty = type.GetProperty("Result");
             if (resultProperty == null)
                 return returnValue;
 
