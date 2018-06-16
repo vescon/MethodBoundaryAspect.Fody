@@ -310,7 +310,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             Weaver.TotalWeavedTypes.Should().Be(1);
         }
 
-        [Fact(Skip = "Issue #33")]
+        [Fact]
         public void IfAGenericClassWithClassConstraintWithAMethodIsWeaved_ThenTheAssemblyShouldBeValid()
         {
             // Arrange

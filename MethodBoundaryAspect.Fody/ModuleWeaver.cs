@@ -148,7 +148,23 @@ namespace MethodBoundaryAspect.Fody
             var assemblyMethodBoundaryAspects = module.Assembly.CustomAttributes;
 
             foreach (var type in module.Types)
-                WeaveType(module, type, assemblyMethodBoundaryAspects);
+                WeaveTypeAndNestedTypes(module, type, assemblyMethodBoundaryAspects);
+        }
+
+        private void WeaveTypeAndNestedTypes(ModuleDefinition module, TypeDefinition type,
+            Collection<CustomAttribute> assemblyMethodBoundaryAspects)
+        {
+            WeaveType(module, type, assemblyMethodBoundaryAspects);
+            if (type.HasNestedTypes)
+            {
+                var classMethodBoundaryAspects = new Collection<CustomAttribute>();
+                foreach (var assemblyAspect in assemblyMethodBoundaryAspects)
+                    classMethodBoundaryAspects.Add(assemblyAspect);
+                foreach (var classAspect in type.CustomAttributes)
+                    classMethodBoundaryAspects.Add(classAspect);
+                foreach (var nestedType in type.NestedTypes)
+                    WeaveTypeAndNestedTypes(module, nestedType, classMethodBoundaryAspects);
+            }
         }
 
         private void WeaveType(

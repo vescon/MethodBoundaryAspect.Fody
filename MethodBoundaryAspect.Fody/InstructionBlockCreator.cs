@@ -220,9 +220,10 @@ namespace MethodBoundaryAspect.Fody
             var parameterCount = 0;
             foreach (var argument in arguments)
             {
+                bool paramIsByRef = methodReference.Parameters[parameterCount].ParameterType.IsByReference;
                 loadArgumentsInstructions.Add(_processor.Create(OpCodes.Ldloc, argument));
                 TypeReference varType = argument.VariableType;
-                if (argument.VariableType.IsByReference)
+                if (argument.VariableType.IsByReference && !paramIsByRef)
                 {
                     varType = ((ByReferenceType)argument.VariableType).ElementType;
                     loadArgumentsInstructions.Add(_processor.Create(OpCodes.Ldobj, varType));
@@ -407,7 +408,6 @@ namespace MethodBoundaryAspect.Fody
             yield return Instruction.Create(OpCodes.Ldloc, paramsArray);
             yield return Instruction.Create(OpCodes.Ldc_I4, parameterDefinition.Index);
             yield return Instruction.Create(OpCodes.Ldarg, parameterDefinition);
-
             // Reset boolean flag variable to false
 
             // If a parameter is passed by reference then you need to use Ldind
@@ -419,6 +419,7 @@ namespace MethodBoundaryAspect.Fody
                 var referencedTypeSpec = (TypeSpecification) paramType;
 
                 var pointerToValueTypeVariable = false;
+                
                 switch (referencedTypeSpec.ElementType.MetadataType)
                 {
                         //Indirect load value of type int8 as int32 on the stack
@@ -490,7 +491,7 @@ namespace MethodBoundaryAspect.Fody
                         // Need to check if it is a value type instance, in which case
                         // we use Ldobj instruction to copy the contents of value type
                         // instance to stack and then box it
-                        if (referencedTypeSpec.ElementType.IsValueType)
+                        if (referencedTypeSpec.ElementType.IsValueType || referencedTypeSpec.ElementType.IsGenericParameter)
                         {
                             yield return Instruction.Create(OpCodes.Ldobj, referencedTypeSpec.ElementType);
                             pointerToValueTypeVariable = true;
