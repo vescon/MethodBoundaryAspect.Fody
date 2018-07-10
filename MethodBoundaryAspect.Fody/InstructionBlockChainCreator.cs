@@ -67,14 +67,18 @@ namespace MethodBoundaryAspect.Fody
 
         public NamedInstructionBlockChain CreateThisVariable()
         {
-            var type = typeof(object);
-            var objectType = _referenceFinder.GetTypeReference(type);
-            return CreateThisVariable(objectType);
+            var type = _method.DeclaringType;
+            TypeReference typeRef = type;
+            if (typeRef.IsValueType)
+                typeRef = new ByReferenceType(type);
+            return CreateThisVariable(type);
         }
 
         public NamedInstructionBlockChain CreateThisVariable(TypeReference typeReference)
         {
             typeReference = FixTypeReference(typeReference);
+            if (typeReference.IsValueType)
+                typeReference = new ByReferenceType(typeReference);
 
             var instanceVariable = _creator.CreateVariable(typeReference);
             var block = _creator.CreateThisVariable(instanceVariable);
