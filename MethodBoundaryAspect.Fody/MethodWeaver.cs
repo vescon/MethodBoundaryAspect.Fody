@@ -208,19 +208,14 @@ namespace MethodBoundaryAspect.Fody
         {
             foreach (var aspect in _aspects.Where(x => x.AspectMethods.HasFlag(AspectMethods.OnEntry)))
             {
-                var call = CallOnEntry(aspect);
+                var call = _creator.CallAspectOnEntry(aspect, ExecutionArgs);
                 AddToSetup(call);
 
                 if (HasMultipleAspects)
                     AddToSetup(_creator.SaveMethodExecutionArgsTagToPersistable(ExecutionArgs, aspect.TagPersistable));
             }
         }
-
-        protected virtual InstructionBlockChain CallOnEntry(AspectData data)
-        {
-            return _creator.CallAspectOnEntry(data, ExecutionArgs);
-        }
-
+        
         protected virtual void HandleBody(VariableDefinition returnValue, out Instruction instructionCallStart, out Instruction instructionCallEnd)
         {
             VariableDefinition thisVariable = null;

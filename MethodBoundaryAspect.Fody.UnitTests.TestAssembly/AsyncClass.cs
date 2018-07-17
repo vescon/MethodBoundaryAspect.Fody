@@ -1,6 +1,7 @@
 ﻿using MethodBoundaryAspect.Fody.Attributes;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Aspects;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
@@ -169,6 +170,20 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
         {
             await Task.Delay(10);
             return 50;
+        }
+
+        public void AttemptThrowWithoutEntry()
+        {
+            var t = Throw();
+            while (!t.IsCompleted) ;
+            Thread.Sleep(1000);
+        }
+
+        [AsyncExceptionOnlyAspect]
+        public async Task Throw()
+        {
+            await Task.Delay(10);
+            throw new Exception("A message");
         }
     }
 }
