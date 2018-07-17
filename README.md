@@ -78,3 +78,151 @@ public class Sample
     }
 }
 ```
+
+### Additional Sample
+
+Consider an aspect written like this.
+
+#### The aspect code
+
+```csharp
+using static System.Console;
+
+public sealed class LogAttribute : OnMethodBoundaryAspect
+{
+    public override void OnEntry(MethodExecutionArgs args)
+    {
+        WriteLine("On entry");
+    }
+
+    public override void OnExit(MethodExecutionArgs args)
+    {
+        WriteLine("On exit");
+    }
+
+    public override void OnException(MethodExecutionArgs args)
+    {
+        WriteLine("On exception");
+    }
+}
+```
+
+#### The applied aspect
+
+Suppose the aspect is applied to this method:
+
+```csharp
+using static System.Console;
+
+public class Sample
+{
+    [Log]
+    public void Method()
+    {
+        WriteLine("Entering original method");
+        OtherClass.DoSomeOtherWork();
+        WriteLine("Exiting original method");
+    }
+}
+```
+
+We would expect the method call to output this:
+
+```
+On entry
+Entering original method
+Exiting original method
+On exit
+```
+
+If, however, the call to `OtherClass.DoSomeOtherWork()` throws an exception, then it will look like this instead:
+
+```
+On entry
+Entering original method
+On exception
+```
+
+Note that the `OnExit` handler is not called when an exception is thrown.
+
+### Asynchronous Sample
+
+Consider the same aspect as above but now applied to this method:
+
+```csharp
+using static System.Console;
+
+public class Sample
+{
+    [Log]
+    public async Task MethodAsync()
+    {
+        WriteLine("Entering original method");
+        await OtherClass.DoSomeOtherWorkAsync();
+        WriteLine("Exiting original method");
+    }
+}
+```
+
+The `On entry` line will be written when `MethodAsync` is first called on the main thread.
+
+The `Entering original method` line will be written shortly thereafter, on the main thread.
+
+The `Exiting original method` line will be written only after the task returned by `OtherClass.DoSomeOtherWorkAsync` has completed. Depending on your context and whether the given task was already complete when it was returned, this may or may not be on the main thread.
+
+The `On exit` line will be written when `MethodAsync` returns to its caller, which may be slightly after or long before the long-running task has completed, but it will occur synchronously on the main thread.
+
+The `On exception` line will be written if `OtherClass.DoSomeOtherWorkAsync` throws an exception, returns null (thus causing a `NullReferenceException` when it is `await`ed), or returns a faulted task. As such, this may occur long after `MethodAsync` itself has returned its `Task` to its caller. The call to `OnException` will take place on whichever thread the synchronization context was running when the exception occurred.
+
+Note that, unlike for synchronous methods, an aspect for an asynchronous method will have its `OnExit` handler called whether or not its `OnException` is called. Furthermore, unlike synchronous methods, the call to `OnException` may take place long after the call to `OnExit`. If this behavior is undesirable, consider using the `MethodExecutionTag` to track whether the `OnExit` has run before the `OnException`. One such solution looks like this.
+
+```csharp
+using static System.Console;
+
+public sealed class LogAttribute : OnMethodBoundaryAspect
+{
+    public override void OnEntry(MethodExecutionArgs args)
+    {
+        WriteLine("On entry");
+        arg.MethodExecutionTag = false;
+    }
+
+    public override void OnExit(MethodExecutionArgs args)
+    {
+        WriteLine("On exit");
+        arg.MethodExecutionTag = true;
+    }
+
+    public override void OnException(MethodExecutionArgs args)
+    {
+        if ((bool)arg.MethodExecutionTag)
+          return;
+        WriteLine("On exception");
+    }
+}
+```
+
+One additional note about the asynchronous behavior: the `OnExit` handler runs when the `MethodAsync` returns to its caller, not when the asynchronous code finishes running, which may be some time later. If you need code to be run when the method's asynchronous code finishes instead of when the actual method exits, consider a solution like the following:
+
+```csharp
+using static System.Console;
+
+public sealed class LogAttribute : OnMethodBoundaryAspect
+{
+    public override void OnEntry(MethodExecutionArgs args)
+    {
+        WriteLine("On entry");
+    }
+
+    public override void OnExit(MethodExecutionArgs args)
+    {
+        if (args.ReturnValue is Task t)
+            t.ContinueWith(task => WriteLine("On exit"));
+    }
+
+    public override void OnException(MethodExecutionArgs args)
+    {
+        WriteLine("On exception");
+    }
+}
+```

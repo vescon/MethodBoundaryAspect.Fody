@@ -116,7 +116,9 @@ namespace MethodBoundaryAspect.Fody
                     var assignVariableInstructionBlock = AssignValueFromStack(valueVariable);
 
                     var methodRef = _referenceFinder.GetMethodReference(instanceTypeReference, md => md.Name == "set_" + propertyCopy.Name);
-                    var setPropertyInstructionBlock = CallVoidInstanceMethod(methodRef, newInstance, valueVariable);
+                    var setPropertyInstructionBlock = CallVoidInstanceMethod(methodRef,
+                        new VariablePersistable(newInstance),
+                        new VariablePersistable(valueVariable));
 
                     loadSetConstValuesToAspect.AddRange(loadOnStackInstruction);
                     loadSetConstValuesToAspect.AddRange(assignVariableInstructionBlock.Instructions);
@@ -174,11 +176,11 @@ namespace MethodBoundaryAspect.Fody
                 "PushValueOnStack",
                 _processor.Create(OpCodes.Ldloc, variable));
         }
-
+        
         public InstructionBlock CallVoidInstanceMethod(
             MethodReference methodReference,
-            VariableDefinition callInstanceVariable,
-            params VariableDefinition[] argumentVariables)
+            IPersistable callInstanceVariable,
+            params ILoadable[] argumentVariables)
         {
             var instructions = CreateInstanceMethodCallInstructions(methodReference,
                 callInstanceVariable, null, argumentVariables);
@@ -187,81 +189,95 @@ namespace MethodBoundaryAspect.Fody
 
         public InstructionBlock CallStaticMethod(
             MethodReference methodReference,
-            VariableDefinition returnValue,
-            params VariableDefinition[] argumentVariables)
+            IPersistable returnValue,
+            params ILoadable[] argumentVariables)
         {
-            var instructions = CreateInstanceMethodCallInstructions(methodReference,
-                null, returnValue, argumentVariables);
+            var instructions = CreateMethodCallInstructions(methodReference, null, returnValue, argumentVariables);
             return new InstructionBlock("CallStaticMethod: " + methodReference.Name, instructions);
         }
 
         public InstructionBlock CallInstanceMethod(
             MethodReference methodReference,
-            VariableDefinition callerInstance,
-            VariableDefinition returnValue,
-            params VariableDefinition[] arguments)
+            ILoadable callerInstance,
+            IPersistable returnValue,
+            params ILoadable[] arguments)
         {
             var instructions = CreateInstanceMethodCallInstructions(methodReference,
                 callerInstance, returnValue, arguments);
             return new InstructionBlock("CallInstanceMethod: " + methodReference.Name, instructions);
         }
 
-        private List<Instruction> CreateInstanceMethodCallInstructions(
+        private static List<Instruction> CreateInstanceMethodCallInstructions(
             MethodReference methodReference,
-            VariableDefinition callerInstance,
-            VariableDefinition returnValue,
-            params VariableDefinition[] arguments)
+            ILoadable callerInstance,
+            IPersistable returnValue,
+            params ILoadable[] arguments)
         {
-            Instruction loadVariableInstruction = null;
-            if (callerInstance != null)
-                loadVariableInstruction = _processor.Create(OpCodes.Ldloc, callerInstance);
+            return CreateMethodCallInstructions(methodReference, callerInstance, returnValue, arguments);
+        }
+
+        private static List<Instruction> CreateMethodCallInstructions(
+            MethodReference methodReference,
+            ILoadable instance,
+            IPersistable returnValue,
+            params ILoadable[] arguments)
+        {
+            InstructionBlock loadVariableInstruction = null;
+            if (instance != null)
+                loadVariableInstruction = instance.Load(true);
 
             var loadArgumentsInstructions = new List<Instruction>();
             var parameterCount = 0;
             foreach (var argument in arguments)
             {
                 bool paramIsByRef = methodReference.Parameters[parameterCount].ParameterType.IsByReference;
-                loadArgumentsInstructions.Add(_processor.Create(OpCodes.Ldloc, argument));
-                TypeReference varType = argument.VariableType;
-                if (argument.VariableType.IsByReference && !paramIsByRef)
+
+                loadArgumentsInstructions.AddRange(argument.Load(false).Instructions);
+                TypeReference varType = argument.PersistedType;
+                if (varType.IsByReference && !paramIsByRef)
                 {
-                    varType = ((ByReferenceType)argument.VariableType).ElementType;
-                    loadArgumentsInstructions.Add(_processor.Create(OpCodes.Ldobj, varType));
+                    varType = ((ByReferenceType)varType).ElementType;
+                    loadArgumentsInstructions.Add(Instruction.Create(OpCodes.Ldobj, varType));
                 }
 
                 var parameter = methodReference.Parameters[parameterCount];
                 if (parameter.ParameterType != varType)
                 {
                     if (varType.IsValueType || varType.IsGenericParameter)
-                        loadArgumentsInstructions.Add(_processor.Create(OpCodes.Box, varType));
+                        loadArgumentsInstructions.Add(Instruction.Create(OpCodes.Box, varType));
                 }
                 parameterCount++;
             }
 
             var methodDefinition = methodReference.Resolve();
-            var methodCallInstruction = _processor.Create(
+            var methodCallInstruction = Instruction.Create(
                 methodDefinition.IsVirtual
                     ? OpCodes.Callvirt
                     : OpCodes.Call,
                 methodReference);
-
-            Instruction assignReturnValueToVariableInstruction = null;
-            if (returnValue != null)
+            
+            bool hasReturnValue = false;
+            List<Instruction> HandleReturnValue(List<Instruction> methodWork)
             {
-                if (IsVoid(methodDefinition.ReturnType))
+                if (!hasReturnValue)
+                    return methodWork;
+
+                return returnValue.Store(new InstructionBlock("", methodWork)).Instructions.ToList();
+            }
+            if (returnValue != null && methodDefinition.ReturnType != null)
+            {
+                if (IsVoid(returnValue.PersistedType))
                     throw new InvalidOperationException("Method has no return value");
 
-                assignReturnValueToVariableInstruction = _processor.Create(OpCodes.Stloc, returnValue);
+                hasReturnValue = true;
             }
 
             var instructions = new List<Instruction>();
             if (loadVariableInstruction != null)
-                instructions.Add(loadVariableInstruction);
+                instructions.AddRange(loadVariableInstruction.Instructions);
             instructions.AddRange(loadArgumentsInstructions);
             instructions.Add(methodCallInstruction);
-            if (assignReturnValueToVariableInstruction != null)
-                instructions.Add(assignReturnValueToVariableInstruction);
-            return instructions;
+            return HandleReturnValue(instructions);
         }
 
         private IList<Instruction> LoadValueOnStack(TypeReference parameterType, object value)
@@ -334,16 +350,6 @@ namespace MethodBoundaryAspect.Fody
             }
 
             throw new NotSupportedException("Parametertype: " + parameterType);
-        }
-
-        public IList<Instruction> LoadValueOnStackFromArguments(int index)
-        {
-            var instructions = new List<Instruction>
-            {
-                _processor.Create(OpCodes.Ldarg_S, (byte)index)
-            };
-
-            return instructions;
         }
 
         private IEnumerable<Instruction> LoadPrimitiveConstOnStack(MetadataType type, object value)
