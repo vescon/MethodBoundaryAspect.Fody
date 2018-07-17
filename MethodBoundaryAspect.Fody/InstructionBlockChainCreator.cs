@@ -26,6 +26,17 @@ namespace MethodBoundaryAspect.Fody
             _creator = new InstructionBlockCreator(_method, _referenceFinder);
         }
         
+        public NamedInstructionBlockChain CreateAndNewUpAspect(CustomAttribute aspect)
+        {
+            var aspectTypeReference = _moduleDefinition.ImportReference(aspect.AttributeType);
+            var aspectLocal = _creator.CreateVariable(aspectTypeReference);
+            var newObjectAspectBlock = _creator.NewObject(aspectLocal, aspectTypeReference, _moduleDefinition, aspect);
+
+            var newObjectAspectBlockChain = new NamedInstructionBlockChain(aspectLocal, aspectTypeReference);
+            newObjectAspectBlockChain.Add(newObjectAspectBlock);
+            return newObjectAspectBlockChain;
+        }
+
         public NamedInstructionBlockChain CreateVariable(TypeReference typeReference)
         {
             var variable = _creator.CreateVariable(typeReference);
@@ -36,6 +47,7 @@ namespace MethodBoundaryAspect.Fody
         {
             var typeReference = _referenceFinder.GetTypeReference(typeof (object));
             var variable = _creator.CreateVariable(typeReference);
+            _method.Body.Variables.Add(variable);
             return new NamedInstructionBlockChain(variable, typeReference);
         }
 
@@ -111,22 +123,28 @@ namespace MethodBoundaryAspect.Fody
             {
                 var methodExecutionArgsSetInstanceMethodRef =
                     _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Instance");
-                callSetInstanceBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetInstanceMethodRef, methodExecutionArgsVariable, createThisVariableBlock.Variable);
+                callSetInstanceBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetInstanceMethodRef,
+                    new VariablePersistable(methodExecutionArgsVariable),
+                    new VariablePersistable(createThisVariableBlock.Variable));
             }
 
             var methodExecutionArgsSetArgumentsMethodRef =
                 _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Arguments");
-            var callSetArgumentsBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetArgumentsMethodRef, methodExecutionArgsVariable, argumentsArrayChain.Variable);
+            var callSetArgumentsBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetArgumentsMethodRef,
+                new VariablePersistable(methodExecutionArgsVariable),
+                new VariablePersistable(argumentsArrayChain.Variable));
 
             var methodBaseTypeRef = _referenceFinder.GetTypeReference(typeof (MethodBase));
             var methodBaseVariable = _creator.CreateVariable(methodBaseTypeRef);
             var methodBaseGetCurrentMethod = _referenceFinder.GetMethodReference(methodBaseTypeRef,
                 md => md.Name == "GetCurrentMethod");
-            var callGetCurrentMethodBlock = _creator.CallStaticMethod(methodBaseGetCurrentMethod, methodBaseVariable);
+            var callGetCurrentMethodBlock = _creator.CallStaticMethod(methodBaseGetCurrentMethod, new VariablePersistable(methodBaseVariable));
 
             var methodExecutionArgsSetMethodBaseMethodRef =
                 _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Method");
-            var callSetMethodBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetMethodBaseMethodRef, methodExecutionArgsVariable, methodBaseVariable);
+            var callSetMethodBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetMethodBaseMethodRef,
+                new VariablePersistable(methodExecutionArgsVariable),
+                new VariablePersistable(methodBaseVariable));
 
             var newMethodExectionArgsBlockChain = new NamedInstructionBlockChain(methodExecutionArgsVariable,
                 methodExecutionArgsTypeRef);
@@ -155,12 +173,14 @@ namespace MethodBoundaryAspect.Fody
         }
 
         public InstructionBlockChain SetMethodExecutionArgsReturnValue(
-            NamedInstructionBlockChain newMethodExectionArgsBlockChain, NamedInstructionBlockChain loadReturnValue)
+            IPersistable newMethodExectionArgsBlockChain, NamedInstructionBlockChain loadReturnValue)
         {
             var methodExecutionArgsSetReturnValueMethodRef =
-                _referenceFinder.GetMethodReference(newMethodExectionArgsBlockChain.TypeReference,
+                _referenceFinder.GetMethodReference(newMethodExectionArgsBlockChain.PersistedType,
                     md => md.Name == "set_ReturnValue");
-            var callSetReturnValueBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetReturnValueMethodRef, newMethodExectionArgsBlockChain.Variable, loadReturnValue.Variable);
+            var callSetReturnValueBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetReturnValueMethodRef,
+                newMethodExectionArgsBlockChain,
+                new VariablePersistable(loadReturnValue.Variable));
 
             var block = new InstructionBlockChain();
             block.Add(callSetReturnValueBlock);
@@ -168,16 +188,18 @@ namespace MethodBoundaryAspect.Fody
         }
 
         public NamedInstructionBlockChain SetMethodExecutionArgsExceptionFromStack(
-            NamedInstructionBlockChain createMethodExecutionArgsInstance)
+            IPersistable createMethodExecutionArgsInstance)
         {
             var exceptionTypeRef = _referenceFinder.GetTypeReference(typeof (Exception));
             var exceptionVariable = _creator.CreateVariable(exceptionTypeRef);
             var assignExceptionVariable = _creator.AssignValueFromStack(exceptionVariable);
 
             var methodExecutionArgsSetExceptionMethodRef =
-                _referenceFinder.GetMethodReference(createMethodExecutionArgsInstance.TypeReference,
+                _referenceFinder.GetMethodReference(createMethodExecutionArgsInstance.PersistedType,
                     md => md.Name == "set_Exception");
-            var callSetExceptionBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetExceptionMethodRef, createMethodExecutionArgsInstance.Variable, exceptionVariable);
+            var callSetExceptionBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetExceptionMethodRef,
+                createMethodExecutionArgsInstance,
+                new VariablePersistable(exceptionVariable));
 
             var block = new NamedInstructionBlockChain(exceptionVariable, exceptionTypeRef);
             block.Add(assignExceptionVariable);
@@ -185,36 +207,27 @@ namespace MethodBoundaryAspect.Fody
             return block;
         }
 
-        public NamedInstructionBlockChain SaveMethodExecutionArgsTagToVariable(
-            NamedInstructionBlockChain createMethodExecutionArgsInstance,
-            VariableDefinition variable)
+        public InstructionBlockChain SaveMethodExecutionArgsTagToPersistable(
+            IPersistable createMethodExecutionArgsInstance,
+            IPersistable tag)
         {
             var getMethod =
-                _referenceFinder.GetMethodReference(createMethodExecutionArgsInstance.TypeReference,
+                _referenceFinder.GetMethodReference(createMethodExecutionArgsInstance.PersistedType,
                     md => md.Name == "get_MethodExecutionTag");
-
-            var objectTypeRef = _referenceFinder.GetTypeReference(typeof(object));
-            var call = _creator.CallInstanceMethod(getMethod, createMethodExecutionArgsInstance.Variable, variable);
-
-            var block = new NamedInstructionBlockChain(variable, objectTypeRef);
-            block.Add(call);
-            return block;
+            var chain = new InstructionBlockChain();
+            chain.Add(_creator.CallInstanceMethod(getMethod, createMethodExecutionArgsInstance, tag));
+            return chain;
         }
 
-        public NamedInstructionBlockChain LoadMethodExecutionArgsTagFromVariable(
-            NamedInstructionBlockChain createMethodExecutionArgsInstance,
-            VariableDefinition value)
+        public InstructionBlockChain LoadMethodExecutionArgsTagFromPersistable(
+            IPersistable createMethodExecutionArgsInstance,
+            IPersistable tag)
         {
-            var objectTypeRef = _referenceFinder.GetTypeReference(typeof (object));
-
-            var setMethod =
-                _referenceFinder.GetMethodReference(createMethodExecutionArgsInstance.TypeReference,
+            var setMethod = _referenceFinder.GetMethodReference(createMethodExecutionArgsInstance.PersistedType,
                     md => md.Name == "set_MethodExecutionTag");
-            var call = _creator.CallVoidInstanceMethod(setMethod, createMethodExecutionArgsInstance.Variable, value);
-
-            var block = new NamedInstructionBlockChain(value, objectTypeRef);
-            block.Add(call);
-            return block;
+            var chain = new InstructionBlockChain();
+            chain.Add(_creator.CallVoidInstanceMethod(setMethod, createMethodExecutionArgsInstance, tag));
+            return chain;
         }
 
         public NamedInstructionBlockChain LoadValueOnStack(NamedInstructionBlockChain instructionBlock)
@@ -249,39 +262,39 @@ namespace MethodBoundaryAspect.Fody
             return block;
         }
 
-        public InstructionBlockChain CallAspectOnEntry(NamedInstructionBlockChain createAspectInstance,
-            NamedInstructionBlockChain newMethodExectionArgsBlockChain)
+        public InstructionBlockChain CallAspectOnEntry(AspectData aspectInstance,
+            IPersistable executionArgs)
         {
-            var onEntryMethodRef = _referenceFinder.GetMethodReference(createAspectInstance.TypeReference,
+            var onEntryMethodRef = _referenceFinder.GetMethodReference(aspectInstance.Info.AspectAttribute.AttributeType,
                 md => md.Name == "OnEntry");
             var callOnEntryBlock = _creator.CallVoidInstanceMethod(onEntryMethodRef,
-                createAspectInstance.Variable, newMethodExectionArgsBlockChain.Variable);
+                aspectInstance.AspectPersistable, executionArgs);
 
             var callAspectOnEntryBlockChain = new InstructionBlockChain();
             callAspectOnEntryBlockChain.Add(callOnEntryBlock);
             return callAspectOnEntryBlockChain;
         }
 
-        public InstructionBlockChain CallAspectOnExit(NamedInstructionBlockChain createAspectInstance,
-            NamedInstructionBlockChain newMethodExectionArgsBlockChain)
+        public InstructionBlockChain CallAspectOnExit(AspectData aspectData,
+            IPersistable executionArgs)
         {
-            var onExitMethodRef = _referenceFinder.GetMethodReference(createAspectInstance.TypeReference,
+            var onExitMethodRef = _referenceFinder.GetMethodReference(aspectData.Info.AspectAttribute.AttributeType,
                 md => md.Name == "OnExit");
             var callOnExitBlock = _creator.CallVoidInstanceMethod(onExitMethodRef,
-                createAspectInstance.Variable, newMethodExectionArgsBlockChain.Variable);
+                aspectData.AspectPersistable, executionArgs);
 
             var callAspectOnExitBlockChain = new InstructionBlockChain();
             callAspectOnExitBlockChain.Add(callOnExitBlock);
             return callAspectOnExitBlockChain;
         }
 
-        public InstructionBlockChain CallAspectOnException(NamedInstructionBlockChain createAspectInstance,
-            NamedInstructionBlockChain newMethodExectionArgsBlockChain)
+        public InstructionBlockChain CallAspectOnException(AspectData aspectData,
+            IPersistable executionArgs)
         {
-            var onExceptionMethodRef = _referenceFinder.GetMethodReference(createAspectInstance.TypeReference,
+            var onExceptionMethodRef = _referenceFinder.GetMethodReference(aspectData.Info.AspectAttribute.AttributeType,
                 md => md.Name == "OnException");
             var callOnExceptionBlock = _creator.CallVoidInstanceMethod(onExceptionMethodRef,
-                createAspectInstance.Variable, newMethodExectionArgsBlockChain.Variable);
+                aspectData.AspectPersistable, executionArgs);
 
             var callAspectOnExceptionBlockChain = new InstructionBlockChain();
             callAspectOnExceptionBlockChain.Add(callOnExceptionBlock);
@@ -289,36 +302,40 @@ namespace MethodBoundaryAspect.Fody
         }
 
         public InstructionBlockChain CallMethodWithLocalParameters(MethodDefinition method,
-            MethodDefinition targetMethod, VariableDefinition caller, VariableDefinition resultVariable)
+            MethodDefinition targetMethod, ILoadable instance, IPersistable resultVariable)
         {
+            int instanceOffset = (method.IsStatic ? 0 : 1);
+            ILoadable[] args = new ILoadable[method.Parameters.Count];
+
+            for (int i = 0; i < args.Length; ++i)
+                args[i] = new ArgumentLoadable(i + instanceOffset, method.Parameters[i], _method.Body.GetILProcessor());
+
+            return CallMethodWithReturn(targetMethod, instance, resultVariable, args);
+        }
+
+        public InstructionBlockChain CallMethodWithReturn(MethodReference method,
+            ILoadable instance,
+            IPersistable returnValue,
+            params ILoadable[] arguments)
+        {
+            var type = FixTypeReference(method.DeclaringType);
+            method = FixMethodReference(type, method);
+
+            InstructionBlock block;
+            
+            if (method.Resolve().IsStatic)
+                block = _creator.CallStaticMethod(method, returnValue, arguments);
+            else
+                block = _creator.CallInstanceMethod(method, instance, returnValue, arguments);
+
             var chain = new InstructionBlockChain();
-            var variables = new List<VariableDefinition>();
-
-            var index = 0;
-            foreach (var parameter in method.Parameters)
-            {
-                var argIndex = method.IsStatic 
-                    ? index 
-                    : index + 1;
-                var push = _creator.LoadValueOnStackFromArguments(argIndex);
-                chain.Add(new InstructionBlock("push" + index, push.ToList()));
-
-                var variable = _creator.CreateVariable(parameter.ParameterType);
-                variables.Add(variable);
-                var assign = _creator.AssignValueFromStack(variable);
-                chain.Add(assign);
-
-                index++;
-            }
-
-            var type = FixTypeReference(targetMethod.DeclaringType);
-            var targetMethodReference = FixMethodReference(type, targetMethod);
-            var call = caller == null
-                ? _creator.CallStaticMethod(targetMethodReference, resultVariable, variables.ToArray())
-                : _creator.CallInstanceMethod(targetMethodReference, caller, resultVariable, variables.ToArray());
-            chain.Add(call);
-
+            chain.Add(block);
             return chain;
+        }
+
+        public InstructionBlockChain CallVoidMethod(MethodReference method, ILoadable instance, params ILoadable[] arguments)
+        {
+            return CallMethodWithReturn(method, instance, null, arguments);
         }
 
         public InstructionBlockChain CreateReturn()

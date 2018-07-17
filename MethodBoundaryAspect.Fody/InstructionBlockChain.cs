@@ -27,6 +27,14 @@ namespace MethodBoundaryAspect.Fody
                 Add(block);
         }
 
+        public void Prepend(ILProcessor processor)
+        {
+            var currentFirst = processor.Body.Instructions[0];
+            foreach (var newInstructionBlock in InstructionBlocks)
+                foreach (var instruction in newInstructionBlock.Instructions)
+                    processor.InsertBefore(currentFirst, instruction);
+        }
+
         public Instruction InsertAfter(Instruction instruction, ILProcessor processor)
         {
             var currentInstruction = instruction;

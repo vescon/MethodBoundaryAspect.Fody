@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Fody;
 using MethodBoundaryAspect.Fody.Attributes;
 using MethodBoundaryAspect.Fody.Ordering;
@@ -161,7 +162,11 @@ namespace MethodBoundaryAspect.Fody
                 foreach (var assemblyAspect in assemblyMethodBoundaryAspects)
                     classMethodBoundaryAspects.Add(assemblyAspect);
                 foreach (var classAspect in type.CustomAttributes)
+                {
+                    if (classAspect.AttributeType.FullName == typeof(CompilerGeneratedAttribute).FullName)
+                        return;
                     classMethodBoundaryAspects.Add(classAspect);
+                }
                 foreach (var nestedType in type.NestedTypes)
                     WeaveTypeAndNestedTypes(module, nestedType, classMethodBoundaryAspects);
             }
@@ -226,8 +231,8 @@ namespace MethodBoundaryAspect.Fody
                 .Where(x => !x.SkipProperties || (!method.IsGetter && !method.IsSetter))
                 .ToList();
 
-            var methodWeaver = new MethodWeaver();
-            methodWeaver.Weave(module, method, aspectInfosWithMethods);
+            var methodWeaver = MethodWeaverFactory.MakeWeaver(module, method, aspectInfosWithMethods);
+            methodWeaver.Weave();
             if (methodWeaver.WeaveCounter == 0)
                 return false;
 

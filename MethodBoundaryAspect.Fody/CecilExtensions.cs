@@ -104,6 +104,8 @@ namespace MethodBoundaryAspect.Fody
 {
     using Mono.Cecil;
     using Mono.Cecil.Cil;
+    using System;
+    using System.Collections.Generic;
     using System.Linq;
 
     public static class CecilExtensions
@@ -191,6 +193,54 @@ namespace MethodBoundaryAspect.Fody
                 default:
                     return OpCodes.Stelem_Ref;
             }
+        }
+
+        public static FieldReference AddPublicInstanceField(this TypeReference typeRef, TypeReference fieldType)
+        {
+            var typeDef = typeRef.Resolve();
+            var field = new FieldDefinition(typeDef.NextAllowableMemberName(), FieldAttributes.Public, fieldType);
+            field.DeclaringType = typeDef;
+            typeDef.Fields.Add(field);
+            return new FieldReference(field.Name, field.FieldType, typeRef);
+        }
+
+        static string NextAllowableMemberName(this TypeDefinition typeDef)
+        {
+            var takenNames = new List<string>();
+            takenNames.AddRange(typeDef.Fields.Select(f => f.Name));
+            takenNames.AddRange(typeDef.Properties.Select(f => f.Name));
+            takenNames.AddRange(typeDef.Methods.Select(f => f.Name));
+            takenNames.AddRange(typeDef.NestedTypes.Select(t => t.Name));
+            takenNames.Add(typeDef.Name);
+            var setOfTakenNames = new HashSet<string>(takenNames);
+            
+            int i = 0;
+            string proposal;
+            do
+                proposal = $"var_{++i}";
+            while (setOfTakenNames.Contains(proposal));
+
+            return proposal;
+        }
+
+        public static VariableDefinition GetLocalStoredByInstruction(this Instruction i, Mono.Collections.Generic.Collection<VariableDefinition> locals)
+        {
+            if (i.OpCode == OpCodes.Stloc || i.OpCode == OpCodes.Stloc_S)
+                return i.Operand as VariableDefinition;
+            if (i.OpCode == OpCodes.Stloc_0)
+                return locals[0];
+            if (i.OpCode == OpCodes.Stloc_1)
+                return locals[1];
+            if (i.OpCode == OpCodes.Stloc_2)
+                return locals[2];
+            if (i.OpCode == OpCodes.Stloc_3)
+                return locals[3];
+            throw new InvalidOperationException("Unable to find variable reference for storage.");
+        }
+
+        public static FieldReference AsDefinedOn(this FieldReference field, TypeReference fullType)
+        {
+            return new FieldReference(field.Name, field.FieldType, fullType);
         }
     }
 }

@@ -1,220 +1,82 @@
-using System.Collections.Generic;
-using System.Linq;
-using MethodBoundaryAspect.Fody.Attributes;
-using MethodBoundaryAspect.Fody.Ordering;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace MethodBoundaryAspect.Fody
 {
     public class MethodWeaver
     {
+        private MethodDefinition _clonedMethod;
+
+        protected readonly ModuleDefinition _module;
+        protected readonly MethodDefinition _method;
+        protected readonly InstructionBlockChainCreator _creator;
+        protected readonly ILProcessor _ilProcessor;
+        protected readonly IList<AspectData> _aspects;
+
+        protected bool HasMultipleAspects { get => _aspects.Count > 1; }
+        protected IPersistable ExecutionArgs { get; set; }
+
         public int WeaveCounter { get; private set; }
 
-        public void Weave(
-            ModuleDefinition module,
-            MethodDefinition method,
-            IEnumerable<AspectInfo> aspectInfos)
+        public MethodWeaver(ModuleDefinition module, MethodDefinition method, IList<AspectData> aspects)
         {
-            var usableAspects = aspectInfos
-                .Select(x => new
-                {
-                    Aspect = x,
-                    AspectMethods = GetUsedAspectMethods(x.AspectAttribute.AttributeType)
-                })
-                .Where(x => x.AspectMethods != AspectMethods.None)
-                .ToList();
-            if (usableAspects.Count == 0)
+            _module = module;
+            _method = method;
+            _creator = new InstructionBlockChainCreator(method, module);
+            _ilProcessor = _method.Body.GetILProcessor();
+            _aspects = aspects;
+        }
+
+        public void Weave()
+        {
+            if (_aspects.Count == 0)
                 return;
 
-            var hasMultipleAspects = usableAspects.Count > 1;
+            Setup();
 
-            var clonedMethod = CloneMethod(method);
-            method.DeclaringType.Methods.Add(clonedMethod);
+            var arguments = _creator.CreateMethodArgumentsArray();
+            AddToSetup(arguments);
 
-            // redirect source call
-            ClearMethod(method);
+            WeaveMethodExecutionArgs(arguments);
 
-            var ilProcessor = method.Body.GetILProcessor();
-            var creator = new InstructionBlockChainCreator(method, module);
-            var arguments = creator.CreateMethodArgumentsArray();
-            arguments.Append(ilProcessor);
+            SetupAspects();
 
-            var executionArgs = creator.CreateMethodExecutionArgsInstance(
-                arguments,
-                usableAspects.First().Aspect.AspectAttribute.AttributeType);
-            executionArgs.Append(ilProcessor);
+            WeaveOnEntry();
 
-            // create aspect instance
-            var aspectInstances = new Dictionary<AspectInfo, NamedInstructionBlockChain>();
-            var tagVariables = new Dictionary<AspectInfo, VariableDefinition>();
-            foreach (var aspect in usableAspects)
-            {
-                var instance = creator.CreateAspectInstance(aspect.Aspect.AspectAttribute);
-                instance.Append(ilProcessor);
-
-                if (hasMultipleAspects)
-                {
-                    var tagVariable = creator.CreateObjectVariable();
-                    method.Body.Variables.Add(tagVariable.Variable);
-                    tagVariables.Add(aspect.Aspect, tagVariable.Variable);
-                }
-
-                aspectInstances.Add(aspect.Aspect, instance);
-            }
-
-            //OnEntries
-            foreach (var aspect in usableAspects.Where(x => x.AspectMethods.HasFlag(AspectMethods.OnEntry)))
-            {
-                var aspectInstance = aspectInstances[aspect.Aspect];
-                var call = creator.CallAspectOnEntry(aspectInstance, executionArgs);
-                call.Append(ilProcessor);
-
-                if (hasMultipleAspects)
-                {
-                    var tagVariable = tagVariables[aspect.Aspect];
-                    var save = creator.SaveMethodExecutionArgsTagToVariable(executionArgs, tagVariable);
-                    save.Append(ilProcessor);
-                }
-            }
-
-            // call original method
-            VariableDefinition thisVariable = null;
-            if (!method.IsStatic)
-            {
-                var thisVariableBlock = creator.CreateThisVariable(method.DeclaringType);
-                thisVariableBlock.Append(ilProcessor);
-                thisVariable = thisVariableBlock.Variable;
-            }
-
-            var hasReturnValue = !InstructionBlockCreator.IsVoid(method.ReturnType);
+            var hasReturnValue = !InstructionBlockCreator.IsVoid(_method.ReturnType);
             var returnValue = hasReturnValue
-                ? creator.CreateVariable(method.ReturnType)
-                : null;
-            var callSourceMethod = creator.CallMethodWithLocalParameters(
-                method,
-                clonedMethod,
-                thisVariable,
-                returnValue?.Variable);
-            callSourceMethod.Append(ilProcessor);
-            var instructionCallStart = callSourceMethod.First;
-            var instructionCallEnd = callSourceMethod.Last;
+                    ? _creator.CreateVariable(_method.ReturnType)
+                    : null;
 
-            var onExitAspects = usableAspects
-                .Where(x => x.AspectMethods.HasFlag(AspectMethods.OnExit))
-                .Reverse()
-                .ToList();
+            HandleBody(returnValue?.Variable, out Instruction instructionCallStart, out Instruction instructionCallEnd);
 
-            Instruction instructionAfterCall = null;
-            if (hasReturnValue && onExitAspects.Any())
-            {
-                var loadReturnValue = creator.LoadValueOnStack(returnValue);
+            Instruction instructionAfterCall = WeaveOnExit(hasReturnValue, returnValue);
 
-                var setMethodExecutionArgsReturnValue = creator.SetMethodExecutionArgsReturnValue(
-                    executionArgs,
-                    loadReturnValue);
-                setMethodExecutionArgsReturnValue.Append(ilProcessor);
+            HandleReturnValue(hasReturnValue, returnValue);
 
-                instructionAfterCall = setMethodExecutionArgsReturnValue.First;
-            }
-
-            // OnExit
-            foreach (var aspect in onExitAspects)
-            {
-                if (hasMultipleAspects)
-                {
-                    var tagVariable = tagVariables[aspect.Aspect];
-                    var load = creator.LoadMethodExecutionArgsTagFromVariable(executionArgs,
-                        tagVariable);
-                    load.Append(ilProcessor);
-                }
-
-                var aspectInstance = aspectInstances[aspect.Aspect];
-                var call = creator.CallAspectOnExit(aspectInstance, executionArgs);
-                call.Append(ilProcessor);
-            }
-
-            // return
-            if (hasReturnValue)
-            {
-                var load = creator.LoadValueOnStack(returnValue);
-                load.Append(ilProcessor);
-            }
-
-            var returnCall = creator.CreateReturn();
-            returnCall.Append(ilProcessor);
-
-            // add exception handling
-            var onExceptionAspects = usableAspects
+            var onExceptionAspects = _aspects
                 .Where(x => x.AspectMethods.HasFlag(AspectMethods.OnException))
                 .Reverse()
                 .ToList();
 
-            if (onExceptionAspects.Any())
-            {
-                var realInstructionAfterCall = instructionAfterCall ?? instructionCallEnd.Next;
-                var tryLeaveInstruction = Instruction.Create(OpCodes.Leave, realInstructionAfterCall);
-                ilProcessor.InsertAfter(instructionCallEnd, tryLeaveInstruction);
+            if (onExceptionAspects.Count != 0)
+                WeaveOnException(onExceptionAspects, instructionCallStart, instructionCallEnd, instructionAfterCall);
 
-                var exception = creator.SaveThrownException();
-                var exceptionHandlerCurrent = exception.InsertAfter(tryLeaveInstruction, ilProcessor);
+            Optimize();
 
-                var pushException = creator.LoadValueOnStack(exception);
-                exceptionHandlerCurrent = pushException.InsertAfter(exceptionHandlerCurrent, ilProcessor);
-
-                var setExceptionFromStack =
-                    creator.SetMethodExecutionArgsExceptionFromStack(executionArgs);
-                exceptionHandlerCurrent = setExceptionFromStack.InsertAfter(exceptionHandlerCurrent, ilProcessor);
-
-                foreach (var onExceptionAspect in onExceptionAspects)
-                {
-                    if (hasMultipleAspects)
-                    {
-                        var tagVariable = tagVariables[onExceptionAspect.Aspect];
-                        var load = creator.LoadMethodExecutionArgsTagFromVariable(executionArgs,
-                            tagVariable);
-                        exceptionHandlerCurrent = load.InsertAfter(exceptionHandlerCurrent, ilProcessor);
-                    }
-
-                    var aspectInstance = aspectInstances[onExceptionAspect.Aspect];
-                    var callAspectOnException =
-                        creator.CallAspectOnException(aspectInstance, executionArgs);
-                    callAspectOnException.InsertAfter(exceptionHandlerCurrent, ilProcessor);
-                    exceptionHandlerCurrent = callAspectOnException.Last;
-                }
-
-                var pushException2 = creator.LoadValueOnStack(exception);
-                exceptionHandlerCurrent = pushException2.InsertAfter(exceptionHandlerCurrent, ilProcessor);
-
-                ////var catchLeaveInstruction = Instruction.Create(OpCodes.Leave, realInstructionAfterCall);
-                var catchLastInstruction = Instruction.Create(OpCodes.Throw);
-                ilProcessor.InsertAfter(exceptionHandlerCurrent, catchLastInstruction);
-
-                method.Body.ExceptionHandlers.Add(new ExceptionHandler(ExceptionHandlerType.Catch)
-                {
-                    CatchType = creator.GetExceptionTypeReference(),
-                    TryStart = instructionCallStart,
-                    TryEnd = tryLeaveInstruction.Next,
-                    HandlerStart = tryLeaveInstruction.Next,
-                    HandlerEnd = catchLastInstruction.Next
-                });
-            }
-
-            // add DebuggerStepThrough attribute to avoid compiler searching for
-            // non existing soure code for weaved il code
-            var attributeCtor = creator.GetDebuggerStepThroughAttributeCtorReference();
-            method.CustomAttributes.Add(new CustomAttribute(attributeCtor));
-
-            method.Body.InitLocals = true;
-            method.Body.Optimize();
-            Catel.Fody.CecilExtensions.UpdateDebugInfo(method);
-
-            clonedMethod.Body.InitLocals = true;
-            clonedMethod.Body.Optimize();
-            Catel.Fody.CecilExtensions.UpdateDebugInfo(clonedMethod);
+            Finish();
 
             WeaveCounter++;
+        }
+
+        protected virtual void Setup()
+        {
+            _clonedMethod = CloneMethod(_method);
+            _method.DeclaringType.Methods.Add(_clonedMethod);
+            ClearMethod(_method);
         }
 
         private static MethodDefinition CloneMethod(MethodDefinition method)
@@ -316,36 +178,181 @@ namespace MethodBoundaryAspect.Fody
             body.ExceptionHandlers.Clear();
         }
 
-        private static AspectMethods GetUsedAspectMethods(TypeReference aspectTypeDefinition)
+        protected virtual void AddToSetup(InstructionBlockChain chain)
         {
-            var overloadedMethods = new Dictionary<string, MethodDefinition>();
+            chain.Append(_ilProcessor);
+        }
 
-            var currentType = aspectTypeDefinition;
-            do
+        protected virtual void WeaveMethodExecutionArgs(NamedInstructionBlockChain arguments)
+        {
+            var executionArgs = _creator.CreateMethodExecutionArgsInstance(
+                arguments,
+                _aspects[0].Info.AspectAttribute.AttributeType);
+            AddToSetup(executionArgs);
+            ExecutionArgs = executionArgs;
+        }
+
+        private void SetupAspects()
+        {
+            foreach (var aspect in _aspects)
             {
-                var typeDefinition = currentType.Resolve();
-                var methods = typeDefinition.Methods
-                    .Where(x => x.IsVirtual)
-                    .ToList();
-                foreach (var method in methods)
-                {
-                    if (overloadedMethods.ContainsKey(method.Name))
-                        continue;
+                var instance = aspect.CreateAspectInstance();
+                AddToSetup(instance);
 
-                    overloadedMethods.Add(method.Name, method);
+                if (HasMultipleAspects)
+                    aspect.EnsureTagStorage();
+            }
+        }
+
+        private void WeaveOnEntry()
+        {
+            foreach (var aspect in _aspects.Where(x => x.AspectMethods.HasFlag(AspectMethods.OnEntry)))
+            {
+                var call = CallOnEntry(aspect);
+                AddToSetup(call);
+
+                if (HasMultipleAspects)
+                    AddToSetup(_creator.SaveMethodExecutionArgsTagToPersistable(ExecutionArgs, aspect.TagPersistable));
+            }
+        }
+
+        protected virtual InstructionBlockChain CallOnEntry(AspectData data)
+        {
+            return _creator.CallAspectOnEntry(data, ExecutionArgs);
+        }
+
+        protected virtual void HandleBody(VariableDefinition returnValue, out Instruction instructionCallStart, out Instruction instructionCallEnd)
+        {
+            VariableDefinition thisVariable = null;
+            if (!_method.IsStatic)
+            {
+                var thisVariableBlock = _creator.CreateThisVariable(_method.DeclaringType);
+                thisVariableBlock.Append(_ilProcessor);
+                thisVariable = thisVariableBlock.Variable;
+            }
+
+            var callSourceMethod = _creator.CallMethodWithLocalParameters(
+                _method,
+                _clonedMethod,
+                thisVariable == null ? null : new VariablePersistable(thisVariable),
+                returnValue == null ? null : new VariablePersistable(returnValue));
+            callSourceMethod.Append(_ilProcessor);
+            instructionCallStart = callSourceMethod.First;
+            instructionCallEnd = callSourceMethod.Last;
+        }
+
+        private Instruction WeaveOnExit(bool hasReturnValue, NamedInstructionBlockChain returnValue)
+        {
+            var onExitAspects = _aspects
+                            .Where(x => x.AspectMethods.HasFlag(AspectMethods.OnExit))
+                            .Reverse()
+                            .ToList();
+
+            Instruction instructionAfterCall = null;
+            if (hasReturnValue && onExitAspects.Any())
+            {
+                var loadReturnValue = _creator.LoadValueOnStack(returnValue);
+
+                var setMethodExecutionArgsReturnValue = _creator.SetMethodExecutionArgsReturnValue(
+                    ExecutionArgs,
+                    loadReturnValue);
+                AddToEnd(setMethodExecutionArgsReturnValue);
+
+                instructionAfterCall = setMethodExecutionArgsReturnValue.First;
+            }
+
+            foreach (var aspect in onExitAspects)
+            {
+                if (HasMultipleAspects)
+                    AddToEnd(_creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs, aspect.TagPersistable));
+                
+                AddToEnd(_creator.CallAspectOnExit(aspect, ExecutionArgs));
+            }
+
+            return instructionAfterCall;
+        }
+
+        private void HandleReturnValue(bool hasReturnValue, NamedInstructionBlockChain returnValue)
+        {
+            if (hasReturnValue)
+                AddToEnd(_creator.LoadValueOnStack(returnValue));
+            
+            AddToEnd(_creator.CreateReturn());
+        }
+
+        protected virtual void WeaveOnException(List<AspectData> onExceptionAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall)
+        {
+            var realInstructionAfterCall = instructionAfterCall ?? instructionCallEnd.Next;
+            var tryLeaveInstruction = Instruction.Create(OpCodes.Leave, realInstructionAfterCall);
+            _ilProcessor.InsertAfter(instructionCallEnd, tryLeaveInstruction);
+
+            var exception = _creator.SaveThrownException();
+            var exceptionHandlerCurrent = exception.InsertAfter(tryLeaveInstruction, _ilProcessor);
+
+            var pushException = _creator.LoadValueOnStack(exception);
+            exceptionHandlerCurrent = pushException.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
+
+            var setExceptionFromStack =
+                _creator.SetMethodExecutionArgsExceptionFromStack(ExecutionArgs);
+            exceptionHandlerCurrent = setExceptionFromStack.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
+
+            foreach (var onExceptionAspect in onExceptionAspects)
+            {
+                if (HasMultipleAspects)
+                {
+                    var load = _creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs,
+                        onExceptionAspect.TagPersistable);
+                    exceptionHandlerCurrent = load.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
                 }
 
-                currentType = typeDefinition.BaseType;
-            } while (currentType.FullName != typeof(OnMethodBoundaryAspect).FullName);
+                var callAspectOnException =
+                    _creator.CallAspectOnException(onExceptionAspect, ExecutionArgs);
+                callAspectOnException.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
+                exceptionHandlerCurrent = callAspectOnException.Last;
+            }
 
-            var aspectMethods = AspectMethods.None;
-            if (overloadedMethods.ContainsKey("OnEntry"))
-                aspectMethods |= AspectMethods.OnEntry;
-            if (overloadedMethods.ContainsKey("OnExit"))
-                aspectMethods |= AspectMethods.OnExit;
-            if (overloadedMethods.ContainsKey("OnException"))
-                aspectMethods |= AspectMethods.OnException;
-            return aspectMethods;
+            var pushException2 = _creator.LoadValueOnStack(exception);
+            exceptionHandlerCurrent = pushException2.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
+
+            ////var catchLeaveInstruction = Instruction.Create(OpCodes.Leave, realInstructionAfterCall);
+            var catchLastInstruction = Instruction.Create(OpCodes.Throw);
+            _ilProcessor.InsertAfter(exceptionHandlerCurrent, catchLastInstruction);
+
+            _method.Body.ExceptionHandlers.Add(new ExceptionHandler(ExceptionHandlerType.Catch)
+            {
+                CatchType = _creator.GetExceptionTypeReference(),
+                TryStart = instructionCallStart,
+                TryEnd = tryLeaveInstruction.Next,
+                HandlerStart = tryLeaveInstruction.Next,
+                HandlerEnd = catchLastInstruction.Next
+            });
+        }
+
+        private void Optimize()
+        {
+            // add DebuggerStepThrough attribute to avoid compiler searching for
+            // non existing soure code for weaved il code
+            var attributeCtor = _creator.GetDebuggerStepThroughAttributeCtorReference();
+
+            // Only add DebuggerStepThrough if not already present.
+            if (!_method.CustomAttributes.Any(a => a.AttributeType.FullName == attributeCtor.DeclaringType.FullName))
+                _method.CustomAttributes.Add(new CustomAttribute(attributeCtor));
+
+            _method.Body.InitLocals = true;
+            _method.Body.Optimize();
+            Catel.Fody.CecilExtensions.UpdateDebugInfo(_method);
+        }
+
+        protected virtual void Finish()
+        {
+            _clonedMethod.Body.InitLocals = true;
+            _clonedMethod.Body.Optimize();
+            Catel.Fody.CecilExtensions.UpdateDebugInfo(_clonedMethod);
+        }
+        
+        private void AddToEnd(InstructionBlockChain chain)
+        {
+            chain.Append(_ilProcessor);
         }
     }
 }
