@@ -99,19 +99,13 @@ namespace MethodBoundaryAspect.Fody
             _executionArgsField = _module.ImportReference(_stateMachine.AddPublicInstanceField(executionArgs.Variable.VariableType));
             executionArgs.Add(new InstructionBlock("", Instruction.Create(OpCodes.Ldloc, executionArgs.Variable)));
 
-            var instructions = new FieldPersistable(new VariablePersistable(_stateMachineLocal), _executionArgsField)
-                .Store(executionArgs.Flatten());
+            var field = new FieldPersistable(new VariablePersistable(_stateMachineLocal), _executionArgsField);
+            var instructions = field.Store(executionArgs.Flatten());
 
             var chain = new InstructionBlockChain();
             chain.Add(instructions);
             AddToSetup(chain);
-        }
-
-        protected override InstructionBlockChain CallOnEntry(AspectData data)
-        {
-            var field = new FieldPersistable(new VariablePersistable(_stateMachineLocal), _executionArgsField);
             ExecutionArgs = field;
-            return _creator.CallAspectOnEntry(data, field);
         }
 
         protected override void WeaveOnException(List<AspectData> onExceptionAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall)

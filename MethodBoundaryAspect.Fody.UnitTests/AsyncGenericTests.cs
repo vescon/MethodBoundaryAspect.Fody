@@ -43,5 +43,16 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             // Assert
             result.Should().Be(50);
         }
+
+        [Fact]
+        public void IfAsyncGenericMethodIsWeavedForOnExceptionButNotForOnEntry_ThenExceptionThrownBetweenAwaitsIsHandled()
+        {
+            // Act
+            WeaveAssemblyClassAndLoad(OpenClass);
+            string result = AssemblyLoader.InvokeMethod(Closed, "AttemptThrowWithoutEntry") as string;
+
+            // Assert
+            result.Should().Contain("OnException third");
+        }
     }
 }
