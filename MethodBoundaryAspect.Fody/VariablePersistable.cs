@@ -1,5 +1,6 @@
 ﻿using Mono.Cecil;
 using Mono.Cecil.Cil;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MethodBoundaryAspect.Fody
@@ -19,10 +20,24 @@ namespace MethodBoundaryAspect.Fody
                 _def.VariableType.IsValueType && forDereferencing ? OpCodes.Ldloca : OpCodes.Ldloc, _def));
         }
 
-        public InstructionBlock Store(InstructionBlock loadNewValueOntoStack)
+        public InstructionBlock Store(InstructionBlock loadNewValueOntoStack, TypeReference typeOnStack)
         {
-            return new InstructionBlock("Store",
-                loadNewValueOntoStack.Instructions.Concat(new[] { Instruction.Create(OpCodes.Stloc, _def) }).ToList());
+            Instruction preInstruction = null;
+            Instruction postInstruction;
+            if (_def.VariableType.IsByReference && !typeOnStack.IsByReference)
+            {
+                preInstruction = Instruction.Create(OpCodes.Ldloc, _def);
+                postInstruction = ((ByReferenceType)_def.VariableType).ElementType.GetStIndInstruction();
+            }
+            else
+                postInstruction = Instruction.Create(OpCodes.Stloc, _def);
+
+            var list = new List<Instruction>();
+            if (preInstruction != null)
+                list.Add(preInstruction);
+            list.AddRange(loadNewValueOntoStack.Instructions);
+            list.Add(postInstruction);
+            return new InstructionBlock("Store", list);
         }
 
         public TypeReference PersistedType { get => _def.VariableType; }

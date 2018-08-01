@@ -241,14 +241,17 @@ namespace MethodBoundaryAspect.Fody
             return block;
         }
 
-        public NamedInstructionBlockChain SaveReturnValue()
+        public InstructionBlockChain ReadReturnValue(IPersistable executionArgs, IPersistable returnValue)
         {
-            var returnValueVariable = _creator.CreateVariable(_method.ReturnType);
-            var block = new NamedInstructionBlockChain(returnValueVariable, _method.ReturnType);
+            if (InstructionBlockCreator.IsVoid(_method.ReturnType))
+                return new InstructionBlockChain();
 
-            var instructions = _creator.SaveReturnValueFromStack(returnValueVariable);
-            block.Add(instructions);
-            return block;
+            var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "get_ReturnValue");
+            var readValueBlock = _creator.CallInstanceMethod(getReturnValue, executionArgs, returnValue);
+
+            var readValueBlockChain = new InstructionBlockChain();
+            readValueBlockChain.Add(readValueBlock);
+            return readValueBlockChain;
         } 
         
         public NamedInstructionBlockChain SaveThrownException()

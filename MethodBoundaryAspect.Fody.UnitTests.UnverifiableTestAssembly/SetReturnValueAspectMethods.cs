@@ -31,5 +31,20 @@ namespace MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly
         {
             return ref StrField;
         }
+
+        static int m_field;
+
+        public void TestRefReturnValueOverwritten()
+        {
+            m_field = 10;
+            ref int i = ref GetRef();
+            Result = i.ToString();
+        }
+
+        [OverwriteReturnValueWithRefIntAspect(42)]
+        ref int GetRef()
+        {
+            return ref m_field;
+        }
     }
 }

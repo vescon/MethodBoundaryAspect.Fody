@@ -36,5 +36,19 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             // Assert
             result.Should().Be("overwritten");
         }
+
+        [Fact]
+        public void IfMethodWithRefReturnHasOverwrittenReturnValue_ThenTheOverwrittenValueIsReturned()
+        {
+            // Arrange
+            const string testMethodName = "TestRefReturnValueOverwritten";
+            WeaveAssemblyClassAndLoad(typeof(SetReturnValueAspectMethods));
+
+            // Act
+            var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
+            
+            // Assert
+            result.Should().Be("42");
+        }
     }
 }

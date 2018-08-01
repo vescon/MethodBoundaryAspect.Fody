@@ -26,6 +26,8 @@ You can easily write your own aspects for
     - globally in `AssemblyInfo.cs`
     - on class
     - on method
+- Change method behavior
+    - Overwrite return value to be returned from the method.
 
 Feel free to make a [Fork](https://github.com/vescon/MethodBoundaryAspect.Fody/fork) of this repository.
 
@@ -42,6 +44,8 @@ Short sample how a transaction aspect could be implemented.
 #### The aspect code
 
 ```csharp
+using MethodBoundaryAspect.Fody;
+
 public sealed class TransactionScopeAttribute : OnMethodBoundaryAspect
 {
     public override void OnEntry(MethodExecutionArgs args)
@@ -52,7 +56,7 @@ public sealed class TransactionScopeAttribute : OnMethodBoundaryAspect
     public override void OnExit(MethodExecutionArgs args)
     {
         var transactionScope = (TransactionScope)args.MethodExecutionTag;
-        
+
         transactionScope.Complete();
         transactionScope.Dispose();
     }
@@ -60,7 +64,7 @@ public sealed class TransactionScopeAttribute : OnMethodBoundaryAspect
     public override void OnException(MethodExecutionArgs args)
     {
         var transactionScope = (TransactionScope)args.MethodExecutionTag;
-        
+
         transactionScope.Dispose();
     }
 }
@@ -87,6 +91,7 @@ Consider an aspect written like this.
 
 ```csharp
 using static System.Console;
+using MethodBoundaryAspect.Fody;
 
 public sealed class LogAttribute : OnMethodBoundaryAspect
 {
@@ -178,6 +183,7 @@ Note that, unlike for synchronous methods, an aspect for an asynchronous method 
 
 ```csharp
 using static System.Console;
+using MethodBoundaryAspect.Fody;
 
 public sealed class LogAttribute : OnMethodBoundaryAspect
 {
@@ -206,6 +212,7 @@ One additional note about the asynchronous behavior: the `OnExit` handler runs w
 
 ```csharp
 using static System.Console;
+using MethodBoundaryAspect.Fody;
 
 public sealed class LogAttribute : OnMethodBoundaryAspect
 {
@@ -223,6 +230,77 @@ public sealed class LogAttribute : OnMethodBoundaryAspect
     public override void OnException(MethodExecutionArgs args)
     {
         WriteLine("On exception");
+    }
+}
+```
+
+### Altering Method Behavior
+
+In order to change the return value of a method, hook into its `OnExit` handler and set the `ReturnValue` property of the `MethodExecutionArgs`.
+
+```csharp
+using MethodBoundaryAspect.Fody.Attributes;
+using System;
+using System.Linq;
+using static System.Console;
+
+public sealed class IndentAttribute : OnMethodBoundaryAspect
+{
+    public override void OnExit(MethodExecutionArgs args)
+    {
+        args.ReturnValue = String.Concat(args.ReturnValue.ToString().Split('\n').Select(line => "  " + line));
+    }
+}
+
+public class Program
+{
+    [Indent]
+    public static string GetLogs() => @"Detailed Log 1
+Detailed Log 2";
+
+    public static void Main(string[] args)
+    {
+        WriteLine(GetLogs()); // Output: "  Detailed Log 1\n  Detailed Log 2";
+    }
+}
+```
+
+This can also be used on async methods to add additional processing or exception-handling.
+
+```csharp
+using MethodBoundaryAspect.Fody.Attributes;
+using System;
+using System.Linq;
+using static System.Console;
+
+public sealed class HandleExceptionAttribute : OnMethodBoundaryAspect
+{
+    public override void OnExit(MethodExecutionArgs args)
+    {
+        if (args.ReturnValue is Task<string> task)
+        {
+          args.ReturnValue = task.ContinueWith(t =>
+          {
+            if (t.IsFaulted)
+              return "An error happened: " + t.Exception.Message;
+            return t.Result;
+          });
+        }
+    }
+}
+
+public class Program
+{
+    [HandleException]
+    public static async Task<string> Process()
+    {
+      await Task.Delay(10);
+      throw new Exception("Bad data");
+    }
+
+    public static async Task Main(string[] args)
+    {
+        WriteLine(await Process()); // Output: "An error happened: Bad data"
     }
 }
 ```

@@ -26,7 +26,7 @@ namespace MethodBoundaryAspect.Fody
                     new[] { Instruction.Create(OpCodes.Ldfld, Field) }).ToList());
         }
 
-        public InstructionBlock Store(InstructionBlock loadNewValueOntoStack)
+        public InstructionBlock Store(InstructionBlock loadNewValueOntoStack, TypeReference typeOnStack)
         {
             var list = new List<Instruction>();
             list.AddRange(_instance.Load(true).Instructions);

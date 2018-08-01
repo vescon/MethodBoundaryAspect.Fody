@@ -255,29 +255,58 @@ namespace MethodBoundaryAspect.Fody
                     ? OpCodes.Callvirt
                     : OpCodes.Call,
                 methodReference);
-            
-            bool hasReturnValue = false;
+
+            bool methodReturnsVoid = IsVoid(methodDefinition.ReturnType);
+            bool returnValueShouldBeStored = (returnValue != null);
+
             List<Instruction> HandleReturnValue(List<Instruction> methodWork)
             {
-                if (!hasReturnValue)
-                    return methodWork;
-
-                return returnValue.Store(new InstructionBlock("", methodWork)).Instructions.ToList();
-            }
-            if (returnValue != null && methodDefinition.ReturnType != null)
-            {
-                if (IsVoid(returnValue.PersistedType))
+                if (methodReturnsVoid && returnValueShouldBeStored)
                     throw new InvalidOperationException("Method has no return value");
+                if (!methodReturnsVoid && !returnValueShouldBeStored)
+                {
+                    methodWork.Add(Instruction.Create(OpCodes.Pop));
+                    return methodWork;
+                }
+                if (methodReturnsVoid && !returnValueShouldBeStored)
+                    return methodWork;
+                // Therefore, !methodReturnsVoid && returnValueShouldBeStored
+                
+                var castToType = returnValue.PersistedType;
+                var castFromType = methodDefinition.ReturnType;
+                if (castToType.FullName != castFromType.FullName)
+                {
+                    if (castToType.IsByReference)
+                        castToType = ((ByReferenceType)castToType).ElementType;
 
-                hasReturnValue = true;
+                    if (castFromType.IsByReference)
+                        castFromType = ((ByReferenceType)castFromType).ElementType;
+                    methodWork.AddRange(CastValueCurrentlyOnStack(castFromType, castToType));
+                }
+                return returnValue.Store(new InstructionBlock("", methodWork), castToType).Instructions.ToList();
             }
-
+            
             var instructions = new List<Instruction>();
             if (loadVariableInstruction != null)
                 instructions.AddRange(loadVariableInstruction.Instructions);
             instructions.AddRange(loadArgumentsInstructions);
             instructions.Add(methodCallInstruction);
             return HandleReturnValue(instructions);
+        }
+
+        private static IEnumerable<Instruction> CastValueCurrentlyOnStack(TypeReference fromType, TypeReference toType)
+        {
+            if (fromType.Equals(toType) || fromType.FullName.Equals(toType.FullName))
+                return new Instruction[0];
+
+            if (fromType.FullName == typeof(Object).FullName)
+            {
+                if (toType.IsValueType || toType.IsGenericParameter)
+                    return new[] { Instruction.Create(OpCodes.Unbox_Any, toType) };
+                return new[] { Instruction.Create(OpCodes.Castclass, toType) };
+            }
+
+            throw new NotSupportedException("Cannot unbox non-object types.");
         }
 
         private IList<Instruction> LoadValueOnStack(TypeReference parameterType, object value)

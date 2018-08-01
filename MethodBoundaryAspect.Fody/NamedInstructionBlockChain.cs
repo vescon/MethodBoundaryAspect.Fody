@@ -21,7 +21,7 @@ namespace MethodBoundaryAspect.Fody
 
         InstructionBlock ILoadable.Load(bool forDereferencing) => Persistable.Load(forDereferencing);
 
-        InstructionBlock IPersistable.Store(InstructionBlock loadNewValueOntoStack) => Persistable.Store(loadNewValueOntoStack);
+        InstructionBlock IPersistable.Store(InstructionBlock loadNewValueOntoStack, TypeReference typeOnStack) => Persistable.Store(loadNewValueOntoStack, typeOnStack);
 
         public InstructionBlock Flatten()
         {
