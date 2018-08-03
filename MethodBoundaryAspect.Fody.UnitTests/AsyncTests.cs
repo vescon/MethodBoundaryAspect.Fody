@@ -92,5 +92,19 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             // Assert
             result.Should().Be(10);
         }
+
+        [Fact]
+        public void IfAsyncMethodIsWeavedForOnExit_ThenOverwrittenReturnValueShouldBeHonored()
+        {
+            // Arrange
+            var testClassType = typeof(AsyncOverwrite);
+
+            // Act
+            WeaveAssemblyMethodAndLoad(testClassType, "ReturnArg");
+            object result = AssemblyLoader.InvokeMethod(testClassType.TypeInfo(), "TestReturnArg", "Raw value");
+
+            // Assert
+            result.Should().Be("Everything is fine");
+        }
     }
 }

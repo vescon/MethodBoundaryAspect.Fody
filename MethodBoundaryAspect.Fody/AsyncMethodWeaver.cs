@@ -100,7 +100,7 @@ namespace MethodBoundaryAspect.Fody
             executionArgs.Add(new InstructionBlock("", Instruction.Create(OpCodes.Ldloc, executionArgs.Variable)));
 
             var field = new FieldPersistable(new VariablePersistable(_stateMachineLocal), _executionArgsField);
-            var instructions = field.Store(executionArgs.Flatten());
+            var instructions = field.Store(executionArgs.Flatten(), _module.ImportReference(typeof(void)));
 
             var chain = new InstructionBlockChain();
             chain.Add(instructions);

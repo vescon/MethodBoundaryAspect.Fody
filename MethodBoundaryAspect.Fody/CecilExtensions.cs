@@ -195,6 +195,45 @@ namespace MethodBoundaryAspect.Fody
             }
         }
 
+        public static Instruction GetStIndInstruction(this TypeReference typeRef)
+        {
+            if (typeRef.IsGenericParameter)
+                return Instruction.Create(OpCodes.Stobj, typeRef);
+            var typeDef = typeRef.Resolve();
+            if (typeDef.IsEnum(out TypeReference underlying))
+                return Instruction.Create(underlying.MetadataType.GetStIndCode());
+            if (typeRef.IsValueType)
+                return Instruction.Create(typeRef.MetadataType.GetStIndCode());
+            return Instruction.Create(OpCodes.Stind_Ref);
+        }
+
+        static OpCode GetStIndCode(this MetadataType type)
+        {
+            switch (type)
+            {
+                case MetadataType.Boolean:
+                case MetadataType.Int32:
+                case MetadataType.UInt32:
+                    return OpCodes.Stind_I4;
+                case MetadataType.Byte:
+                case MetadataType.SByte:
+                    return OpCodes.Stind_I1;
+                case MetadataType.Char:
+                case MetadataType.Int16:
+                case MetadataType.UInt16:
+                    return OpCodes.Stind_I2;
+                case MetadataType.Double:
+                    return OpCodes.Stind_R8;
+                case MetadataType.Int64:
+                case MetadataType.UInt64:
+                    return OpCodes.Stind_I8;
+                case MetadataType.Single:
+                    return OpCodes.Stind_R4;
+                default:
+                    return OpCodes.Stind_Ref;
+            }
+        }
+
         public static FieldReference AddPublicInstanceField(this TypeReference typeRef, TypeReference fieldType)
         {
             var typeDef = typeRef.Resolve();

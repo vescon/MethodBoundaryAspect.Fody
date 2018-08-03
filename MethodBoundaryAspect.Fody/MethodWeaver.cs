@@ -264,6 +264,9 @@ namespace MethodBoundaryAspect.Fody
                 AddToEnd(_creator.CallAspectOnExit(aspect, ExecutionArgs));
             }
 
+            if (hasReturnValue && onExitAspects.Any())
+                _creator.ReadReturnValue(ExecutionArgs, returnValue).Append(_ilProcessor);
+
             return instructionAfterCall;
         }
 
