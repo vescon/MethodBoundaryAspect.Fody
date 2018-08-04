@@ -5,6 +5,7 @@ namespace MethodBoundaryAspect.Fody.Attributes
 {
     public class MethodExecutionArgs
     {
+        public FlowBehavior FlowBehavior { get; set; }
         public object Instance { get; set; }
         public MethodBase Method { get; set; }
         public object[] Arguments { get; set; }

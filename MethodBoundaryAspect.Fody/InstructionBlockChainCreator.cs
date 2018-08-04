@@ -160,18 +160,7 @@ namespace MethodBoundaryAspect.Fody
 
             return newMethodExectionArgsBlockChain;
         }
-
-        public NamedInstructionBlockChain CreateAspectInstance(CustomAttribute aspect)
-        {
-            var aspectTypeReference = _moduleDefinition.ImportReference(aspect.AttributeType);
-            var aspectVariable = _creator.CreateVariable(aspectTypeReference);
-            var newObjectAspectBlock = _creator.NewObject(aspectVariable, aspectTypeReference, _moduleDefinition, aspect);
-
-            var newObjectAspectBlockChain = new NamedInstructionBlockChain(aspectVariable, aspectTypeReference);
-            newObjectAspectBlockChain.Add(newObjectAspectBlock);
-            return newObjectAspectBlockChain;
-        }
-
+        
         public InstructionBlockChain SetMethodExecutionArgsReturnValue(
             IPersistable newMethodExectionArgsBlockChain, NamedInstructionBlockChain loadReturnValue)
         {

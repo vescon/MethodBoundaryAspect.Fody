@@ -110,9 +110,10 @@ namespace MethodBoundaryAspect.Fody
                 foreach (var property in aspect.Properties)
                 {
                     var propertyCopy = property;
+                    var propertyType = module.ImportReference(propertyCopy.Argument.Type.Resolve());
 
-                    var loadOnStackInstruction = LoadValueOnStack(propertyCopy.Argument.Type, propertyCopy.Argument.Value);
-                    var valueVariable = CreateVariable(propertyCopy.Argument.Type);
+                    var loadOnStackInstruction = LoadValueOnStack(propertyType, propertyCopy.Argument.Value);
+                    var valueVariable = CreateVariable(propertyType);
                     var assignVariableInstructionBlock = AssignValueFromStack(valueVariable);
 
                     var methodRef = _referenceFinder.GetMethodReference(instanceTypeReference, md => md.Name == "set_" + propertyCopy.Name);
@@ -241,7 +242,7 @@ namespace MethodBoundaryAspect.Fody
                 }
 
                 var parameter = methodReference.Parameters[parameterCount];
-                if (parameter.ParameterType != varType)
+                if (parameter.ParameterType.FullName != varType.FullName)
                 {
                     if (varType.IsValueType || varType.IsGenericParameter)
                         loadArgumentsInstructions.Add(Instruction.Create(OpCodes.Box, varType));

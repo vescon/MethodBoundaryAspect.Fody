@@ -108,7 +108,7 @@ namespace MethodBoundaryAspect.Fody
             ExecutionArgs = field;
         }
 
-        protected override void WeaveOnException(List<AspectData> onExceptionAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall)
+        protected override void WeaveOnException(List<AspectData> onExceptionAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall, IPersistable returnValue)
         {
             var handler = _moveNext.Body.ExceptionHandlers.FirstOrDefault(IsStateMachineCatchBlock);
             if (handler == null)
