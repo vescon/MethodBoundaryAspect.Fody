@@ -63,7 +63,7 @@ namespace MethodBoundaryAspect.Fody
                 .ToList();
 
             if (onExceptionAspects.Count != 0)
-                WeaveOnException(onExceptionAspects, instructionCallStart, instructionCallEnd, instructionAfterCall);
+                WeaveOnException(onExceptionAspects, instructionCallStart, instructionCallEnd, instructionAfterCall, returnValue);
 
             Optimize();
 
@@ -278,7 +278,7 @@ namespace MethodBoundaryAspect.Fody
             AddToEnd(_creator.CreateReturn());
         }
 
-        protected virtual void WeaveOnException(List<AspectData> onExceptionAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall)
+        protected virtual void WeaveOnException(List<AspectData> onExceptionAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall, IPersistable returnValue)
         {
             var realInstructionAfterCall = instructionAfterCall ?? instructionCallEnd.Next;
             var tryLeaveInstruction = Instruction.Create(OpCodes.Leave, realInstructionAfterCall);
@@ -308,13 +308,22 @@ namespace MethodBoundaryAspect.Fody
                 callAspectOnException.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
                 exceptionHandlerCurrent = callAspectOnException.Last;
             }
+            
+            var getFlowBehavior = _module.ImportReference(ExecutionArgs.PersistedType.Resolve().Methods.First(m => m.Name == "get_FlowBehavior"));
+            var flowBehaviorLocal = new VariablePersistable(_creator.CreateVariable(_module.ImportReference(getFlowBehavior.ReturnType)).Variable);
+            var flowBehaviorHandler = _creator.CallMethodWithReturn(getFlowBehavior, ExecutionArgs, flowBehaviorLocal);
+            flowBehaviorHandler.Add(flowBehaviorLocal.Load(false));
+            flowBehaviorHandler.Add(new InstructionBlock("FlowBehavior.Continue", Instruction.Create(OpCodes.Ldc_I4_1)));
 
-            var pushException2 = _creator.LoadValueOnStack(exception);
-            exceptionHandlerCurrent = pushException2.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
+            InstructionBlockChain afterThrowChain = new InstructionBlockChain();
+            if (returnValue != null)
+                afterThrowChain = _creator.ReadReturnValue(ExecutionArgs, returnValue);
 
-            ////var catchLeaveInstruction = Instruction.Create(OpCodes.Leave, realInstructionAfterCall);
-            var catchLastInstruction = Instruction.Create(OpCodes.Throw);
-            _ilProcessor.InsertAfter(exceptionHandlerCurrent, catchLastInstruction);
+            afterThrowChain.Add(new InstructionBlock("Leave", Instruction.Create(OpCodes.Leave_S, realInstructionAfterCall)));
+            flowBehaviorHandler.Add(new InstructionBlock("If == then skip throw", Instruction.Create(OpCodes.Beq_S, afterThrowChain.First)));
+            flowBehaviorHandler.Add(new InstructionBlock("throw", _creator.LoadValueOnStack(exception).Flatten().Instructions.Concat(new[] { Instruction.Create(OpCodes.Throw) } ).ToArray()));
+            flowBehaviorHandler.Add(afterThrowChain);
+            flowBehaviorHandler.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
 
             _method.Body.ExceptionHandlers.Add(new ExceptionHandler(ExceptionHandlerType.Catch)
             {
@@ -322,7 +331,7 @@ namespace MethodBoundaryAspect.Fody
                 TryStart = instructionCallStart,
                 TryEnd = tryLeaveInstruction.Next,
                 HandlerStart = tryLeaveInstruction.Next,
-                HandlerEnd = catchLastInstruction.Next
+                HandlerEnd = flowBehaviorHandler.Last.Next
             });
         }
 
