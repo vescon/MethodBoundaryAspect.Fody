@@ -211,6 +211,9 @@ namespace MethodBoundaryAspect.Fody
                 if (aspectInfos.Count == 0)
                     continue;
 
+                if (!method.HasBody)
+                    continue;
+
                 weavedAtLeastOneMethod = WeaveMethod(
                     module,
                     method,
