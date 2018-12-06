@@ -1,11 +1,15 @@
 using System;
 using MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects;
 
+[assembly: ExceptionAssembly]
+
 namespace MethodBoundaryAspect.Fody.UnitTests.TestProgram
 {
     [LogClass]
     public class TestClass
     {
+        public delegate void DoNothing();
+
         [LogMethod]
         public void DoIt(int zahl)
         {
