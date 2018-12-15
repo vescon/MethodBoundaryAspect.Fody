@@ -18,9 +18,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects\MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects.csproj" />
-    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssemblyDelegateCore\MethodBoundaryAspect.Fody.UnitTests.TestAssemblyDelegateCore.csproj" />
-    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssemblyDelegateFwk2\MethodBoundaryAspect.Fody.UnitTests.TestAssemblyDelegateFwk2.csproj" />
-    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssemblyDelegateFwk\MethodBoundaryAspect.Fody.UnitTests.TestAssemblyDelegateFwk.csproj" />
     <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssembly\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.csproj" />
     <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestProgram\MethodBoundaryAspect.Fody.UnitTests.TestProgram.csproj" />
     <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly\MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.csproj" />

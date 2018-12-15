@@ -9,15 +9,5 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssemblyDelegateFwk2
     public class ClassWithDelegate
     {
         public delegate void ThreadFinishedEventHandler();
-
-        public struct MyStruct
-        {
-            public string MyString { get; set; }
-        }
-
-        public void DoSomething()
-        {
-            int myval = 5 + 2;
-        }
     }
 }

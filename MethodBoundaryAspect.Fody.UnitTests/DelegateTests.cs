@@ -1,6 +1,6 @@
 ﻿using System;
-using System.IO;
 using FluentAssertions;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
 using Xunit;
 
 
@@ -9,23 +9,17 @@ namespace MethodBoundaryAspect.Fody.UnitTests
     public class DelegateTests : MethodBoundaryAspectTestBase
     {
         [Fact]
-        public void WeaveWithoutErrorEvenIfDelegateExistsCore()
+        public void IfClassWithDelegateIsWeaved_ThenThereShouldBeNoException()
         {
-            WeaveAssembly(typeof(TestAssemblyDelegateCore.ClassWithDelegate));
-        }
+            // Arrange
+            var type = typeof(ClassWithDelegate);
 
-        [Fact]
-        public void WeaveWithoutErrorEvenIfDelegateExistsFramework()
-        {
-            WeaveAssembly(typeof(TestAssemblyDelegateFwk.ClassWithDelegate));
-        }
+            // Act
+            Action action = () => WeaveAssemblyClassWithNestedTypesAndLoad(type);
 
-        [Fact]
-        public void WeaveWithoutErrorEvenIfDelegateExistsFramework2()
-        {
-            // This fails without code which skips weaving methods that don't have a body.
-            WeaveAssembly(typeof(TestAssemblyDelegateFwk2.ClassWithDelegate));
-        }
+            // Assert
 
+            action.Should().NotThrow();
+        }
     }
 }

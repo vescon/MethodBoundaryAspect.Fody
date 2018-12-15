@@ -50,19 +50,24 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 File.Delete(pdbPath);
         }
 
+        protected void WeaveAssemblyClassWithNestedTypesAndLoad(Type type)
+        {
+            WeaveAssemblyAndVerifyAndLoad(type, null, null, true);
+        }
+
         protected void WeaveAssemblyClassAndLoad(Type type)
         {
-            WeaveAssemblyAndVerifyAndLoad(type, null, null);
+            WeaveAssemblyAndVerifyAndLoad(type, null, null, false);
         }
 
         protected void WeaveAssemblyMethodAndLoad(Type type, string methodName)
         {
-            WeaveAssemblyAndVerifyAndLoad(type, methodName, null);
+            WeaveAssemblyAndVerifyAndLoad(type, methodName, null, false);
         }
 
         protected void WeaveAssemblyPropertyAndLoad(Type type, string propertyName)
         {
-            WeaveAssemblyAndVerifyAndLoad(type, null, propertyName);
+            WeaveAssemblyAndVerifyAndLoad(type, null, propertyName, false);
         }
 
         protected void RunIlSpy()
@@ -97,7 +102,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             return WeavedType.Assembly.CodeBase.Replace(@"file:///", string.Empty);
         }
 
-        private void WeaveAssemblyAndVerifyAndLoad(Type type, string methodName, string propertyName)
+        private void WeaveAssemblyAndVerifyAndLoad(Type type, string methodName, string propertyName, bool includeNested)
         {
             WeavedType = type;
             Weaver = new ModuleWeaver();
@@ -109,7 +114,16 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 Weaver.AddPropertyFilter(fullPropertyName.Item2);
             }
             else if (methodName == null)
+            {
                 Weaver.AddClassFilter(type.FullName);
+                if (includeNested)
+                {
+                    foreach (var nestedType in GetNestedTypes(type))
+                    {
+                        Weaver.AddClassFilter(nestedType.FullName);
+                    }
+                }
+            }
             else
             {
                 var fullMethodName = CreateFullMethodName(type, methodName);
@@ -120,6 +134,19 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             var ignores = type.Assembly.GetCustomAttributes<UnverifiableTestAssembly.Attributes.IgnorePEVerifyCode>();
             RunPeVerify(ignores.Select(a => a.ErrorCode));
             LoadWeavedAssembly();
+        }
+
+        private IEnumerable<Type> GetNestedTypes(Type type)
+        {
+            foreach (var nestedType in type.GetNestedTypes())
+            {
+                yield return nestedType;
+                foreach (var nestedNestedType in GetNestedTypes(nestedType))
+                {
+                    yield return nestedNestedType;
+                }
+            }
+
         }
 
         private static void WeaveAssembly(Type type, ModuleWeaver weaver)

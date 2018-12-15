@@ -95,7 +95,7 @@ namespace MethodBoundaryAspect.Fody
             {
                 ReadSymbols = true,
                 SymbolReaderProvider = new PdbReaderProvider(),
-				ReadWrite = true,
+				ReadWrite = true
             };
 
             if (_additionalAssemblyResolveFolders.Any())
@@ -210,10 +210,7 @@ namespace MethodBoundaryAspect.Fody
                     .ToList();
                 if (aspectInfos.Count == 0)
                     continue;
-
-                if (!method.HasBody)
-                    continue;
-
+                
                 weavedAtLeastOneMethod = WeaveMethod(
                     module,
                     method,
@@ -277,10 +274,18 @@ namespace MethodBoundaryAspect.Fody
             if (IsUserFiltered(fullName, name))
                 return false;
 
+            if (IsDelegate(method))
+                return false;
+
             return !(method.IsAbstract // abstract or interface method
                      || method.IsConstructor
                      || name.StartsWith("<") // anonymous
                      || method.IsPInvokeImpl); // extern
+        }
+
+        private bool IsDelegate(MethodDefinition method)
+        {
+            return !method.HasBody;
         }
 
         private bool IsUserFiltered(string fullName, string name)
