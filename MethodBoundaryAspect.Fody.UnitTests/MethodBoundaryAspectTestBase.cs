@@ -120,7 +120,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 {
                     foreach (var nestedType in GetNestedTypes(type))
                     {
-                        Weaver.AddClassFilter(nestedType.FullName);
+                        var fullName = CreateNestedClassFullName(nestedType);
+                        Weaver.AddClassFilter(fullName);
                     }
                 }
             }
@@ -170,6 +171,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             AssemblyLoader = _testDomain.CreateAssemblyLoader();
             AssemblyLoader.SetDomain(_testDomain.AppDomain);
             AssemblyLoader.Load(WeavedAssemblyPath);
+        }
+
+        private string CreateNestedClassFullName(Type type)
+        {
+            return type.FullName.Replace('+', '/');
         }
 
         private string CreateFullMethodName(Type type, string methodName)
