@@ -11,7 +11,7 @@ dotnet_csproj:
   file_version: '{version}'
   informational_version: '{version}'
 before_build:
-- cmd: dotnet restore
+- cmd: dotnet restore src
 build:
   verbosity: minimal
   project: src\MethodBoundaryAspect.Fody.sln
@@ -19,7 +19,7 @@ after_build:
 - cmd: >-
     nuget pack src\MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.nuspec -Properties "version=%APPVEYOR_BUILD_VERSION%"
 test_script:
-- cmd: dotnet test MethodBoundaryAspect.Fody.UnitTests --configuration Release
+- cmd: dotnet test src\MethodBoundaryAspect.Fody.UnitTests --configuration Release
 artifacts:
 - path: src\MethodBoundaryAspect.Fody\bin\$(configuration)
   name: Binaries
