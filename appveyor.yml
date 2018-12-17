@@ -4,7 +4,7 @@ configuration: Release
 platform: Any CPU
 dotnet_csproj:
   patch: true
-  file: '**\MethodBoundaryAspect.Fody.sln'
+  file: 'src\**\*.csproj'
   version: '{version}'
   package_version: '{version}'
   assembly_version: '{version}'
@@ -20,9 +20,9 @@ after_build:
 test_script:
 - cmd: dotnet test MethodBoundaryAspect.Fody.UnitTests --configuration Release
 artifacts:
-- path: MethodBoundaryAspect.Fody\bin\$(configuration)
+- path: src\MethodBoundaryAspect.Fody\bin\$(configuration)
   name: Binaries
-- path: '**\*.nupkg'
+- path: 'src\**\*.nupkg'
   name: Packages
 deploy:
 - provider: NuGet
