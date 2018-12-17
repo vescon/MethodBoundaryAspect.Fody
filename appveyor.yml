@@ -4,25 +4,26 @@ configuration: Release
 platform: Any CPU
 dotnet_csproj:
   patch: true
-  file: '**\*.csproj'
+  file: 'src\**\*.csproj'
   version: '{version}'
   package_version: '{version}'
   assembly_version: '{version}'
   file_version: '{version}'
   informational_version: '{version}'
 before_build:
-- cmd: dotnet restore
+- cmd: dotnet restore src
 build:
   verbosity: minimal
+  project: src\MethodBoundaryAspect.Fody.sln
 after_build:
 - cmd: >-
-    nuget pack MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.nuspec -Properties "version=%APPVEYOR_BUILD_VERSION%"
+    nuget pack src\MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.nuspec -Properties "version=%APPVEYOR_BUILD_VERSION%" -OutputDirectory src
 test_script:
-- cmd: dotnet test MethodBoundaryAspect.Fody.UnitTests --configuration Release
+- cmd: dotnet test src\MethodBoundaryAspect.Fody.UnitTests --configuration Release
 artifacts:
-- path: MethodBoundaryAspect.Fody\bin\$(configuration)
+- path: src\MethodBoundaryAspect.Fody\bin\$(configuration)
   name: Binaries
-- path: '**\*.nupkg'
+- path: 'src\**\*.nupkg'
   name: Packages
 deploy:
 - provider: NuGet
