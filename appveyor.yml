@@ -4,7 +4,7 @@ configuration: Release
 platform: Any CPU
 dotnet_csproj:
   patch: true
-  file: '**\*.csproj'
+  file: '**\MethodBoundaryAspect.Fody.sln'
   version: '{version}'
   package_version: '{version}'
   assembly_version: '{version}'
