@@ -14,9 +14,10 @@ before_build:
 - cmd: dotnet restore
 build:
   verbosity: minimal
+  project: src\MethodBoundaryAspect.Fody.sln
 after_build:
 - cmd: >-
-    nuget pack MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.nuspec -Properties "version=%APPVEYOR_BUILD_VERSION%"
+    nuget pack src\MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.nuspec -Properties "version=%APPVEYOR_BUILD_VERSION%"
 test_script:
 - cmd: dotnet test MethodBoundaryAspect.Fody.UnitTests --configuration Release
 artifacts:
