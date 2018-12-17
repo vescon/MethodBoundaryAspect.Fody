@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.136
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloWorld_NetFramework", "HelloWorld_NetFramework\HelloWorld_NetFramework.csproj", "{99F179A1-AECC-4640-8ACB-F76BD36CC69B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloWorld_NetFramework_Attributes", "HelloWorld_NetFramework_Attributes\HelloWorld_NetFramework_Attributes.csproj", "{49CAF2C7-C008-405F-A5AB-12F88339B564}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{99F179A1-AECC-4640-8ACB-F76BD36CC69B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{99F179A1-AECC-4640-8ACB-F76BD36CC69B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{99F179A1-AECC-4640-8ACB-F76BD36CC69B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{99F179A1-AECC-4640-8ACB-F76BD36CC69B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49CAF2C7-C008-405F-A5AB-12F88339B564}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49CAF2C7-C008-405F-A5AB-12F88339B564}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49CAF2C7-C008-405F-A5AB-12F88339B564}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49CAF2C7-C008-405F-A5AB-12F88339B564}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BCF6ED94-AA81-4217-ABB5-11CBF6135CEB}
+	EndGlobalSection
+EndGlobal
