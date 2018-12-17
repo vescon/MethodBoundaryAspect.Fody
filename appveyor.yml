@@ -17,7 +17,7 @@ build:
   project: src\MethodBoundaryAspect.Fody.sln
 after_build:
 - cmd: >-
-    nuget pack src\MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.nuspec -Properties "version=%APPVEYOR_BUILD_VERSION%"
+    nuget pack src\MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.nuspec -Properties "version=%APPVEYOR_BUILD_VERSION%" -OutputDirectory src
 test_script:
 - cmd: dotnet test src\MethodBoundaryAspect.Fody.UnitTests --configuration Release
 artifacts:
