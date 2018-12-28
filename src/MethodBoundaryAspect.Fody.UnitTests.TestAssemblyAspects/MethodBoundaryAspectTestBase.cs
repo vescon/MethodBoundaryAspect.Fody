@@ -178,6 +178,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared
 
         private void RunPeVerify(Type type)
         {
+            if (type.GetCustomAttribute<SkipPEVerify>() != null || type.Assembly.GetCustomAttribute<SkipPEVerify>() != null)
+                return;
+
             var ignores = type.GetCustomAttributes<IgnorePEVerifyCode>().Select(a => a.ErrorCode);
             ignores = ignores.Concat(type.Assembly.GetCustomAttributes<IgnorePEVerifyCode>().Select(a => a.ErrorCode));
 
