@@ -1,7 +1,7 @@
 using System;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnExit
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified.OnExit
 {
     public class Tests : UnifiedWeaverTestBase
     {

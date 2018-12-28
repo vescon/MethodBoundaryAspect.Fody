@@ -4,8 +4,9 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using FluentAssertions;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.Unified
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified
 {
     public class UnifiedWeaverTestBase : IDisposable
     {

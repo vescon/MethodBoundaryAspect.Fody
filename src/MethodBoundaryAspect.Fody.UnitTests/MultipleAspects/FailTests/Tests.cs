@@ -1,10 +1,10 @@
 using System;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.Ordering;
-using MethodBoundaryAspect.Fody.UnitTests.Unified;
+using MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.MultipleAspects.FailTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects.FailTests
 {
     public class Tests : UnifiedWeaverTestBase
     {

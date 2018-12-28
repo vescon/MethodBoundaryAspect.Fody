@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.Unified
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared
 {
     public static class PeVerifier
     {

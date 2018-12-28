@@ -1,6 +1,6 @@
 using System;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.MultipleAspects
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects
 {
     [FirstAspect]
     [SecondAspect]

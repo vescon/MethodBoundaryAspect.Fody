@@ -1,8 +1,8 @@
-﻿using MethodBoundaryAspect.Fody.Attributes;
-using System;
+﻿using System;
 using System.Linq;
+using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Aspects
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.Aspects
 {
     public class IntArrayTakingAspect : OnMethodBoundaryAspect
     {

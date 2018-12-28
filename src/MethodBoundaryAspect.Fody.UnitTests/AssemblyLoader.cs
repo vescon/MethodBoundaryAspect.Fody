@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Linq;
-using System.Net;
 using System.Reflection;
 using System.Runtime.Remoting;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
     public class AssemblyLoader : MarshalByRefObject
     {

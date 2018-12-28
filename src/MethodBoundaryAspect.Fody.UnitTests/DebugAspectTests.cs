@@ -2,11 +2,12 @@
 using System.IO;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestProgram;
+using MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
-    public class DebugAspectTests : MethodBoundaryAspectTestBase
+    public class DebugAspectTests : MethodBoundaryAspectNetFrameworkTestBase
     {
         [Fact(Skip = "Needs to be clarified")]
         public void IfWeavedTestProgramIsExecuted_ThenTheDebugSymbolsShouldWorkAndTheDebuggerShouldBeAttachable()

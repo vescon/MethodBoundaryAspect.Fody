@@ -1,11 +1,12 @@
 ﻿using System;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
-    public class SetReturnValueAspectTests : MethodBoundaryAspectTestBase
+    public class SetReturnValueAspectTests : MethodBoundaryAspectNetFrameworkTestBase
     {
         private static readonly Type TestClassType = typeof (SetReturnValueAspectMethods);
         

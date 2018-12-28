@@ -1,4 +1,4 @@
-namespace MethodBoundaryAspect.Fody.UnitTests.MultipleAspects.FailTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects.FailTests
 {
     public class TestFailMethods
     {

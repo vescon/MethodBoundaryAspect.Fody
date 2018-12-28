@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects
 {
     public class ForeignGeneric<T1, T2> where T1 : IList<T2>
     {

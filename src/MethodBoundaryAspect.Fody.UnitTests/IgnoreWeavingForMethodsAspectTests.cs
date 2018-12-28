@@ -1,11 +1,11 @@
-﻿using System;
-using FluentAssertions;
+﻿using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
-    public class IgnoreWeavingForMethodsAspectTests : MethodBoundaryAspectTestBase
+    public class IgnoreWeavingForMethodsAspectTests : MethodBoundaryAspectNetFrameworkTestBase
     {
         [Fact]
         public void IfStaticMethodIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()

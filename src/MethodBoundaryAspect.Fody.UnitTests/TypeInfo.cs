@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
     [Serializable]
     public class TypeInfo

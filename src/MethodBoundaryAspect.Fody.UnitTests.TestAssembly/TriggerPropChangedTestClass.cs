@@ -1,6 +1,6 @@
 ﻿using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework
 {
     public class TriggerPropChangedTestClass
     {
@@ -9,10 +9,10 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
         [TriggerPropChangedAspect("a")]
         public string TestProp { get; set; }
 
-        [TestAssemblyAspects.TriggerPropChangedAspect("expectedResult")]
+        [Shared.Aspects.TriggerPropChangedAspect("expectedResult")]
         public string TestPropCrossDll { get; set; }
 
-        [TestAssemblyAspects.TriggerPropChangedAspect(typeof(string), typeof(object))]
+        [Shared.Aspects.TriggerPropChangedAspect(typeof(string), typeof(object))]
         public string TestTypeArrayCrossDll { get; set; }
     }
 

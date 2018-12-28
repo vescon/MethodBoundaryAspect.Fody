@@ -1,10 +1,11 @@
-﻿using FluentAssertions;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using FluentAssertions;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
     public class GenericForeignAssemblyTests : GenericTestBase
     {

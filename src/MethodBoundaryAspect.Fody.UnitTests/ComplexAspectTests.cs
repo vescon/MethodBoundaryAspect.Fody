@@ -1,15 +1,15 @@
-﻿using FluentAssertions;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using FluentAssertions;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
-    public class ComplexAspectTests : MethodBoundaryAspectTestBase
+    public class ComplexAspectTests : MethodBoundaryAspectNetFrameworkTestBase
     {
         static readonly Type TestClassType = typeof(ComplexAspectTestClass);
 

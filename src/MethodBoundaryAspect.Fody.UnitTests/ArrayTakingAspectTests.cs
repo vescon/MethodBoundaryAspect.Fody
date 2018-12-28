@@ -1,11 +1,12 @@
-﻿using FluentAssertions;
+﻿using System;
+using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
-using System;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
-    public class ArrayTakingAspectTests : MethodBoundaryAspectTestBase
+    public class ArrayTakingAspectTests : MethodBoundaryAspectNetFrameworkTestBase
     {
         static readonly Type TestClassType = typeof(ArrayTakingAspectMethod);
 

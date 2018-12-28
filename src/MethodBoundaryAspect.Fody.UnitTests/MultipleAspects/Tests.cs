@@ -1,8 +1,8 @@
 ﻿using System;
-using MethodBoundaryAspect.Fody.UnitTests.Unified;
+using MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.MultipleAspects
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects
 {
     public class Tests : UnifiedWeaverTestBase
     {

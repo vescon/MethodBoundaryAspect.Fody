@@ -1,7 +1,7 @@
 using System;
 using System.Security.Policy;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
     public class TestDomain : IDisposable
     {

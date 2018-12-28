@@ -1,9 +1,10 @@
 using System;
 using MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects;
+using MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.Shared;
 
 [assembly: ExceptionAssembly]
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestProgram
+namespace MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework
 {
     [LogClass]
     public class TestClass

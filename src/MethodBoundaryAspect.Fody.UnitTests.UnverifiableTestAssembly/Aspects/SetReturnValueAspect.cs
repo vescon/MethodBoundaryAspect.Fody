@@ -1,6 +1,6 @@
 ﻿using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.Aspects
+namespace MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework.Aspects
 {
     public class SetReturnValueAspect : OnMethodBoundaryAspect
     {

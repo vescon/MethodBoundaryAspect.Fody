@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.MultipleAspects
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects
 {
     [ProvideAspectRole(TestRoles.First)]
     [AspectRoleDependency(AspectDependencyAction.Order, AspectDependencyPosition.Before, TestRoles.Second)]

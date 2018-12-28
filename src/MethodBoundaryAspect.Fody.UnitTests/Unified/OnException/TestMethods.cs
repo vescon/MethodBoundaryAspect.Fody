@@ -1,6 +1,6 @@
 using System;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnException
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified.OnException
 {
     [OnlyOnExceptionAspect]
     public class TestMethods

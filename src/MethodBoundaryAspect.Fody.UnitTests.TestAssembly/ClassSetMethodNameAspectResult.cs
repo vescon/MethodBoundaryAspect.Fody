@@ -1,4 +1,4 @@
-﻿namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
+﻿namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework
 {
     public class ClassSetMethodNameAspectResult
     {

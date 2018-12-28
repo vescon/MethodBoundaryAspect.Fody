@@ -1,6 +1,6 @@
 using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.MultipleAspects
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects
 {
     public class UnorderedAspect : OnMethodBoundaryAspect
     {

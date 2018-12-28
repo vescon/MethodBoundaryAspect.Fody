@@ -1,6 +1,6 @@
 using System;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnEntry
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified.OnEntry
 {
     [OnlyOnEntryAspect]
     public class TestMethods

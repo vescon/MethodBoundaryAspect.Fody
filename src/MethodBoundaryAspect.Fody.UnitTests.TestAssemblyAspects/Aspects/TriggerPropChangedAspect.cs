@@ -1,9 +1,9 @@
-﻿using MethodBoundaryAspect.Fody.Attributes;
-using System;
+﻿using System;
 using System.Linq;
 using System.Reflection;
+using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects
 {
     public class TriggerPropChangedAspect : OnMethodBoundaryAspect
     {

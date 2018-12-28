@@ -1,12 +1,12 @@
-﻿using MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly
+namespace MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework
 {
+    // Ignore PEVerify's complaint about ref return types.
+    [IgnorePEVerifyCode("80131870")]
     public class UnverifiableGenerics<T>: IResult where T : IDisposable, new()
     {
         public static object Result { get; set; }

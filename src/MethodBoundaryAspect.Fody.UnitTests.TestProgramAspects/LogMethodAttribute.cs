@@ -1,7 +1,7 @@
 using System;
 using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects
+namespace MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.Shared
 {
     public class LogMethodAttribute : OnMethodBoundaryAspect
     {

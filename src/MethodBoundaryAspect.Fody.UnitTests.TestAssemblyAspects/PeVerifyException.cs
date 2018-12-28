@@ -1,6 +1,6 @@
 using System;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.Unified
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared
 {
     public class PeVerifyException : Exception
     {

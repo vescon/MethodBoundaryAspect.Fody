@@ -1,9 +1,9 @@
-﻿using MethodBoundaryAspect.Fody.Attributes;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Aspects;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework
 {
     public class OverwriteReturnValues
     {
@@ -14,7 +14,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ReturnString();
         }
 
-        [OverwriteReturnValueAspect("Overwritten")]
+        [Aspects.OverwriteReturnValueAspect("Overwritten")]
         string ReturnString()
         {
             return "not overwritten";
@@ -25,7 +25,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ExternReturnString();
         }
 
-        [TestAssemblyAspects.OverwriteReturnValueAspect("Overwritten")]
+        [OverwriteReturnValueAspect("Overwritten")]
         string ExternReturnString()
         {
             return "not overwritten";
@@ -36,7 +36,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ReturnInt().ToString();
         }
 
-        [OverwriteReturnValueAspect(42)]
+        [Aspects.OverwriteReturnValueAspect(42)]
         int ReturnInt()
         {
             return -1;
@@ -47,7 +47,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ExternReturnInt().ToString();
         }
 
-        [TestAssemblyAspects.OverwriteReturnValueAspect(42)]
+        [OverwriteReturnValueAspect(42)]
         int ExternReturnInt()
         {
             return -1;
@@ -64,7 +64,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Overwritten
         }
 
-        [OverwriteReturnValueAspect(TestValues.Overwritten)]
+        [Aspects.OverwriteReturnValueAspect(TestValues.Overwritten)]
         TestValues ReturnEnum()
         {
             return TestValues.NotOverwritten;
@@ -75,7 +75,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ExternReturnEnum().ToString();
         }
 
-        [TestAssemblyAspects.OverwriteReturnValueAspect(TestValues.Overwritten)]
+        [OverwriteReturnValueAspect(TestValues.Overwritten)]
         TestValues ExternReturnEnum()
         {
             return TestValues.NotOverwritten;
@@ -86,7 +86,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             ReturnWrongType();
         }
 
-        [OverwriteReturnValueAspect("not an integer")]
+        [Aspects.OverwriteReturnValueAspect("not an integer")]
         int ReturnWrongType()
         {
             return -1;
@@ -97,7 +97,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             ExternReturnWrongType();
         }
 
-        [TestAssemblyAspects.OverwriteReturnValueAspect("not an integer")]
+        [OverwriteReturnValueAspect("not an integer")]
         int ExternReturnWrongType()
         {
             return -1;
@@ -108,7 +108,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ReturnFromTry();
         }
 
-        [OverwriteReturnValueAspect("Overwritten")]
+        [Aspects.OverwriteReturnValueAspect("Overwritten")]
         string ReturnFromTry()
         {
             try
@@ -126,7 +126,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ExternReturnFromTry();
         }
 
-        [TestAssemblyAspects.OverwriteReturnValueAspect("Overwritten")]
+        [OverwriteReturnValueAspect("Overwritten")]
         string ExternReturnFromTry()
         {
             try
@@ -144,7 +144,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ReturnFromCatch();
         }
 
-        [OverwriteReturnValueAspect("Overwritten")]
+        [Aspects.OverwriteReturnValueAspect("Overwritten")]
         string ReturnFromCatch()
         {
             try
@@ -162,7 +162,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ExternReturnFromCatch();
         }
 
-        [TestAssemblyAspects.OverwriteReturnValueAspect("Overwritten")]
+        [OverwriteReturnValueAspect("Overwritten")]
         string ExternReturnFromCatch()
         {
             try
@@ -180,7 +180,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ReturnCovariantGeneric().GetType().FullName;
         }
 
-        [OverwriteReturnValueAspect(new string[] { "one", "two" })]
+        [Aspects.OverwriteReturnValueAspect(new string[] { "one", "two" })]
         IEnumerable<object> ReturnCovariantGeneric()
         {
             return new object[0];
@@ -191,7 +191,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ExternReturnCovariantGeneric().GetType().FullName;
         }
 
-        [TestAssemblyAspects.OverwriteReturnValueAspect(new string[] { "one", "two" })]
+        [OverwriteReturnValueAspect(new string[] { "one", "two" })]
         IEnumerable<object> ExternReturnCovariantGeneric()
         {
             return new object[0];
@@ -202,10 +202,10 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ReturnCustomStruct().ToString();
         }
 
-        [OverwriteReturnValueWithTestDataAspect(42)]
-        TestAssemblyAspects.TestData ReturnCustomStruct()
+        [Aspects.OverwriteReturnValueWithTestDataAspect(42)]
+        TestData ReturnCustomStruct()
         {
-            return new TestAssemblyAspects.TestData(0);
+            return new TestData(0);
         }
 
         public void ExternTestCustomStruct()
@@ -213,10 +213,10 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ExternReturnCustomStruct().ToString();
         }
 
-        [TestAssemblyAspects.OverwriteReturnValueWithTestDataAspect(42)]
-        TestAssemblyAspects.TestData ExternReturnCustomStruct()
+        [OverwriteReturnValueWithTestDataAspect(42)]
+        TestData ExternReturnCustomStruct()
         {
-            return new TestAssemblyAspects.TestData(0);
+            return new TestData(0);
         }
         
         public void TestMultipleSimultaneousAspects()
@@ -224,8 +224,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ReturnMultipleAspects(4).ToString();
         }
 
-        [TestAssemblyAspects.ReturnValueTimesN(2)]  // Has order First, so its OnExit should be run last.
-        [TestAssemblyAspects.ReturnValuePlusN(5)]
+        [ReturnValueTimesN(2)]  // Has order First, so its OnExit should be run last.
+        [ReturnValuePlusN(5)]
         int ReturnMultipleAspects(int n)
         {
             // Should be rewoven to:
@@ -240,7 +240,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ReturnGenericInt<int>().ToString();
         }
 
-        [OverwriteReturnValueAspect(42)]
+        [Aspects.OverwriteReturnValueAspect(42)]
         T ReturnGenericInt<T>() => default(T);
 
         public void ExternTestGenericReturnOverwriteInt()
@@ -248,7 +248,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ExternReturnGenericInt<int>().ToString();
         }
 
-        [TestAssemblyAspects.OverwriteReturnValueAspect(42)]
+        [OverwriteReturnValueAspect(42)]
         T ExternReturnGenericInt<T>() => default(T);
 
         public void TestGenericReturnOverwriteString()
@@ -256,7 +256,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ReturnGenericString<string>().ToString();
         }
 
-        [OverwriteReturnValueAspect("Overwritten")]
+        [Aspects.OverwriteReturnValueAspect("Overwritten")]
         T ReturnGenericString<T>() => default(T);
 
         public void ExternTestGenericReturnOverwriteString()
@@ -264,39 +264,39 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
             Result = ExternReturnGenericString<string>().ToString();
         }
 
-        [TestAssemblyAspects.OverwriteReturnValueAspect("Overwritten")]
+        [OverwriteReturnValueAspect("Overwritten")]
         T ExternReturnGenericString<T>() => default(T);
 
         public void TestGenericReturnOverwriteEnum()
         {
-            Result = ReturnGenericEnum<TestAssemblyAspects.LongExampleEnum>().ToString();
+            Result = ReturnGenericEnum<LongExampleEnum>().ToString();
         }
 
-        [OverwriteReturnValueAspect(TestAssemblyAspects.LongExampleEnum.LongFifth)]
+        [Aspects.OverwriteReturnValueAspect(LongExampleEnum.LongFifth)]
         T ReturnGenericEnum<T>() => default(T);
 
         public void ExternTestGenericReturnOverwriteEnum()
         {
-            Result = ExternReturnGenericEnum<TestAssemblyAspects.LongExampleEnum>().ToString();
+            Result = ExternReturnGenericEnum<LongExampleEnum>().ToString();
         }
 
-        [TestAssemblyAspects.OverwriteReturnValueAspect(TestAssemblyAspects.LongExampleEnum.LongFifth)]
+        [OverwriteReturnValueAspect(LongExampleEnum.LongFifth)]
         T ExternReturnGenericEnum<T>() => default(T);
 
         public void TestGenericReturnOverwriteStruct()
         {
-            Result = ReturnGenericStruct<TestAssemblyAspects.TestData>().ToString();
+            Result = ReturnGenericStruct<TestData>().ToString();
         }
 
-        [OverwriteReturnValueWithTestDataAspect(42)]
+        [Aspects.OverwriteReturnValueWithTestDataAspect(42)]
         T ReturnGenericStruct<T>() => default(T);
 
         public void ExternTestGenericReturnOverwriteStruct()
         {
-            Result = ExternReturnGenericStruct<TestAssemblyAspects.TestData>().ToString();
+            Result = ExternReturnGenericStruct<TestData>().ToString();
         }
 
-        [TestAssemblyAspects.OverwriteReturnValueWithTestDataAspect(42)]
+        [OverwriteReturnValueWithTestDataAspect(42)]
         T ExternReturnGenericStruct<T>() => default(T);
     }
 }

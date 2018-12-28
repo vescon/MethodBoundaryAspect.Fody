@@ -7,17 +7,23 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect", "MethodBoundaryAspect\MethodBoundaryAspect.csproj", "{647FC29E-DDD1-4122-81A1-7FCD7E915F0F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests", "MethodBoundaryAspect.Fody.UnitTests\MethodBoundaryAspect.Fody.UnitTests.csproj", "{A0DBF542-6CA0-49CA-9EF7-C58D8E4E2243}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.NetFramework", "MethodBoundaryAspect.Fody.UnitTests\MethodBoundaryAspect.Fody.UnitTests.NetFramework.csproj", "{A0DBF542-6CA0-49CA-9EF7-C58D8E4E2243}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.TestProgram", "MethodBoundaryAspect.Fody.UnitTests.TestProgram\MethodBoundaryAspect.Fody.UnitTests.TestProgram.csproj", "{59E1A528-34EC-4931-9E6C-9CDCFEF371E3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework", "MethodBoundaryAspect.Fody.UnitTests.TestProgram\MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework.csproj", "{59E1A528-34EC-4931-9E6C-9CDCFEF371E3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects", "MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects\MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.csproj", "{63CCDF8D-C875-446A-8744-744D51073AAA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.Shared", "MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects\MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.Shared.csproj", "{63CCDF8D-C875-446A-8744-744D51073AAA}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.TestAssembly", "MethodBoundaryAspect.Fody.UnitTests.TestAssembly\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.csproj", "{B5D3E43D-1B47-46DA-9CFE-76750D195359}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework", "MethodBoundaryAspect.Fody.UnitTests.TestAssembly\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.csproj", "{B5D3E43D-1B47-46DA-9CFE-76750D195359}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly", "MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly\MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.csproj", "{DDB88B85-71FE-42B8-9653-EE0DBDC45620}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework", "MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly\MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework.csproj", "{DDB88B85-71FE-42B8-9653-EE0DBDC45620}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects", "MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects\MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects.csproj", "{EAD6BAD4-9DAE-44A4-9418-24A68F7C935A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared", "MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.csproj", "{EAD6BAD4-9DAE-44A4-9418-24A68F7C935A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.UnitTests.NetCore", "MethodBoundaryAspect.Fody.UnitTests.NetCore\MethodBoundaryAspect.Fody.UnitTests.NetCore.csproj", "{CBC73200-4396-409C-B950-274CB692AEF3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore", "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore.csproj", "{0920DE73-E0E1-4BC7-9394-5EF78D680CE9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetStandard", "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetStandard\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetStandard.csproj", "{744CD551-374B-4801-B565-0A008F1DD656}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +63,18 @@ Global
 		{EAD6BAD4-9DAE-44A4-9418-24A68F7C935A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EAD6BAD4-9DAE-44A4-9418-24A68F7C935A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EAD6BAD4-9DAE-44A4-9418-24A68F7C935A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CBC73200-4396-409C-B950-274CB692AEF3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBC73200-4396-409C-B950-274CB692AEF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBC73200-4396-409C-B950-274CB692AEF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBC73200-4396-409C-B950-274CB692AEF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0920DE73-E0E1-4BC7-9394-5EF78D680CE9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0920DE73-E0E1-4BC7-9394-5EF78D680CE9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0920DE73-E0E1-4BC7-9394-5EF78D680CE9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0920DE73-E0E1-4BC7-9394-5EF78D680CE9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{744CD551-374B-4801-B565-0A008F1DD656}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{744CD551-374B-4801-B565-0A008F1DD656}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{744CD551-374B-4801-B565-0A008F1DD656}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{744CD551-374B-4801-B565-0A008F1DD656}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

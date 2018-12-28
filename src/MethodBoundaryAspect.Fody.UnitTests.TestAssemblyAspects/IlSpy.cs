@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared
 {
     public class IlSpy
     {

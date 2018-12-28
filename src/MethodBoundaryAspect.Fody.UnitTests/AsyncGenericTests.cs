@@ -1,12 +1,13 @@
-﻿using FluentAssertions;
+﻿using System;
+using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Aspects;
-using System;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.Aspects;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
-    public class AsyncGenericTests : MethodBoundaryAspectTestBase
+    public class AsyncGenericTests : MethodBoundaryAspectNetFrameworkTestBase
     {
         Type OpenClass = typeof(AsyncClass<>);
         TypeInfo Closed = typeof(AsyncClass<>).TypeInfoWithGenericParameters(typeof(Placeholder));

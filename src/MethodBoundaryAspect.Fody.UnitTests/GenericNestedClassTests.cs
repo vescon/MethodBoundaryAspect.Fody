@@ -1,8 +1,9 @@
-﻿using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
     public class GenericNestedClassTests : GenericTestBase
     {

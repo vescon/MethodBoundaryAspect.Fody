@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Aspects;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.Aspects;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework
 {
     public class SpecialOperatorMethods
     {

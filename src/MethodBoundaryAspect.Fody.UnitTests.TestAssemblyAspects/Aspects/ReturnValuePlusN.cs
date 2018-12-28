@@ -1,6 +1,6 @@
 ﻿using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects
 {
     [ProvideAspectRole("Second")]
     [AspectRoleDependency(AspectDependencyAction.Order, AspectDependencyPosition.After, "First")]

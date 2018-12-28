@@ -1,7 +1,10 @@
-﻿using MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.Aspects;
+﻿using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Attributes;
+using MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework.Aspects;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly
+namespace MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework
 {
+    // Ignore PEVerify's complaint about ref return types.
+    [IgnorePEVerifyCode("80131870")]
     public class SetReturnValueAspectMethods
     {
         public static object Result { get; set; }

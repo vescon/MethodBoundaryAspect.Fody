@@ -1,5 +1,5 @@
 ﻿using FluentAssertions;
-using MethodBoundaryAspect.Fody.UnitTests.Unified;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Attributes;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,12 +7,10 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared
 {
     public class MethodBoundaryAspectTestBase : IDisposable
     {
-        private TestDomain _testDomain;
-
         public MethodBoundaryAspectTestBase()
         {
             var url = Path.GetDirectoryName(GetType().Assembly.CodeBase);
@@ -20,23 +18,13 @@ namespace MethodBoundaryAspect.Fody.UnitTests
 
             Environment.CurrentDirectory = path;
         }
-
-        protected AssemblyLoader AssemblyLoader { get; private set; }
         
         protected static string WeavedAssemblyPath { get; private set; }
         protected Type WeavedType { get; private set; }
         protected ModuleWeaver Weaver { get; set; }
         
-        public void Dispose()
+        public virtual void Dispose()
         {
-            AssemblyLoader = null;
-
-            if (_testDomain != null)
-            {
-                _testDomain.Dispose();
-                _testDomain = null;
-            }
-
             TryCleanupWeavedAssembly();
         }
 
@@ -50,24 +38,24 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 File.Delete(pdbPath);
         }
 
-        protected void WeaveAssemblyClassWithNestedTypesAndLoad(Type type)
+        protected void WeaveAssemblyClassWithNestedTypes(Type type)
         {
-            WeaveAssemblyAndVerifyAndLoad(type, null, null, true);
+            WeaveAssemblyAndVerify(type, null, null, true);
         }
 
-        protected void WeaveAssemblyClassAndLoad(Type type)
+        protected void WeaveAssemblyClass(Type type)
         {
-            WeaveAssemblyAndVerifyAndLoad(type, null, null, false);
+            WeaveAssemblyAndVerify(type, null, null, false);
         }
 
-        protected void WeaveAssemblyMethodAndLoad(Type type, string methodName)
+        protected void WeaveAssemblyMethod(Type type, string methodName)
         {
-            WeaveAssemblyAndVerifyAndLoad(type, methodName, null, false);
+            WeaveAssemblyAndVerify(type, methodName, null, false);
         }
 
-        protected void WeaveAssemblyPropertyAndLoad(Type type, string propertyName)
+        protected void WeaveAssemblyProperty(Type type, string propertyName)
         {
-            WeaveAssemblyAndVerifyAndLoad(type, null, propertyName, false);
+            WeaveAssemblyAndVerify(type, null, propertyName, false);
         }
 
         protected void RunIlSpy()
@@ -102,7 +90,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             return WeavedType.Assembly.CodeBase.Replace(@"file:///", string.Empty);
         }
 
-        private void WeaveAssemblyAndVerifyAndLoad(Type type, string methodName, string propertyName, bool includeNested)
+        protected void WeaveAssemblyAndVerify(Type type, string methodName, string propertyName, bool includeNested)
         {
             WeavedType = type;
             Weaver = new ModuleWeaver();
@@ -132,9 +120,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             }
 
             WeaveAssembly(type, Weaver);
-            var ignores = type.Assembly.GetCustomAttributes<UnverifiableTestAssembly.Attributes.IgnorePEVerifyCode>();
-            RunPeVerify(ignores.Select(a => a.ErrorCode));
-            LoadWeavedAssembly();
+            RunPeVerify(type);
         }
 
         private IEnumerable<Type> GetNestedTypes(Type type)
@@ -163,16 +149,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests
             var weaver = new ModuleWeaver();
             return WeavedAssemblyPath = weaver.WeaveToShadowFile(normalizedPath);
         }
-
-        private void LoadWeavedAssembly()
-        {
-            _testDomain = new TestDomain();
-
-            AssemblyLoader = _testDomain.CreateAssemblyLoader();
-            AssemblyLoader.SetDomain(_testDomain.AppDomain);
-            AssemblyLoader.Load(WeavedAssemblyPath);
-        }
-
+        
         private string CreateNestedClassFullName(Type type)
         {
             return type.FullName.Replace('+', '/');
@@ -199,14 +176,17 @@ namespace MethodBoundaryAspect.Fody.UnitTests
                 $"{type.FullName}.{propertyInfo.GetMethod.Name}");
         }
 
-        private void RunPeVerify(IEnumerable<string> ignoreErrorCodes)
+        private void RunPeVerify(Type type)
         {
+            var ignores = type.GetCustomAttributes<IgnorePEVerifyCode>().Select(a => a.ErrorCode);
+            ignores = ignores.Concat(type.Assembly.GetCustomAttributes<IgnorePEVerifyCode>().Select(a => a.ErrorCode));
+
             Action action = () =>
             {
                 var runIlSpy = false;
                 try
                 {
-                    PeVerifier.Verify(WeavedAssemblyPath, ignoreErrorCodes);
+                    PeVerifier.Verify(WeavedAssemblyPath, ignores);
                 }
                 catch (Exception)
                 {

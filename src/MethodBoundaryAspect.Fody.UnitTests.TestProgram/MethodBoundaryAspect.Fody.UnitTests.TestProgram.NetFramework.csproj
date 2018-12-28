@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects\MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.csproj" />
+    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects\MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.Shared.csproj" />
     <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
   </ItemGroup>
 

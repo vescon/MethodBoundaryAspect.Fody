@@ -1,8 +1,8 @@
-﻿using MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework
 {
     public class Generic<T1, T2> : IResult where T1 : IList<T2[]>
     {

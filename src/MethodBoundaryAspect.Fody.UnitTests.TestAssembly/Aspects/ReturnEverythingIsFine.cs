@@ -1,7 +1,7 @@
-﻿using MethodBoundaryAspect.Fody.Attributes;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Aspects
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.Aspects
 {
     public class ReturnEverythingIsFine : OnMethodBoundaryAspect
     {

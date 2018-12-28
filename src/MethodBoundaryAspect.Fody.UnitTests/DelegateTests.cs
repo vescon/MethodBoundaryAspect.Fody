@@ -1,12 +1,12 @@
 ﻿using System;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
 using Xunit;
 
-
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
-    public class DelegateTests : MethodBoundaryAspectTestBase
+    public class DelegateTests : MethodBoundaryAspectNetFrameworkTestBase
     {
         [Fact]
         public void IfClassWithDelegateIsWeaved_ThenThereShouldBeNoException()

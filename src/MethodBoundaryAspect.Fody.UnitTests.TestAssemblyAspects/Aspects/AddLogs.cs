@@ -1,7 +1,7 @@
-﻿using MethodBoundaryAspect.Fody.Attributes;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects
 {
     public interface IResult
     {

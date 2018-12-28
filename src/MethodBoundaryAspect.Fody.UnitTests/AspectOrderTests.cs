@@ -5,7 +5,7 @@ using FluentAssertions;
 using MethodBoundaryAspect.Fody.Ordering;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.UnitTests
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
     public class AspectOrderTests
     {

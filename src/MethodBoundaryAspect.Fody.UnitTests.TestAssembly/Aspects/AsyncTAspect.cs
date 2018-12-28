@@ -1,4 +1,4 @@
-﻿namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Aspects
+﻿namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.Aspects
 {
     public struct Placeholder { public int Value { get; set; } }
 

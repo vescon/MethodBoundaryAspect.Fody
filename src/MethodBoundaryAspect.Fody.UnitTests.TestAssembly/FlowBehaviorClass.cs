@@ -1,8 +1,8 @@
-﻿using MethodBoundaryAspect.Fody.Attributes;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Aspects;
-using System;
+﻿using System;
+using MethodBoundaryAspect.Fody.Attributes;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.Aspects;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework
 {
     public class FlowBehaviorClass
     {

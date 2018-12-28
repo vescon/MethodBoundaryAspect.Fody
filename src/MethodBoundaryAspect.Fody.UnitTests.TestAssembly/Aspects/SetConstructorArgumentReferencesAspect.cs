@@ -1,7 +1,7 @@
 ﻿using System;
 using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Aspects
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.Aspects
 {
     public class SetConstructorArgumentReferencesAspect : OnMethodBoundaryAspect
     {

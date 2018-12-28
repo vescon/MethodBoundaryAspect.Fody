@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.Unified.OnExit
+namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified.OnExit
 {
     public class OnlyOnExitAspect : OnMethodBoundaryAspect
     {

@@ -1,8 +1,8 @@
-﻿using MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework
 {
     [Serializable]
     public class Disposable : IDisposable { public void Dispose() { } }
