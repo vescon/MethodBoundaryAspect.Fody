@@ -20,10 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.csproj" />
-    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssembly\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.csproj" />
-    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestProgram\MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework.csproj" />
-    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly\MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework.csproj" />
+    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.csproj" />
+    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework\MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework.csproj" />
+    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework\MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework.csproj" />
     <ProjectReference Include="..\MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj" />
     <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
   </ItemGroup>

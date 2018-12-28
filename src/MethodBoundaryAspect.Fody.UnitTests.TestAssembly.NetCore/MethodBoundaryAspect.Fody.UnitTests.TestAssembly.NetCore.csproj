@@ -6,7 +6,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetStandard\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetStandard.csproj" />
-    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssemblyAspects\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.csproj" />
   </ItemGroup>
 
 </Project>
