@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Reflection;
-using MethodBoundaryAspect.Fody.Attributes;
 
 namespace MethodBoundaryAspect.Fody
 {
@@ -14,48 +13,48 @@ namespace MethodBoundaryAspect.Fody
     /// </summary>
     class MethodWeaverLogic
     {
-        public object Executor(object param1, object param2, object param3)
-        {
-            var args = new[] {param1, param2, param3};
+        //public object Executor(object param1, object param2, object param3)
+        //{
+        //    var args = new[] {param1, param2, param3};
 
-            var methodExecutionArgs = new MethodExecutionArgs
-            {
-                Instance = this,
-                Arguments = args,
-                Method = MethodBase.GetCurrentMethod()
-            };
+        //    var methodExecutionArgs = new MethodExecutionArgs
+        //    {
+        //        Instance = this,
+        //        Arguments = args,
+        //        Method = MethodBase.GetCurrentMethod()
+        //    };
 
-            var aspect = new MyOnMethodBoundaryAspect();
-            aspect.OnEntry(methodExecutionArgs);
+        //    var aspect = new MyOnMethodBoundaryAspect();
+        //    aspect.OnEntry(methodExecutionArgs);
 
-            try
-            {
-                var returnValue = OriginalMethod(param1, param2, param3);
-                methodExecutionArgs.ReturnValue = returnValue;
-            }
-            catch (Exception ex)
-            {
-                methodExecutionArgs.Exception = ex;
-                aspect.OnException(methodExecutionArgs);
-                throw;
-            }
+        //    try
+        //    {
+        //        var returnValue = OriginalMethod(param1, param2, param3);
+        //        methodExecutionArgs.ReturnValue = returnValue;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        methodExecutionArgs.Exception = ex;
+        //        aspect.OnException(methodExecutionArgs);
+        //        throw;
+        //    }
 
-            aspect.OnExit(methodExecutionArgs);
-            return methodExecutionArgs.ReturnValue;
-        }
+        //    aspect.OnExit(methodExecutionArgs);
+        //    return methodExecutionArgs.ReturnValue;
+        //}
 
-        public object OriginalMethod(object param1, object param2, object param3)
-        {
-            return null;
-        }
+        //public object OriginalMethod(object param1, object param2, object param3)
+        //{
+        //    return null;
+        //}
 
-        public object ClonedMethod(object param1, object param2, object param3)
-        {
-            return OriginalMethod(param1, param2, param3);
-        }
+        //public object ClonedMethod(object param1, object param2, object param3)
+        //{
+        //    return OriginalMethod(param1, param2, param3);
+        //}
 
-        private class MyOnMethodBoundaryAspect : OnMethodBoundaryAspect
-        {
-        }
+        //private class MyOnMethodBoundaryAspect : OnMethodBoundaryAspect
+        //{
+        //}
     }
 }

@@ -1,10 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using MethodBoundaryAspect.Fody.Attributes;
 using Mono.Cecil;
-using Mono.Cecil.Rocks;
-using Mono.Collections.Generic;
-using Mono.CompilerServices.SymbolWriter;
 
 namespace MethodBoundaryAspect.Fody.Ordering
 {
@@ -45,7 +41,7 @@ namespace MethodBoundaryAspect.Fody.Ordering
             Role = "<Default>";
 
             var roleAttribute = aspectAttributes
-                .SingleOrDefault(c => c.AttributeType.FullName == typeof (ProvideAspectRoleAttribute).FullName);
+                .SingleOrDefault(c => c.AttributeType.FullName == AttributeFullNames.ProvideAspectRoleAttribute);
 
             if (roleAttribute == null)
                 return;
@@ -66,7 +62,7 @@ namespace MethodBoundaryAspect.Fody.Ordering
         {
             AspectRoleDependencyAttributes =
                 aspectAttributes.Where(
-                    c => c.AttributeType.FullName == typeof (AspectRoleDependencyAttribute).FullName).ToList();
+                    c => c.AttributeType.FullName == AttributeFullNames.AspectRoleDependencyAttribute).ToList();
 
             if (AspectRoleDependencyAttributes.Count == 0)
                 return;
@@ -81,7 +77,7 @@ namespace MethodBoundaryAspect.Fody.Ordering
                     throw new InvalidAspectConfigurationException(msg);
                 }
 
-                var position = (AspectDependencyPosition) roleDependencyAttribute.ConstructorArguments[1].Value;
+                var position = (int) roleDependencyAttribute.ConstructorArguments[1].Value;
 
                 aspectOrder.AddRole(role, position);
             }
@@ -92,7 +88,7 @@ namespace MethodBoundaryAspect.Fody.Ordering
         private void InitSkipProperties(IEnumerable<CustomAttribute> aspectAttributes)
         {
             var skipPropertiesAttribute = aspectAttributes
-                .SingleOrDefault(c => c.AttributeType.FullName == typeof(AspectSkipPropertiesAttribute).FullName);
+                .SingleOrDefault(c => c.AttributeType.FullName == AttributeFullNames.AspectSkipPropertiesAttribute);
 
             if (skipPropertiesAttribute == null)
                 return;

@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Fody;
-using MethodBoundaryAspect.Fody.Attributes;
 using MethodBoundaryAspect.Fody.Ordering;
 using Mono.Cecil;
 using Mono.Cecil.Pdb;
@@ -252,7 +251,7 @@ namespace MethodBoundaryAspect.Fody
             var currentType = attributeTypeDefinition.BaseType;
             do
             {
-                if (currentType.FullName == typeof(OnMethodBoundaryAspect).FullName)
+                if (currentType.FullName == AttributeFullNames.OnMethodBoundaryAspect)
                     return true;
 
                 currentType = currentType.Resolve().BaseType;
@@ -324,7 +323,7 @@ namespace MethodBoundaryAspect.Fody
 
         private static bool IsIgnoredByWeaving(ICustomAttributeProvider method)
         {
-            return method.CustomAttributes.Any(x => x.AttributeType.FullName == typeof(DisableWeavingAttribute).FullName);
+            return method.CustomAttributes.Any(x => x.AttributeType.FullName == AttributeFullNames.DisableWeavingAttribute);
         }
     }
 }

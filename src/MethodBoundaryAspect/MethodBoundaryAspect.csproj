@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net452;netstandard2.0</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
@@ -6,12 +6,22 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <IsPackable>false</IsPackable>
     <Authors>Ralf Kornelius, Marcell Spies</Authors>
     <Company>VESCON GmbH</Company>
     <Copyright>VESCON GmbH</Copyright>
     <Product>MethodBoundaryAspect</Product>
-    <Version>1.0.0</Version>
+    <Version>1.0-localBuild</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Description>A Fody weaver which allows to decorate methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.</Description>
+    <PackageTags>il weaving fody aspect aop method-invocation method boundary</PackageTags>
+    <GitHubOrganization>VESCON</GitHubOrganization>
+    <PackageProjectUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</PackageProjectUrl>
+    <PackageIconUrl>https://github.com/vescon/MethodBoundaryAspect.Fody/raw/master/docs/images/NuGetIcon.png</PackageIconUrl>
+    <RepositoryUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</RepositoryUrl>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fody" Version="3.3.5" PrivateAssets="None" />
+    <PackageReference Include="FodyPackaging" Version="3.3.5" PrivateAssets="All" />
+  </ItemGroup>
 </Project>

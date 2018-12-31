@@ -1,5 +1,4 @@
-﻿using MethodBoundaryAspect.Fody.Attributes;
-using MethodBoundaryAspect.Fody.Ordering;
+﻿using MethodBoundaryAspect.Fody.Ordering;
 using Mono.Cecil;
 using System.Collections.Generic;
 using System.Linq;
@@ -48,7 +47,7 @@ namespace MethodBoundaryAspect.Fody
                 }
 
                 currentType = typeDefinition.BaseType;
-            } while (currentType.FullName != typeof(OnMethodBoundaryAspect).FullName);
+            } while (currentType.FullName != AttributeFullNames.OnMethodBoundaryAspect);
 
             var aspectMethods = AspectMethods.None;
             if (overloadedMethods.ContainsKey("OnEntry"))
