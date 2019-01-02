@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External.Aspects;
 using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework

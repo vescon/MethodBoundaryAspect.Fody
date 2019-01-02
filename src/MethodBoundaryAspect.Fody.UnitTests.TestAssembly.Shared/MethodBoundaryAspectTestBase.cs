@@ -1,13 +1,13 @@
-﻿using FluentAssertions;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Attributes;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using FluentAssertions;
+using MethodBoundaryAspect.Fody.UnitTests.Shared.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared
+namespace MethodBoundaryAspect.Fody.UnitTests.Shared
 {
     public class MethodBoundaryAspectTestBase : IDisposable
     {

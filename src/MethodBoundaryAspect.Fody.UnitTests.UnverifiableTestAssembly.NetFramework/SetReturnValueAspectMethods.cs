@@ -1,4 +1,4 @@
-﻿using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Attributes;
+﻿using MethodBoundaryAspect.Fody.UnitTests.Shared.Attributes;
 using MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework.Aspects;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework

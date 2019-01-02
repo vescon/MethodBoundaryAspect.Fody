@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External.Aspects;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework
 {

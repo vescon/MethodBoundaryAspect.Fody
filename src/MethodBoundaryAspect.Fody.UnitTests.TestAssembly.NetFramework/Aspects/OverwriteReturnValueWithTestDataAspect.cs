@@ -1,6 +1,5 @@
 ﻿using MethodBoundaryAspect.Fody.Attributes;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External.Aspects;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.Aspects
 {

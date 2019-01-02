@@ -3,7 +3,7 @@ using System.Linq;
 using System.Reflection;
 using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects
+namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External.Aspects
 {
     public class TriggerPropChangedAspect : OnMethodBoundaryAspect
     {

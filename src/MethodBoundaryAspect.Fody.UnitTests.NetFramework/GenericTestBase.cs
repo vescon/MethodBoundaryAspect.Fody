@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects;
+using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External.Aspects;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {

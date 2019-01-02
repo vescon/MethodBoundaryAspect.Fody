@@ -1,0 +1,12 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <DisableFody>True</DisableFody>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
+  </ItemGroup>
+
+</Project>

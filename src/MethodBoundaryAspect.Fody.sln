@@ -19,11 +19,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.U
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework", "MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework\MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework.csproj", "{145B9419-BE49-48A2-B9F9-EF32C07EDE30}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared", "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.csproj", "{22CA9EBB-A1DC-46A6-BB6A-9B69E563CFF8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.Shared", "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared\MethodBoundaryAspect.Fody.UnitTests.Shared.csproj", "{22CA9EBB-A1DC-46A6-BB6A-9B69E563CFF8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework", "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.csproj", "{1DD27780-A534-4DA0-9524-F09654A8DE59}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.NetFramework", "MethodBoundaryAspect.Fody.UnitTests.NetFramework\MethodBoundaryAspect.Fody.UnitTests.NetFramework.csproj", "{0421F8A5-8698-4D92-9223-872FBA18572B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External", "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External.csproj", "{98C6DD8D-41E8-468B-9176-873D9DDAC82E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +77,10 @@ Global
 		{0421F8A5-8698-4D92-9223-872FBA18572B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0421F8A5-8698-4D92-9223-872FBA18572B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0421F8A5-8698-4D92-9223-872FBA18572B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98C6DD8D-41E8-468B-9176-873D9DDAC82E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98C6DD8D-41E8-468B-9176-873D9DDAC82E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98C6DD8D-41E8-468B-9176-873D9DDAC82E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98C6DD8D-41E8-468B-9176-873D9DDAC82E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Attributes
+namespace MethodBoundaryAspect.Fody.UnitTests.Shared.Attributes
 {
     [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
     public class IgnorePEVerifyCode : Attribute

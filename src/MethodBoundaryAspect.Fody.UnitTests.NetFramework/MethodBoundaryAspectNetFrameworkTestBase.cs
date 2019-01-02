@@ -1,5 +1,5 @@
 ﻿using System;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared;
+using MethodBoundaryAspect.Fody.UnitTests.Shared;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {

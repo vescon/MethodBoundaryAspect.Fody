@@ -1,7 +1,7 @@
 ﻿using System;
 using FluentAssertions;
+using MethodBoundaryAspect.Fody.UnitTests.Shared;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared;
 using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.NetCore

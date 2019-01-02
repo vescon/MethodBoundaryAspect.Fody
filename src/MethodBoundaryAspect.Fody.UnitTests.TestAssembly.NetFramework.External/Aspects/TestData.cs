@@ -1,4 +1,4 @@
-﻿namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared.Aspects
+﻿namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External.Aspects
 {
     public struct TestData
     {
