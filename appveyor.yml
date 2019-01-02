@@ -12,7 +12,7 @@ dotnet_csproj:
   informational_version: '{version}'
 before_build:
 - cmd: dotnet restore src
-build:
+build_script:
   - cmd: dotnet build src\ --configuration Release -p:Version=%APPVEYOR_BUILD_VERSION%
 test_script:
 - cmd: dotnet test src\MethodBoundaryAspect.Fody.UnitTests.NetFramework --configuration Release
