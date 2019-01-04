@@ -7,7 +7,7 @@
       
   <ItemGroup>
     <PackageReference Include="FodyCecil" Version="3.0.1" developmentDependency="true" />
-    <PackageReference Include="FodyHelpers" Version="3.3.5" developmentDependency="true" />
+    <PackageReference Include="FodyHelpers" Version="3.3.0" developmentDependency="true" />
   </ItemGroup>
 
   <PropertyGroup>
