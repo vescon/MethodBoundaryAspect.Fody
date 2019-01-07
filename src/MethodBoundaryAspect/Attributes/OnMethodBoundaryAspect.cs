@@ -3,7 +3,6 @@ using System.Reflection;
 
 namespace MethodBoundaryAspect.Fody.Attributes
 {
-    [Serializable]
     public abstract class OnMethodBoundaryAspect : Attribute
     {
         public virtual void OnEntry(MethodExecutionArgs arg)

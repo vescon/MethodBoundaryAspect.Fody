@@ -6,9 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody", "MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj", "{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect", "MethodBoundaryAspect\MethodBoundaryAspect.csproj", "{647FC29E-DDD1-4122-81A1-7FCD7E915F0F}"
-	ProjectSection(ProjectDependencies) = postProject
-		{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988} = {30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}
-	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.NetCore", "MethodBoundaryAspect.Fody.UnitTests.NetCore\MethodBoundaryAspect.Fody.UnitTests.NetCore.csproj", "{CBC73200-4396-409C-B950-274CB692AEF3}"
 EndProject
