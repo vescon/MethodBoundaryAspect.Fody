@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MethodBoundaryAspect.Fody.Attributes;
 
 namespace MethodBoundaryAspect.Fody.Ordering
 {
@@ -22,7 +21,7 @@ namespace MethodBoundaryAspect.Fody.Ordering
         public List<string> AnyRoles { get; private set; }
         public List<string> BeforeRoles { get; private set; }
 
-        public void AddRole(string role, AspectDependencyPosition position)
+        public void AddRole(string role, int position)
         {
             if (ContainsRole(role))
                 throw new InvalidOperationException(
@@ -32,13 +31,13 @@ namespace MethodBoundaryAspect.Fody.Ordering
 
             switch (position)
             {
-                case AspectDependencyPosition.Before:
+                case -1:
                     BeforeRoles.Add(role);
                     break;
-                case AspectDependencyPosition.Any:
+                case 0:
                     AnyRoles.Add(role);
                     break;
-                case AspectDependencyPosition.After:
+                case 1:
                     AfterRoles.Add(role);
                     break;
                 default:

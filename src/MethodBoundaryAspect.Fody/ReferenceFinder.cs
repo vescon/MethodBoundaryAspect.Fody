@@ -40,24 +40,24 @@ namespace MethodBoundaryAspect.Fody
             return _moduleDefinition.ImportReference(methodDefinition);
         }
 
-        public TypeReference GetTypeReference(Type type, string assemblyHint = null)
+        public TypeReference GetTypeReference(Type type, string netCoreAssemblyHint = null)
         {
             var importedType = _moduleDefinition.ImportReference(type);
             // On .NET Core, we need to rewrite mscorlib types to use the
             // dot net assemblies from the weaved assembly and not the ones
             // used by the weaver itself.
-            string scopeName = importedType.Scope.Name;
-            if (!(importedType is TypeSpecification) && scopeName == "System.Private.CoreLib")
-            {
-                IMetadataScope scope;
+            if (importedType is TypeSpecification)
+                return importedType;
 
-                if (assemblyHint == null)
-                    scope = _moduleDefinition.TypeSystem.CoreLibrary;
-                else
-                    scope = new AssemblyNameReference(assemblyHint, _moduleDefinition.AssemblyReferences.First(mr => mr.Name == "System.Runtime").Version);
+            var scope = importedType.Scope;
+            if (scope.Name != _moduleDefinition.TypeSystem.CoreLibrary.Name)
+                scope = _moduleDefinition.TypeSystem.CoreLibrary;
 
-                importedType.Scope = scope;
-            }
+            if (scope.Name == "System.Runtime" && netCoreAssemblyHint != null)
+                scope = new AssemblyNameReference(netCoreAssemblyHint,
+                    _moduleDefinition.AssemblyReferences.First(mr => mr.Name == "System.Runtime").Version);
+
+            importedType.Scope = scope;
             return importedType;
         }
     }

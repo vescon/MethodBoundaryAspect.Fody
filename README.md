@@ -44,7 +44,7 @@ Short sample how a transaction aspect could be implemented.
 #### The aspect code
 
 ```csharp
-using MethodBoundaryAspect.Fody;
+using MethodBoundaryAspect.Fody.Attributes;
 
 public sealed class TransactionScopeAttribute : OnMethodBoundaryAspect
 {
@@ -91,7 +91,7 @@ Consider an aspect written like this.
 
 ```csharp
 using static System.Console;
-using MethodBoundaryAspect.Fody;
+using MethodBoundaryAspect.Fody.Attributes;
 
 public sealed class LogAttribute : OnMethodBoundaryAspect
 {
@@ -183,7 +183,7 @@ Note that, unlike for synchronous methods, an aspect for an asynchronous method 
 
 ```csharp
 using static System.Console;
-using MethodBoundaryAspect.Fody;
+using MethodBoundaryAspect.Fody.Attributes;
 
 public sealed class LogAttribute : OnMethodBoundaryAspect
 {
@@ -212,7 +212,7 @@ One additional note about the asynchronous behavior: the `OnExit` handler runs w
 
 ```csharp
 using static System.Console;
-using MethodBoundaryAspect.Fody;
+using MethodBoundaryAspect.Fody.Attributes;
 
 public sealed class LogAttribute : OnMethodBoundaryAspect
 {
