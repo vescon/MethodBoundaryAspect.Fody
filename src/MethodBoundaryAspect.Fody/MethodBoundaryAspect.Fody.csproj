@@ -15,7 +15,6 @@
     <Company>VESCON GmbH</Company>
     <Copyright>VESCON GmbH</Copyright>
     <Product>MethodBoundaryAspect.Fody</Product>
-    <Version>1.0.0</Version>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <PackageId>MethodBoundaryAspect.Fody</PackageId>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>

@@ -11,7 +11,6 @@
     <Company>VESCON GmbH</Company>
     <Copyright>VESCON GmbH</Copyright>
     <Product>MethodBoundaryAspect</Product>
-    <Version>1.0-localBuild</Version>
     <AssemblyVersion>1.0.0.0</AssemblyVersion>
     <Description>A Fody weaver which allows to decorate methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.</Description>
     <PackageTags>il weaving fody aspect aop method-invocation method boundary</PackageTags>
