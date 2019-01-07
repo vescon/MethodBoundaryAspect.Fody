@@ -56,7 +56,10 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework
             }
         }
 
+#pragma warning disable CS0414 // Variable is assigned but its value is never used
         private bool _resultField;
+#pragma warning restore CS0414 // Variable is assigned but its value is never used
+
         /// <summary>
         /// from https://github.com/vescon/MethodBoundaryAspect.Fody/issues/9
         /// </summary>

@@ -2,6 +2,7 @@
   <PropertyGroup>
     <TargetFrameworks>net452;netstandard1.0</TargetFrameworks>
     <SignAssembly>true</SignAssembly>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <AssemblyOriginatorKeyFile>..\MethodBoundaryAspect.Fody.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 

@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.Shared
 {
-    public class IlSpy
+    public static class IlSpy
     {
         public const bool AlwaysRunIlSpy = false;
         private const bool ShouldRunIlSpyOnPeVerifyError = false;
@@ -18,12 +18,13 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
             RunInternal(assemblyPath, "/navigateTo:T:" + typeName);
         }
 
+#pragma warning disable CS0162 // Unreachable code detected
         private static void RunInternal(string assemblyPath, string navigateTo)
         {
             if(!AlwaysRunIlSpy)
                 if (!ShouldRunIlSpyOnPeVerifyError)
                     return;
-            
+
             var args = new[]
             {
                 assemblyPath,
@@ -44,5 +45,6 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
 
             Process.Start(psi);
         }
+#pragma warning restore CS0162 // Unreachable code detected
     }
 }

@@ -14,13 +14,17 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework
         [SetInstanceValueAspect]
         public void DoItWithClassConstraint<T>(T test) where T : class
         {
+#pragma warning disable CS0219 // Variable is assigned but its value is never used
             T t = default(T);
+#pragma warning restore CS0219 // Variable is assigned but its value is never used
         }
 
         [SetInstanceValueAspect]
         public void DoItWithStructConstraint<T>(T test) where T : struct
         {
+#pragma warning disable CS0219 // Variable is assigned but its value is never used
             T t = default(T);
+#pragma warning restore CS0219 // Variable is assigned but its value is never used
         }
 
         [SetInstanceValueAspect]
