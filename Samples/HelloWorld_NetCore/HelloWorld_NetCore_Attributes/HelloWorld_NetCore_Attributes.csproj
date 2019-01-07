@@ -1,14 +1,12 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <DisableFody>True</DisableFody>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MethodBoundaryAspect.Fody" Version="1.0.74">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="MethodBoundaryAspect.Fody" Version="2.0.105" />
   </ItemGroup>
 
 </Project>
