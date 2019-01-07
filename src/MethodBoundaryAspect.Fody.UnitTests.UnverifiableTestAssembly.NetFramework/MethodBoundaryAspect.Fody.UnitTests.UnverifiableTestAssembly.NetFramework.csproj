@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.Shared\MethodBoundaryAspect.Fody.UnitTests.Shared.csproj" />
     <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External.csproj" />
-    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.Shared\MethodBoundaryAspect.Fody.UnitTests.Shared.csproj" />
     <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
   </ItemGroup>
 
