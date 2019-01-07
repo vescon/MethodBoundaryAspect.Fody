@@ -1,5 +1,5 @@
-﻿using System;
-using MethodBoundaryAspect.Fody.Attributes;
+﻿using MethodBoundaryAspect.Fody.Attributes;
+using System;
 
 namespace HelloWorld_NetFramework_Attributes
 {
