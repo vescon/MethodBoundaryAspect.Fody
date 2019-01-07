@@ -20,6 +20,20 @@
     <RepositoryUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</RepositoryUrl>
   </PropertyGroup>
 
+  
+  <!--Fixes problems with buildorder when using dotnet build-->
+  <ItemGroup>
+    <ProjectReference Include="..\MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj">
+      <PrivateAssets>All</PrivateAssets>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <AssetTargetFallback>netstandard2.0</AssetTargetFallback>
+  </PropertyGroup>
+  <!--Fixes problems with buildorder when using dotnet build-->
+
   <ItemGroup>
     <PackageReference Include="Fody" Version="3.3.0" PrivateAssets="None" />
     <PackageReference Include="FodyPackaging" Version="3.3.0" PrivateAssets="All" />
