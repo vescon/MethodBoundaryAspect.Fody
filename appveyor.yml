@@ -13,7 +13,7 @@ dotnet_csproj:
 before_build:
 - cmd: dotnet restore src
 build_script:
-  - cmd: dotnet build src\ --configuration Release -p:Version=%APPVEYOR_BUILD_VERSION%
+  - cmd: dotnet build src\ --configuration Release -p:Version=%APPVEYOR_BUILD_VERSION% --no-restore
 test_script:
 - cmd: dotnet test src\MethodBoundaryAspect.Fody.UnitTests.NetFramework --configuration Release
 - cmd: dotnet test src\MethodBoundaryAspect.Fody.UnitTests.NetCore --configuration Release
