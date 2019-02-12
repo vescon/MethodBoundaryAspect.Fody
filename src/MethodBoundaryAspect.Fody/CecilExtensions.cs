@@ -15,7 +15,7 @@ namespace Catel.Fody
     using System.Reflection;
 
     /// <summary>
-    /// taken from https://github.com/Catel/Catel.Fody/blob/develop/src/Catel.Fody/Extensions/CecilExtensions.debuginfo.cs#L23
+    /// taken from https://github.com/Catel/Catel.Fody/blob/master/src/Catel.Fody/Extensions/CecilExtensions.debuginfo.cs#L23
     /// </summary>
     public static partial class CecilExtensions
     {
@@ -41,8 +41,19 @@ namespace Catel.Fody
             // Step 1: check if all variables are present
             foreach (var variable in method.Body.Variables)
             {
-                var hasVariable = scope.Variables.Any(x => x.Index == variable.Index);
-                if (!hasVariable)
+                if (method.IsAsyncMethod())
+                {
+                    // Skip some special items of an async method:
+                    // 1) int (state?)
+                    // 2) exception
+                    if (variable.Index == 0 && variable.VariableType.Name.Contains("Int") ||
+                        variable.VariableType.Name.Contains("Exception"))
+                    {
+                        continue;
+                    }
+                }
+
+                if (!ContainsVariable(scope, variable))
                 {
                     var variableDebugInfo = new VariableDebugInformation(variable, $"__var_{variable.Index}");
                     scope.Variables.Add(variableDebugInfo);
@@ -94,9 +105,71 @@ namespace Catel.Fody
                 debugInfo.SequencePoints.Add(newSequencePoint);
             }
 
-            // Step 3: update the scopes by setting the indices
+            // Step 3: Remove any unused variables
+            RemoveUnusedVariablesFromDebugInfo(scope);
+
+            // Final step: update the scopes by setting the indices
             scope.Start = new InstructionOffset(instructions.First());
             scope.End = new InstructionOffset(instructions.Last());
+        }
+
+        public static bool IsAsyncMethod(this MethodDefinition method)
+        {
+            if (!method.Name.Contains("MoveNext"))
+            {
+                return false;
+            }
+
+            var declaringType = method.DeclaringType;
+
+            var setStateMachineMethod = declaringType?.Methods.FirstOrDefault(x => x.Name.Equals("SetStateMachine"));
+            if (setStateMachineMethod == null)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool ContainsVariable(this ScopeDebugInformation debugInfo, VariableDefinition variable)
+        {
+            // Note: just checking for index might not be sufficient
+            var hasVariable = debugInfo.Variables.Any(x => x.Index == variable.Index);
+            if (hasVariable)
+            {
+                return true;
+            }
+
+            // Important: check nested scopes
+            for (var i = 0; i < debugInfo.Scopes.Count; i++)
+            {
+                if (ContainsVariable(debugInfo.Scopes[i], variable))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void RemoveUnusedVariablesFromDebugInfo(this ScopeDebugInformation debugInfo)
+        {
+            // Remove any variables that no longer have a valid index (such as -1)
+            for (var i = 0; i < debugInfo.Variables.Count; i++)
+            {
+                var debugInfoVariable = debugInfo.Variables[i];
+                if (debugInfoVariable.Index < 0)
+                {
+                    debugInfo.Variables.Remove(debugInfoVariable);
+                    i--;
+                }
+            }
+
+            // Important: nested scopes (for example, for async methods)
+            for (var i = 0; i < debugInfo.Scopes.Count; i++)
+            {
+                RemoveUnusedVariablesFromDebugInfo(debugInfo.Scopes[i]);
+            }
         }
     }
 }
