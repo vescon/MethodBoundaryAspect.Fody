@@ -107,15 +107,44 @@ namespace MethodBoundaryAspect.Fody
             AddToSetup(chain);
             ExecutionArgs = field;
         }
+        
+        private Instruction GetFirstInstructionToSetException(ExceptionHandler handler, out MethodReference setResultMethod,
+            out InstructionBlock loadBuilder)
+        {
+            var ret = handler.HandlerEnd;
+            var leave = ret.Previous;
+            var nop = leave.Previous;
+            var setException = (nop.OpCode == OpCodes.Nop ? nop.Previous : nop); // The nop is only in Debug mode.
+            var setExceptionMethod = (MethodReference)setException.Operand;
+            if (setExceptionMethod.DeclaringType is GenericInstanceType setExceptionType)
+            {
+                var setResultMethodRef = setExceptionType.Resolve().Methods.FirstOrDefault(m => m.Name == "SetResult");
+                setResultMethod = _module.ImportReference(setResultMethodRef);
+                setResultMethod.DeclaringType = setExceptionType;
+            }
+            else
+            {
+                setResultMethod = _module.ImportReference(setExceptionMethod.DeclaringType.Resolve().Methods.FirstOrDefault(m => m.Name == "SetResult"));
+            }
+            var ldlocException = setException.Previous;
+            var ldfldaBuilder = ldlocException.Previous;
+            var ldarg_0 = ldfldaBuilder.Previous;
+            loadBuilder = new InstructionBlock("Load Builder", ldarg_0, ldfldaBuilder);
+            return ldarg_0;
+        }
 
-        protected override void WeaveOnException(List<AspectData> onExceptionAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall, IPersistable returnValue)
+        protected override void WeaveOnException(IList<AspectData> allAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall, IPersistable returnValue)
         {
             var handler = _moveNext.Body.ExceptionHandlers.FirstOrDefault(IsStateMachineCatchBlock);
             if (handler == null)
                 throw new InvalidOperationException($"Async state machine for {_method.FullName} did not catch exceptions in the expected way.");
             var exceptionLocal = handler.HandlerStart.GetLocalStoredByInstruction(_moveNext.Body.Variables);
-            Instruction exceptionHandlerCurrent = handler.HandlerEnd.Previous.Previous; // HandlerEnd is ret. Previous is leave. Need to insert before the leave.
+            Instruction firstInstructionToSetException = GetFirstInstructionToSetException(handler, out var setResultMethod, out var loadBuilder);
+            Instruction exceptionHandlerCurrent = firstInstructionToSetException.Previous; // Need to start inserting before SetException
+            Instruction retInstruction = handler.HandlerEnd;
             var processor = _moveNext.Body.GetILProcessor();
+            Instruction gotoSetException = Instruction.Create(OpCodes.Br, firstInstructionToSetException);
+            new InstructionBlock("else", gotoSetException).InsertAfter(exceptionHandlerCurrent, processor);
 
             // Need to replace leave.s with leave since we are adding instructions
             // between here and the destination which may invalidate short form labels.
@@ -129,7 +158,10 @@ namespace MethodBoundaryAspect.Fody
                 }
             }
 
-            foreach (var onExceptionAspect in onExceptionAspects.OfType<AspectDataOnAsyncMethod>())
+            foreach (var onExceptionAspect in allAspects
+                .Where(a => (a.AspectMethods & AspectMethods.OnException) != 0)
+                .Reverse()
+                .OfType<AspectDataOnAsyncMethod>())
             {
                 if (HasMultipleAspects)
                 {
@@ -138,6 +170,28 @@ namespace MethodBoundaryAspect.Fody
                 }
 
                 var callAspectOnException = onExceptionAspect.CallOnExceptionInMoveNext(ExecutionArgs, exceptionLocal);
+
+                if (setResultMethod.Parameters.Count == 1)
+                    returnValue = new VariablePersistable(new InstructionBlockCreator(_moveNext, new ReferenceFinder(_module)).CreateVariable(
+                        ((GenericInstanceType)setResultMethod.DeclaringType).GenericArguments[0]));
+
+                var thenBody = new InstructionBlockChain();
+                if (setResultMethod.Parameters.Count == 1)
+                    thenBody.Add(_creator.ReadReturnValue(onExceptionAspect.GetMoveNextExecutionArgs(ExecutionArgs), returnValue));
+                thenBody.Add(loadBuilder.Clone());
+                if (setResultMethod.Parameters.Count == 1)
+                    thenBody.Add(returnValue.Load(false));
+                thenBody.Add(new InstructionBlock("Call SetResult", Instruction.Create(OpCodes.Call, setResultMethod)));
+                thenBody.Add(new InstructionBlock("Leave peacefully", Instruction.Create(OpCodes.Leave, handler.HandlerEnd)));
+
+                var nop = Instruction.Create(OpCodes.Nop);
+                callAspectOnException.Add(_creator.IfFlowBehaviorIsAnyOf(
+                    new InstructionBlockCreator(_moveNext, new ReferenceFinder(_module)).CreateVariable,
+                    onExceptionAspect.GetMoveNextExecutionArgs(ExecutionArgs),
+                    nop,
+                    thenBody,
+                    1, 3));
+                callAspectOnException.Add(new InstructionBlock("", nop));
                 callAspectOnException.InsertAfter(exceptionHandlerCurrent, processor);
                 exceptionHandlerCurrent = callAspectOnException.Last;
             }

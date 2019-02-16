@@ -56,6 +56,12 @@ namespace MethodBoundaryAspect.Fody
             return _referenceFinder.GetTypeReference(typeof (Exception));
         }
 
+        public TypeReference GetExceptionTypeReference<T>()
+            where T : Exception
+        {
+            return _referenceFinder.GetTypeReference(typeof(T));
+        }
+
         public MethodReference GetDebuggerStepThroughAttributeCtorReference()
         {
             var typeReference = _referenceFinder.GetTypeReference(typeof (System.Diagnostics.DebuggerStepThroughAttribute), "System.Diagnostics.Debug");
@@ -335,6 +341,36 @@ namespace MethodBoundaryAspect.Fody
             var chain = new InstructionBlockChain();
             chain.Add(new InstructionBlock("Return", _creator.CreateReturn()));
             return chain;
+        }
+
+        public InstructionBlockChain IfFlowBehaviorIsAnyOf(ILoadable args, Instruction nextInstruction, InstructionBlockChain thenBody, params int[] behaviors)
+        {
+            return IfFlowBehaviorIsAnyOf(_creator.CreateVariable, args, nextInstruction, thenBody, behaviors);
+        }
+
+        public InstructionBlockChain IfFlowBehaviorIsAnyOf(Func<TypeReference, VariableDefinition> variableFactory, ILoadable args, Instruction nextInstruction, InstructionBlockChain thenBody, params int[] behaviors)
+        {
+            var typeRef = args.PersistedType.Resolve();
+            var getFlowBehavior = _referenceFinder.GetMethodReference(typeRef, m => m.Name == "get_FlowBehavior");
+            var flowBehaviorLocal = new VariablePersistable(variableFactory(_moduleDefinition.ImportReference(getFlowBehavior.ReturnType)));
+            var flowBehaviorHandler = CallMethodWithReturn(getFlowBehavior, args, flowBehaviorLocal);
+
+            if (behaviors.Length == 0)
+                return flowBehaviorHandler;
+            for (int i = 0; i < behaviors.Length - 1; ++i)
+            {
+                flowBehaviorHandler.Add(flowBehaviorLocal.Load(false));
+                flowBehaviorHandler.Add(new InstructionBlock("FlowBehavior", Instruction.Create(OpCodes.Ldc_I4, behaviors[i])));
+                flowBehaviorHandler.Add(new InstructionBlock("If == then goto the 'then' block", Instruction.Create(OpCodes.Beq_S, thenBody.First)));
+            }
+            
+            flowBehaviorHandler.Add(flowBehaviorLocal.Load(false));
+            flowBehaviorHandler.Add(new InstructionBlock("FlowBehavior", Instruction.Create(OpCodes.Ldc_I4, behaviors[behaviors.Length - 1])));
+            flowBehaviorHandler.Add(new InstructionBlock("If != then skip", Instruction.Create(OpCodes.Bne_Un, nextInstruction)));
+
+            flowBehaviorHandler.Add(thenBody);
+
+            return flowBehaviorHandler;
         }
 
         private static TypeReference FixTypeReference(TypeReference typeReference)

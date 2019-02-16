@@ -354,5 +354,117 @@ namespace MethodBoundaryAspect.Fody
         {
             return new FieldReference(field.Name, field.FieldType, fullType);
         }
+
+        public static Instruction Clone(this Instruction i)
+        {
+            // Based on the table at https://stackoverflow.com/a/7215711
+            switch (i.OpCode.Code)
+            {
+                case Code.Ldarg_S:
+                case Code.Ldarga_S:
+                case Code.Starg_S:
+                case Code.Ldarg:
+                case Code.Ldarga:
+                case Code.Starg:
+                    return Instruction.Create(i.OpCode, (ParameterDefinition)i.Operand);
+                case Code.Ldloc_S:
+                case Code.Ldloca_S:
+                case Code.Stloc_S:
+                case Code.Ldloc:
+                case Code.Ldloca:
+                case Code.Stloc:
+                    return Instruction.Create(i.OpCode, (VariableDefinition)i.Operand);
+                case Code.Unaligned:
+                case Code.No:
+                    return Instruction.Create(i.OpCode, (byte)i.Operand);
+                case Code.Ldc_I4_S:
+                    return Instruction.Create(i.OpCode, (sbyte)i.Operand);
+                case Code.Ldc_I4:
+                    return Instruction.Create(i.OpCode, (int)i.Operand);
+                case Code.Ldc_I8:
+                    return Instruction.Create(i.OpCode, (long)i.Operand);
+                case Code.Ldc_R4:
+                    return Instruction.Create(i.OpCode, (float)i.Operand);
+                case Code.Ldc_R8:
+                    return Instruction.Create(i.OpCode, (double)i.Operand);
+                case Code.Jmp:
+                case Code.Call:
+                case Code.Newobj:
+                case Code.Callvirt:
+                case Code.Ldftn:
+                case Code.Ldvirtftn:
+                    return Instruction.Create(i.OpCode, (MethodReference)i.Operand);
+                case Code.Calli:
+                    return Instruction.Create(i.OpCode, (CallSite)i.Operand);
+                case Code.Br_S:
+                case Code.Brfalse_S:
+                case Code.Brtrue_S:
+                case Code.Beq_S:
+                case Code.Bge_S:
+                case Code.Bgt_S:
+                case Code.Ble_S:
+                case Code.Blt_S:
+                case Code.Bne_Un_S:
+                case Code.Bge_Un_S:
+                case Code.Bgt_Un_S:
+                case Code.Ble_Un_S:
+                case Code.Blt_Un_S:
+                case Code.Br:
+                case Code.Brfalse:
+                case Code.Brtrue:
+                case Code.Beq:
+                case Code.Bge:
+                case Code.Bgt:
+                case Code.Ble:
+                case Code.Blt:
+                case Code.Bne_Un:
+                case Code.Bge_Un:
+                case Code.Bgt_Un:
+                case Code.Ble_Un:
+                case Code.Blt_Un:
+                case Code.Leave:
+                case Code.Leave_S:
+                    return Instruction.Create(i.OpCode, (Instruction)i.Operand);
+                case Code.Switch:
+                    return Instruction.Create(i.OpCode, (Instruction[])i.Operand);
+                case Code.Cpobj:
+                case Code.Ldobj:
+                case Code.Castclass:
+                case Code.Isinst:
+                case Code.Unbox:
+                case Code.Stobj:
+                case Code.Box:
+                case Code.Newarr:
+                case Code.Ldelema:
+                case Code.Ldelem_Any:
+                case Code.Stelem_Any:
+                case Code.Unbox_Any:
+                case Code.Refanyval:
+                case Code.Mkrefany:
+                case Code.Initobj:
+                case Code.Constrained:
+                case Code.Sizeof:
+                    return Instruction.Create(i.OpCode, (TypeReference)i.Operand);
+                case Code.Ldstr:
+                    return Instruction.Create(i.OpCode, (string)i.Operand);
+                case Code.Ldfld:
+                case Code.Ldflda:
+                case Code.Stfld:
+                case Code.Ldsfld:
+                case Code.Ldsflda:
+                case Code.Stsfld:
+                    return Instruction.Create(i.OpCode, (FieldReference)i.Operand);
+                case Code.Ldtoken:
+                    switch (i.Operand)
+                    {
+                        case TypeReference type: return Instruction.Create(i.OpCode, type);
+                        case FieldReference field: return Instruction.Create(i.OpCode, field);
+                        case MethodReference method: return Instruction.Create(i.OpCode, method);
+                        default: throw new NotSupportedException("Unknown token type.");
+                    }
+                default:
+                    return Instruction.Create(i.OpCode);
+            }
+        }
     }
 }
