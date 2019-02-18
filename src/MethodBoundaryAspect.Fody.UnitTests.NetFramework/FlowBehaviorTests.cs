@@ -86,5 +86,103 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
             // Assert
             result.Should().Be("Changed");
         }
+
+        [Fact]
+        public void IfFlowBehaviorIsReturnAfterOnEntry_ThenOriginalMethodIsNotExecuted()
+        {
+            // Arrange
+            const string testMethodName = "TryReturn";
+            WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
+
+            // Act
+            object result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
+
+            // Assert
+            result.Should().Be(3);
+        }
+
+        [Fact]
+        public void IfFlowBehaviorIsReturnAfterOnEntry_ThenOriginalVoidMethodIsNotExecuted()
+        {
+            // Arrange
+            const string testMethodName = "TryReturnVoid";
+            WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
+
+            // Act
+            Action a = () => AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
+
+            // Assert
+            a.Should().NotThrow();
+        }
+
+        [Fact]
+        public void IfFlowBehaviorIsReturnAfterOnEntry_ThenRemainingAspectsAreNotExecuted()
+        {
+            // Arrange
+            const string testMethodName = "AbortAspects";
+            WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
+
+            // Act
+            object result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
+
+            // Assert
+            result.Should().Be(6);
+        }
+
+        [Fact]
+        public void IfFlowBehaviorIsReturn_ThenExceptionIsSuppressed()
+        {
+            // Arrange
+            const string testMethodName = "SuppressReturn";
+            WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
+
+            // Act
+            Action a = () => AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
+
+            // Assert
+            a.Should().NotThrow();
+        }
+
+        [Fact]
+        public void IfFlowBehaviorIsReturnAfterOnEntry_ThenPreviousAspectsOnExitAreStillCalled()
+        {
+            // Arrange
+            const string testMethodName = "ExitTest";
+            WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
+
+            // Act
+            object result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
+
+            // Assert
+            result.Should().Be(6);
+        }
+
+        [Fact]
+        public void IfFlowBehaviorIsReturnAfterOnException_ThenSubsequentAspectsOnExitAreCalledInsteadOfOnException()
+        {
+            // Arrange
+            const string testMethodName = "ExitAfterException";
+            WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
+
+            // Act
+            object result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
+
+            // Assert
+            result.Should().Be(6);
+        }
+
+        [Fact]
+        public void IfFlowBehaviorIsReturnAfterAsyncOnException_ThenNoOtherAspectsOnExceptionAreCalled()
+        {
+            // Arrange
+            const string testMethodName = "ExitAfterAsyncException";
+            WeaveAssemblyMethodAndLoad(TestClassType, testMethodName);
+
+            // Act
+            object result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), $"Test{testMethodName}");
+
+            // Assert
+            result.Should().Be(6);
+        }
     }
 }

@@ -4,6 +4,7 @@
     {
         Default,
         Continue,
-        RethrowException
+        RethrowException,
+        Return
     }
 }

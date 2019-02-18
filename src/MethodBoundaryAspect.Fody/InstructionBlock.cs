@@ -34,5 +34,10 @@ namespace MethodBoundaryAspect.Fody
 
             return currentInstruction;
         }
+
+        public InstructionBlock Clone()
+        {
+            return new InstructionBlock(Name, Instructions.Select(i => i.Clone()).ToArray());
+        }
     }
 }

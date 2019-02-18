@@ -50,7 +50,7 @@ namespace MethodBoundaryAspect.Fody
             return newObjectAspectBlockChain;
         }
 
-        IPersistable GetMoveNextExecutionArgs(IPersistable executionArgs)
+        public IPersistable GetMoveNextExecutionArgs(IPersistable executionArgs)
         {
             var fieldExecutionArgs = executionArgs as FieldPersistable;
             var sm = StateMachineFromMoveNext;
