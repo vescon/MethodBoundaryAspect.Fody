@@ -2,6 +2,7 @@ using System;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.Ordering;
 using MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified;
+using MethodBoundaryAspect.Fody.UnitTests.Shared;
 using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects.FailTests
@@ -18,7 +19,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects.FailT
             weaver.AddMethodFilter(_testType.FullName + ".VoidEmptyMethod");
 
             // Act
-            Action call = () => weaver.Weave(Weave.DllPath);
+            Action call = () => weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             call.Should().Throw<InvalidAspectConfigurationException>();
@@ -32,7 +33,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects.FailT
             weaver.AddMethodFilter(_testType.FullName + ".VoidEmptyMethodUnorderedAspectMixedWithOrderedAspect");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);

@@ -139,7 +139,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
         private static void WeaveAssembly(Type type, ModuleWeaver weaver)
         {
             var normalizedPath = type.Assembly.CodeBase.Replace(@"file:///", string.Empty);
-            WeavedAssemblyPath = weaver.WeaveToShadowFile(normalizedPath);
+            WeavedAssemblyPath = weaver.WeaveToShadowFile(normalizedPath, ModuleHelper.AssemblyResolver);
         }
 
         protected static string WeaveAssembly(Type assemblyType)
@@ -147,7 +147,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
             var normalizedPath = assemblyType.Assembly.CodeBase.Replace(@"file:///", string.Empty);
 
             var weaver = new ModuleWeaver();
-            return WeavedAssemblyPath = weaver.WeaveToShadowFile(normalizedPath);
+            return WeavedAssemblyPath = weaver.WeaveToShadowFile(normalizedPath, ModuleHelper.AssemblyResolver);
         }
         
         private string CreateNestedClassFullName(Type type)

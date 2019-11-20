@@ -4,22 +4,23 @@ using System.IO;
 using System.Linq;
 using Mono.Cecil;
 
-namespace MethodBoundaryAspect.Fody
+namespace MethodBoundaryAspect.Fody.UnitTests.Shared
 {
     public class FolderAssemblyResolver : IAssemblyResolver
     {
-        private readonly IAssemblyResolver _defaultAssemblyResolver = new DefaultAssemblyResolver();
+        private readonly IAssemblyResolver _defaultAssemblyResolver;
 
-        public FolderAssemblyResolver(List<string> folder)
+        public FolderAssemblyResolver(IAssemblyResolver defaultAssemblyResolver, params string[] folders)
         {
-            Folder = folder;
+            Folders = folders;
+            _defaultAssemblyResolver = defaultAssemblyResolver;
         }
 
-        public List<string> Folder { get; }
+        public IList<string> Folders { get; }
 
         public AssemblyDefinition Resolve(AssemblyNameReference name)
         {
-            var assemblyPath = Folder
+            var assemblyPath = Folders
                 .SelectMany(x => Directory.GetFiles(x, name.Name + ".dll"))
                 .SingleOrDefault();
 

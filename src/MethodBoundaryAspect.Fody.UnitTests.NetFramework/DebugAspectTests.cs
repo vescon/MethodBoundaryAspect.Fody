@@ -1,6 +1,8 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using FluentAssertions;
+using MethodBoundaryAspect.Fody.UnitTests.Shared;
 using MethodBoundaryAspect.Fody.UnitTests.TestProgram;
 using MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework;
 using Xunit;
@@ -34,8 +36,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 
             Weaver = new ModuleWeaver();
             Weaver.AddClassFilter("???");
-            Weaver.AddAdditionalAssemblyResolveFolder(Path.GetDirectoryName(assemblyPath));
-            Weaver.WeaveToShadowFile(assemblyPath);
+            Weaver.WeaveToShadowFile(assemblyPath, new FolderAssemblyResolver(ModuleHelper.AssemblyResolver, Path.GetDirectoryName(assemblyPath)));
         }
     }
 }

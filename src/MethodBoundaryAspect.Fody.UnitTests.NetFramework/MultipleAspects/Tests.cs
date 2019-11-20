@@ -1,5 +1,6 @@
 ﻿using System;
 using MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified;
+using MethodBoundaryAspect.Fody.UnitTests.Shared;
 using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects
@@ -16,7 +17,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects
             weaver.AddMethodFilter(_testType.FullName + ".VoidEmptyMethod");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);
@@ -30,7 +31,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects
             weaver.AddMethodFilter(_testType.FullName + ".IntMethod");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);
@@ -44,7 +45,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects
             weaver.AddMethodFilter(_testType.FullName + ".VoidThrowMethod");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);
@@ -58,7 +59,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects
             weaver.AddMethodFilter(typeof (TestMethods).FullName + ".IntMethodIntWithMultipleReturn");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);
@@ -72,7 +73,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects
             weaver.AddMethodFilter(typeof (TestMethods).FullName + ".VoidThrowMethodTryCatch");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);
