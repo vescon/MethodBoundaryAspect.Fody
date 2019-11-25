@@ -35,7 +35,7 @@
   <!--Fixes problems with buildorder when using dotnet build-->
 
   <ItemGroup>
-    <PackageReference Include="Fody" Version="3.3.0" PrivateAssets="None" />
-    <PackageReference Include="FodyPackaging" Version="3.3.0" PrivateAssets="All" />
+    <PackageReference Include="Fody" Version="6.0.5" PrivateAssets="None" />
+    <PackageReference Include="FodyPackaging" Version="6.0.5" PrivateAssets="All" />
   </ItemGroup>
 </Project>

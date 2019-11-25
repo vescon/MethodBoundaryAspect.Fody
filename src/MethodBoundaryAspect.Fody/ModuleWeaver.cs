@@ -33,8 +33,6 @@ namespace MethodBoundaryAspect.Fody
     /// </summary>
     public class ModuleWeaver : BaseModuleWeaver
     {
-        private readonly List<string> _additionalAssemblyResolveFolders = new List<string>();
-        
         public ModuleWeaver()
         {
             InitLogging();
@@ -75,7 +73,7 @@ namespace MethodBoundaryAspect.Fody
                 + fileInfoSource.Extension.ToLower();
         }
 
-        public string WeaveToShadowFile(string assemblyPath)
+        public string WeaveToShadowFile(string assemblyPath, IAssemblyResolver assemblyResolver)
         {
             var prefix = Environment.TickCount.ToString();
             var shadowAssemblyPath = CreateShadowAssemblyPath(assemblyPath, prefix);
@@ -87,21 +85,19 @@ namespace MethodBoundaryAspect.Fody
             if (File.Exists(pdbPath))
                 File.Copy(pdbPath, shadowPdbPath, true);
 
-            Weave(shadowAssemblyPath);
+            Weave(shadowAssemblyPath, assemblyResolver);
             return shadowAssemblyPath;
         }
 
-        public void Weave(string assemblyPath)
+        public void Weave(string assemblyPath, IAssemblyResolver assemblyResolver)
         {
             var readerParameters = new ReaderParameters
             {
                 ReadSymbols = true,
                 SymbolReaderProvider = new PdbReaderProvider(),
-				ReadWrite = true
+				ReadWrite = true,
+                AssemblyResolver = assemblyResolver
             };
-
-            if (_additionalAssemblyResolveFolders.Any())
-                readerParameters.AssemblyResolver = new FolderAssemblyResolver(_additionalAssemblyResolveFolders);
 
 			using (var assemblyDefinition = AssemblyDefinition.ReadAssembly(assemblyPath, readerParameters))
 			{
@@ -130,10 +126,6 @@ namespace MethodBoundaryAspect.Fody
         public void AddPropertyFilter(string propertyFilter)
         {
             PropertyFilter.Add(propertyFilter);
-        }
-        public void AddAdditionalAssemblyResolveFolder(string folderName)
-        {
-            _additionalAssemblyResolveFolders.Add(folderName);
         }
 
         private void InitLogging()

@@ -1,4 +1,5 @@
 using System;
+using MethodBoundaryAspect.Fody.UnitTests.Shared;
 using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified.OnException
@@ -15,7 +16,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified.OnException
             weaver.AddMethodFilter(_testType.FullName + ".VoidEmptyMethod");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);
@@ -29,7 +30,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified.OnException
             weaver.AddMethodFilter(_testType.FullName + ".IntMethod");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);
@@ -43,7 +44,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified.OnException
             weaver.AddMethodFilter(_testType.FullName + ".VoidThrowMethod");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);
@@ -57,7 +58,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified.OnException
             weaver.AddMethodFilter(typeof(TestMethods).FullName + ".SwitchCaseMethodWithReturnValueAndThrowAsDefaultValue");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);
@@ -71,7 +72,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified.OnException
             weaver.AddMethodFilter(typeof(TestMethods).FullName + ".IfMethodWithReturnValueAndThrowAsDefaultValue");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);
@@ -85,7 +86,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified.OnException
             weaver.AddMethodFilter(typeof(TestMethods).FullName + ".SwitchCaseMethodWithoutReturnValueAndThrowAsDefaultValue");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);
@@ -99,7 +100,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified.OnException
             weaver.AddMethodFilter(typeof(TestMethods).FullName + ".IfMethodWithoutReturnValueAndThrowAsDefaultValue");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);
@@ -113,7 +114,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified.OnException
             weaver.AddMethodFilter(_testType.FullName + ".IntMethodIntWithMultipleReturn");
 
             // Act
-            weaver.Weave(Weave.DllPath);
+            weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
             AssertRunPeVerify(weaver);
