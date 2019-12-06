@@ -5,7 +5,9 @@ using MethodBoundaryAspect.Fody.Attributes;
 namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects
 {
     [ProvideAspectRole(TestRoles.First)]
+#pragma warning disable 0618
     [AspectRoleDependency(AspectDependencyAction.Order, AspectDependencyPosition.Before, TestRoles.Second)]
+#pragma warning restore 0618
     public class FirstAspect : OnMethodBoundaryAspect
     {
         private const string MethodExecutionTagValue = TestRoles.First;

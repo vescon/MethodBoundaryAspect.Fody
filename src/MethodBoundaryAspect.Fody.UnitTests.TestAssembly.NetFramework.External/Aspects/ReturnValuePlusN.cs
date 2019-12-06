@@ -3,7 +3,9 @@
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External.Aspects
 {
     [ProvideAspectRole("Second")]
+#pragma warning disable 0618
     [AspectRoleDependency(AspectDependencyAction.Order, AspectDependencyPosition.After, "First")]
+#pragma warning restore 0618
     public class ReturnValuePlusN : OnMethodBoundaryAspect
     {
         int _n;
