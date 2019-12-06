@@ -204,7 +204,10 @@ namespace MethodBoundaryAspect.Fody
                     .ToList();
                 if (aspectInfos.Count == 0)
                     continue;
-                
+
+                foreach (var aspectInfo in aspectInfos)
+                    aspectInfo.InitOrderIndex(assemblyMethodBoundaryAspects, classMethodBoundaryAspects, methodMethodBoundaryAspects);
+
                 weavedAtLeastOneMethod = WeaveMethod(
                     module,
                     method,

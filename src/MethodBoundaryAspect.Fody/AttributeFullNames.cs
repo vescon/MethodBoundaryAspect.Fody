@@ -16,5 +16,8 @@
 
         public static string ProvideAspectRoleAttribute =>
             "MethodBoundaryAspect.Fody.Attributes.ProvideAspectRoleAttribute";
+
+        public static string AspectOrderIndexAttribute =>
+            "MethodBoundaryAspect.Fody.Attributes.AspectOrderIndexAttribute";
     }
 }
