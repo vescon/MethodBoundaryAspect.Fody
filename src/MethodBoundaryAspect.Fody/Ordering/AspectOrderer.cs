@@ -12,6 +12,7 @@ namespace MethodBoundaryAspect.Fody.Ordering
                 .Where(x => x.AspectRoleDependencyAttributes.Count > 0)
                 .ToList();
 
+            // if AspectDependencyAction.Order is not used, use AspectOrderIndexAttribute
             if (aspectInfosWithOrderAttributes.Count == 0)
                 return OrderInternalByOrderIndex(aspectInfos);
 

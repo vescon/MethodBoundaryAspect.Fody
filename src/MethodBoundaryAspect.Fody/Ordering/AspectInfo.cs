@@ -116,24 +116,23 @@ namespace MethodBoundaryAspect.Fody.Ordering
             IEnumerable<CustomAttribute> classAspectAttributes,
             IEnumerable<CustomAttribute> methodAspectAttributes)
         {
-            var aspectAttributes = new[] {assemblyAspectAttributes, classAspectAttributes, methodAspectAttributes};
+            InternalInitOrderIndex(assemblyAspectAttributes, "assembly");
+            InternalInitOrderIndex(classAspectAttributes, "class");
+            InternalInitOrderIndex(methodAspectAttributes, "method");
+        }
 
-            for (int i = 0; i < aspectAttributes.Length; i++)
-            {
-                var orderIndexAttributes = aspectAttributes[i]
+        private void InternalInitOrderIndex(IEnumerable<CustomAttribute> aspectAttributes, string level)
+        {
+            var orderIndexAttributes = aspectAttributes
                     .Where(c => c.AttributeType.FullName == AttributeFullNames.AspectOrderIndexAttribute &&
                                 ((TypeReference)c.ConstructorArguments[0].Value).FullName == AspectTypeDefinition.FullName)
                     .ToList();
 
-                if (orderIndexAttributes.Count > 1)
-                    throw new InvalidAspectConfigurationException(
-                        string.Format(AspectHasMultipleOrderIndicesDefinedOnTheSameLevel,
-                            Name,
-                            i == 0 ? "assembly" : i == 1 ? "class" : "method"));
+            if (orderIndexAttributes.Count > 1)
+                throw new InvalidAspectConfigurationException(string.Format(AspectHasMultipleOrderIndicesDefinedOnTheSameLevel, Name, level));
 
-                if (orderIndexAttributes.Count == 1)
-                    OrderIndex = (int)orderIndexAttributes[0].ConstructorArguments[1].Value;
-            }
+            if (orderIndexAttributes.Count == 1)
+                OrderIndex = (int)orderIndexAttributes[0].ConstructorArguments[1].Value;
         }
     }
 }
