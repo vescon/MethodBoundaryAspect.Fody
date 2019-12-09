@@ -12,8 +12,12 @@ namespace MethodBoundaryAspect.Fody.Ordering
                 .Where(x => x.AspectRoleDependencyAttributes.Count > 0)
                 .ToList();
 
+            // if AspectDependencyAction.Order is not used, use AspectOrderIndexAttribute
             if (aspectInfosWithOrderAttributes.Count == 0)
-                return aspectInfos;
+                return OrderInternalByOrderIndex(aspectInfos);
+
+            if (aspectInfos.Any(x => x.OrderIndex != null))
+                throw new InvalidAspectConfigurationException("Error: Usage of AspectDependencyAction.Order and AspectOrderIndexAttribute are mutually exclusive!");
 
             var orderedAspects = OrderInternal(aspectInfosWithOrderAttributes);
             var aspectsWithoutOrderAttribute = aspectInfos.Except(aspectInfosWithOrderAttributes);
@@ -59,6 +63,25 @@ namespace MethodBoundaryAspect.Fody.Ordering
                 .OrderBy(x => x.Order.GetOrderIndex(roleIndexes))
                 .ToList();
             return orderedAspects;
+        }
+
+        private static List<AspectInfo> OrderInternalByOrderIndex(List<AspectInfo> aspectInfos)
+        {
+            if (aspectInfos.All(x => x.OrderIndex == null))
+                return aspectInfos;
+
+            foreach (var aspectInfo in aspectInfos.ToList())
+            {
+                if (aspectInfo.OrderIndex == null)
+                    throw new InvalidAspectConfigurationException(
+                        string.Format("No order index provided for aspect '{0}'", aspectInfo.Name));
+
+                if (aspectInfos.Where(x => x != aspectInfo).Any(x => x.OrderIndex == aspectInfo.OrderIndex))
+                    throw new InvalidAspectConfigurationException(
+                        string.Format("No unique order index provided for aspect '{0}'", aspectInfo.Name));
+            }
+
+            return aspectInfos.OrderBy(x => x.OrderIndex).ToList();
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
@@ -9,21 +10,26 @@ namespace MethodBoundaryAspect.Fody.Ordering
         private const string AspectCanTHaveRoleAndBeOrderedBeforeOrAfterThatRole =
             "Aspect '{0}' can't have role '{1}' and be ordered before or after that role";
 
-        private const string AspectHasToProvideANonEmptyMethodboundaryaspectAttributesProvideaspectroleAttribute =
+        private const string AspectHasToProvideANonEmptyMethodBoundaryAspectAttributesProvideAspectRoleAttribute =
             "Aspect '{0}' has to provide a non-empty MethodBoundaryAspect.Attributes.ProvideAspectRoleAttribute attribute";
+
+        private const string AspectHasMultipleOrderIndicesDefinedOnTheSameLevel =
+            "Aspect '{0}' has multiple order indices defined on {1} level";
 
         public AspectInfo(CustomAttribute aspectAttribute)
         {
             AspectAttribute = aspectAttribute;
             Name = aspectAttribute.AttributeType.FullName;
-            var aspectType = aspectAttribute.AttributeType.Resolve();
+            AspectTypeDefinition = aspectAttribute.AttributeType.Resolve();
 
-            var aspectAttributes = aspectType.CustomAttributes;
+            var aspectAttributes = AspectTypeDefinition.CustomAttributes;
             InitRole(aspectAttributes);
             InitOrder(aspectAttributes);
             InitSkipProperties(aspectAttributes);
         }
         
+        public TypeDefinition AspectTypeDefinition { get; }
+
         public string Name { get; private set; }
 
         public string Role { get; private set; }
@@ -34,7 +40,11 @@ namespace MethodBoundaryAspect.Fody.Ordering
 
         public List<CustomAttribute> AspectRoleDependencyAttributes { get; private set; }
 
+#pragma warning disable 0618
         public AspectOrder Order { get; private set; }
+#pragma warning restore 0618
+
+        public int? OrderIndex { get; set; }
 
         private void InitRole(IEnumerable<CustomAttribute> aspectAttributes)
         {
@@ -50,7 +60,7 @@ namespace MethodBoundaryAspect.Fody.Ordering
             if (string.IsNullOrEmpty(role))
             {
                 var msg =
-                    string.Format(AspectHasToProvideANonEmptyMethodboundaryaspectAttributesProvideaspectroleAttribute,
+                    string.Format(AspectHasToProvideANonEmptyMethodBoundaryAspectAttributesProvideAspectRoleAttribute,
                         Name);
                 throw new InvalidAspectConfigurationException(msg);
             }
@@ -67,7 +77,10 @@ namespace MethodBoundaryAspect.Fody.Ordering
             if (AspectRoleDependencyAttributes.Count == 0)
                 return;
 
+#pragma warning disable 0618
             var aspectOrder = new AspectOrder(this);
+#pragma warning restore 0618
+
             foreach (var roleDependencyAttribute in AspectRoleDependencyAttributes)
             {
                 var role = (string) roleDependencyAttribute.ConstructorArguments[2].Value;
@@ -96,6 +109,30 @@ namespace MethodBoundaryAspect.Fody.Ordering
             var skipProperties = (bool)skipPropertiesAttribute.ConstructorArguments[0].Value;
 
             SkipProperties = skipProperties;
+        }
+
+        public void InitOrderIndex(
+            IEnumerable<CustomAttribute> assemblyAspectAttributes,
+            IEnumerable<CustomAttribute> classAspectAttributes,
+            IEnumerable<CustomAttribute> methodAspectAttributes)
+        {
+            InternalInitOrderIndex(assemblyAspectAttributes, "assembly");
+            InternalInitOrderIndex(classAspectAttributes, "class");
+            InternalInitOrderIndex(methodAspectAttributes, "method");
+        }
+
+        private void InternalInitOrderIndex(IEnumerable<CustomAttribute> aspectAttributes, string level)
+        {
+            var orderIndexAttributes = aspectAttributes
+                    .Where(c => c.AttributeType.FullName == AttributeFullNames.AspectOrderIndexAttribute &&
+                                ((TypeReference)c.ConstructorArguments[0].Value).FullName == AspectTypeDefinition.FullName)
+                    .ToList();
+
+            if (orderIndexAttributes.Count > 1)
+                throw new InvalidAspectConfigurationException(string.Format(AspectHasMultipleOrderIndicesDefinedOnTheSameLevel, Name, level));
+
+            if (orderIndexAttributes.Count == 1)
+                OrderIndex = (int)orderIndexAttributes[0].ConstructorArguments[1].Value;
         }
     }
 }
