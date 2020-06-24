@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
@@ -26,6 +25,7 @@ namespace MethodBoundaryAspect.Fody.Ordering
             InitRole(aspectAttributes);
             InitOrder(aspectAttributes);
             InitSkipProperties(aspectAttributes);
+            InitTargetMembers();
         }
         
         public TypeDefinition AspectTypeDefinition { get; }
@@ -45,6 +45,17 @@ namespace MethodBoundaryAspect.Fody.Ordering
 #pragma warning restore 0618
 
         public int? OrderIndex { get; set; }
+
+        public IEnumerable<MethodAttributes> AttributeTargetMemberAttributes { get; set; } =
+            new List<MethodAttributes>
+            {
+                MethodAttributes.Private,
+                MethodAttributes.FamANDAssem,
+                MethodAttributes.Assembly,
+                MethodAttributes.Family,
+                MethodAttributes.FamORAssem,
+                MethodAttributes.Public
+            };
 
         private void InitRole(IEnumerable<CustomAttribute> aspectAttributes)
         {
@@ -133,6 +144,47 @@ namespace MethodBoundaryAspect.Fody.Ordering
 
             if (orderIndexAttributes.Count == 1)
                 OrderIndex = (int)orderIndexAttributes[0].ConstructorArguments[1].Value;
+        }
+
+        private void InitTargetMembers()
+        {
+            var targetMembersAttribute = AspectAttribute.Properties
+                .FirstOrDefault(property => property.Name == AttributeNames.AttributeTargetMemberAttributes);
+
+            if (targetMembersAttribute.Equals(default(CustomAttributeNamedArgument)))
+            {
+                return;
+            }
+
+            var memberAttributes = new List<MethodAttributes>();
+
+            var attributes = (int) targetMembersAttribute.Argument.Value;
+            if ((attributes & 2) != 0)
+            {
+                memberAttributes.Add(MethodAttributes.Private);
+            }
+            if ((attributes & 4) != 0)
+            {
+                memberAttributes.Add(MethodAttributes.Family);
+            }
+            if ((attributes & 8) != 0)
+            {
+                memberAttributes.Add(MethodAttributes.Assembly);
+            }
+            if ((attributes & 16) != 0)
+            {
+                memberAttributes.Add(MethodAttributes.FamANDAssem);
+            }
+            if ((attributes & 32) != 0)
+            {
+                memberAttributes.Add(MethodAttributes.FamORAssem);
+            }
+            if ((attributes & 64) != 0)
+            {
+                memberAttributes.Add(MethodAttributes.Public);
+            }
+
+            AttributeTargetMemberAttributes = memberAttributes;
         }
     }
 }

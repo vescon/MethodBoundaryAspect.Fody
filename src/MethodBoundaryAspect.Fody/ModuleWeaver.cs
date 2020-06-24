@@ -201,6 +201,7 @@ namespace MethodBoundaryAspect.Fody
                     .Concat(methodMethodBoundaryAspects)
                     .Where(IsMethodBoundaryAspect)
                     .Select(x => new AspectInfo(x))
+                    .Where(info => info.AttributeTargetMemberAttributes.Contains((MethodAttributes)((int)method.Attributes & 7)))
                     .ToList();
                 if (aspectInfos.Count == 0)
                     continue;
