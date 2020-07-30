@@ -1,9 +1,8 @@
-using MethodBoundaryAspect.Fody.Attributes;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.Aspects;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework
 {
-    [MethodAttributeAspect(AttributeTargetMemberAttributes = MulticastAttributes.Private)]
+    [MethodAttributeAspect(AttributeTargetMemberAttributes = Attributes.MulticastAttributes.Private)]
     public class PrivateMethodAttributeAspectMethods
     {
         public static string PublicMethod() => ProtectedInternalMethod();
