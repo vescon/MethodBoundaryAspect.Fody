@@ -57,6 +57,9 @@ namespace MethodBoundaryAspect.Fody.Ordering
                 MethodAttributes.Public
             };
 
+        public bool HasTargetMemberAttribute(MethodAttributes visibility) =>
+            AttributeTargetMemberAttributes.Contains(visibility);
+
         private void InitRole(IEnumerable<CustomAttribute> aspectAttributes)
         {
             Role = "<Default>";
@@ -158,28 +161,28 @@ namespace MethodBoundaryAspect.Fody.Ordering
 
             var memberAttributes = new List<MethodAttributes>();
 
-            var attributes = (int) targetMembersAttribute.Argument.Value;
-            if ((attributes & 2) != 0)
+            var attributes = (MulticastAttributes) targetMembersAttribute.Argument.Value;
+            if (attributes.HasFlag(MulticastAttributes.Private))
             {
                 memberAttributes.Add(MethodAttributes.Private);
             }
-            if ((attributes & 4) != 0)
+            if (attributes.HasFlag(MulticastAttributes.Protected))
             {
                 memberAttributes.Add(MethodAttributes.Family);
             }
-            if ((attributes & 8) != 0)
+            if (attributes.HasFlag(MulticastAttributes.Internal))
             {
                 memberAttributes.Add(MethodAttributes.Assembly);
             }
-            if ((attributes & 16) != 0)
+            if (attributes.HasFlag(MulticastAttributes.InternalAndProtected))
             {
                 memberAttributes.Add(MethodAttributes.FamANDAssem);
             }
-            if ((attributes & 32) != 0)
+            if (attributes.HasFlag(MulticastAttributes.InternalOrProtected))
             {
                 memberAttributes.Add(MethodAttributes.FamORAssem);
             }
-            if ((attributes & 64) != 0)
+            if (attributes.HasFlag(MulticastAttributes.Public))
             {
                 memberAttributes.Add(MethodAttributes.Public);
             }
