@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Mono.Cecil;
@@ -26,6 +25,7 @@ namespace MethodBoundaryAspect.Fody.Ordering
             InitRole(aspectAttributes);
             InitOrder(aspectAttributes);
             InitSkipProperties(aspectAttributes);
+            InitTargetMembers();
         }
         
         public TypeDefinition AspectTypeDefinition { get; }
@@ -45,6 +45,20 @@ namespace MethodBoundaryAspect.Fody.Ordering
 #pragma warning restore 0618
 
         public int? OrderIndex { get; set; }
+
+        public IEnumerable<MethodAttributes> AttributeTargetMemberAttributes { get; set; } =
+            new List<MethodAttributes>
+            {
+                MethodAttributes.Private,
+                MethodAttributes.FamANDAssem,
+                MethodAttributes.Assembly,
+                MethodAttributes.Family,
+                MethodAttributes.FamORAssem,
+                MethodAttributes.Public
+            };
+
+        public bool HasTargetMemberAttribute(MethodAttributes visibility) =>
+            AttributeTargetMemberAttributes.Contains(visibility);
 
         private void InitRole(IEnumerable<CustomAttribute> aspectAttributes)
         {
@@ -133,6 +147,47 @@ namespace MethodBoundaryAspect.Fody.Ordering
 
             if (orderIndexAttributes.Count == 1)
                 OrderIndex = (int)orderIndexAttributes[0].ConstructorArguments[1].Value;
+        }
+
+        private void InitTargetMembers()
+        {
+            var targetMembersAttribute = AspectAttribute.Properties
+                .FirstOrDefault(property => property.Name == AttributeNames.AttributeTargetMemberAttributes);
+
+            if (targetMembersAttribute.Equals(default(CustomAttributeNamedArgument)))
+            {
+                return;
+            }
+
+            var memberAttributes = new List<MethodAttributes>();
+
+            var attributes = (MulticastAttributes) targetMembersAttribute.Argument.Value;
+            if (attributes.HasFlag(MulticastAttributes.Private))
+            {
+                memberAttributes.Add(MethodAttributes.Private);
+            }
+            if (attributes.HasFlag(MulticastAttributes.Protected))
+            {
+                memberAttributes.Add(MethodAttributes.Family);
+            }
+            if (attributes.HasFlag(MulticastAttributes.Internal))
+            {
+                memberAttributes.Add(MethodAttributes.Assembly);
+            }
+            if (attributes.HasFlag(MulticastAttributes.InternalAndProtected))
+            {
+                memberAttributes.Add(MethodAttributes.FamANDAssem);
+            }
+            if (attributes.HasFlag(MulticastAttributes.InternalOrProtected))
+            {
+                memberAttributes.Add(MethodAttributes.FamORAssem);
+            }
+            if (attributes.HasFlag(MulticastAttributes.Public))
+            {
+                memberAttributes.Add(MethodAttributes.Public);
+            }
+
+            AttributeTargetMemberAttributes = memberAttributes;
         }
     }
 }

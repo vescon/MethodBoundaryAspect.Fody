@@ -196,11 +196,14 @@ namespace MethodBoundaryAspect.Fody
                 else
                     methodMethodBoundaryAspects = method.CustomAttributes;
 
+                var methodVisibility = GetMethodVisibility(method);
+
                 var aspectInfos = assemblyMethodBoundaryAspects
                     .Concat(classMethodBoundaryAspects)
                     .Concat(methodMethodBoundaryAspects)
                     .Where(IsMethodBoundaryAspect)
                     .Select(x => new AspectInfo(x))
+                    .Where(info => info.HasTargetMemberAttribute(methodVisibility))
                     .ToList();
                 if (aspectInfos.Count == 0)
                     continue;
@@ -320,5 +323,8 @@ namespace MethodBoundaryAspect.Fody
         {
             return method.CustomAttributes.Any(x => x.AttributeType.FullName == AttributeFullNames.DisableWeavingAttribute);
         }
+
+        private static MethodAttributes GetMethodVisibility(MethodDefinition method) =>
+            method.Attributes & MethodAttributes.MemberAccessMask;
     }
 }
