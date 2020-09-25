@@ -5,9 +5,9 @@ namespace MethodBoundaryAspect.Fody
 {
     public class ArgumentLoadable : ILoadable
     {
-        int _index;
-        ParameterDefinition _parameter;
-        ILProcessor _processor;
+        private int _index;
+        private ParameterDefinition _parameter;
+        private ILProcessor _processor;
 
         public ArgumentLoadable(int i, ParameterDefinition p, ILProcessor methodProcessor)
         {

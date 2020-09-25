@@ -1,6 +1,5 @@
 ﻿using Mono.Cecil;
 using Mono.Cecil.Cil;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -8,8 +7,7 @@ namespace MethodBoundaryAspect.Fody
 {
     public class FieldPersistable : IPersistable
     {
-        ILoadable _instance;
-        public FieldReference Field { get; private set; }
+        private readonly ILoadable _instance;
 
         public FieldPersistable(ILoadable instance, FieldReference field)
         {
@@ -17,13 +15,15 @@ namespace MethodBoundaryAspect.Fody
             Field = field;
         }
 
-        public TypeReference PersistedType { get => Field.FieldType; }
+        public FieldReference Field { get; }
+        public TypeReference PersistedType => Field.FieldType;
 
         public InstructionBlock Load(bool forDereferencing)
         {
-            return new InstructionBlock("Load",
-                _instance.Load(true).Instructions.Concat(
-                    new[] { Instruction.Create(OpCodes.Ldfld, Field) }).ToList());
+            var instructions = _instance.Load(true).Instructions
+                .Concat(new[] { Instruction.Create(OpCodes.Ldfld, Field) })
+                .ToList();
+            return new InstructionBlock("Load", instructions);
         }
 
         public InstructionBlock Store(InstructionBlock loadNewValueOntoStack, TypeReference typeOnStack)

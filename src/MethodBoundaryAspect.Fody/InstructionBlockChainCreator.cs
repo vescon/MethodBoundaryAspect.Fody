@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Mono.Cecil;
@@ -77,8 +76,7 @@ namespace MethodBoundaryAspect.Fody
                 _creator.CreateObjectArrayWithMethodArguments(argumentsArrayVariable,
                     _referenceFinder.GetTypeReference(typeof (object)));
 
-            var blockChain = new NamedInstructionBlockChain(argumentsArrayVariable,
-                argumentsTypeReference);
+            var blockChain = new NamedInstructionBlockChain(argumentsArrayVariable, argumentsTypeReference);
             blockChain.Add(createObjectArrayWithMethodArgumentsBlock);
             return blockChain;
         }
@@ -88,7 +86,7 @@ namespace MethodBoundaryAspect.Fody
             var type = _method.DeclaringType;
             TypeReference typeRef = type;
             if (typeRef.IsValueType)
-                typeRef = new ByReferenceType(type);
+                typeRef = new ByReferenceType(type); // Unused? why?
             return CreateThisVariable(type);
         }
 
@@ -152,29 +150,29 @@ namespace MethodBoundaryAspect.Fody
                 new VariablePersistable(methodExecutionArgsVariable),
                 new VariablePersistable(methodBaseVariable));
 
-            var newMethodExectionArgsBlockChain = new NamedInstructionBlockChain(methodExecutionArgsVariable,
+            var newMethodExecutionArgsBlockChain = new NamedInstructionBlockChain(methodExecutionArgsVariable,
                 methodExecutionArgsTypeRef);
-            newMethodExectionArgsBlockChain.Add(newObjectMethodExecutionArgsBlock);
-            newMethodExectionArgsBlockChain.Add(callSetArgumentsBlock);
-            newMethodExectionArgsBlockChain.Add(callGetCurrentMethodBlock);
-            newMethodExectionArgsBlockChain.Add(callSetMethodBlock);
+            newMethodExecutionArgsBlockChain.Add(newObjectMethodExecutionArgsBlock);
+            newMethodExecutionArgsBlockChain.Add(callSetArgumentsBlock);
+            newMethodExecutionArgsBlockChain.Add(callGetCurrentMethodBlock);
+            newMethodExecutionArgsBlockChain.Add(callSetMethodBlock);
             if (callSetInstanceBlock != null)
             {
-                newMethodExectionArgsBlockChain.Add(createThisVariableBlock);
-                newMethodExectionArgsBlockChain.Add(callSetInstanceBlock);
+                newMethodExecutionArgsBlockChain.Add(createThisVariableBlock);
+                newMethodExecutionArgsBlockChain.Add(callSetInstanceBlock);
             }
 
-            return newMethodExectionArgsBlockChain;
+            return newMethodExecutionArgsBlockChain;
         }
         
         public InstructionBlockChain SetMethodExecutionArgsReturnValue(
-            IPersistable newMethodExectionArgsBlockChain, NamedInstructionBlockChain loadReturnValue)
+            IPersistable newMethodExecutionArgsBlockChain, NamedInstructionBlockChain loadReturnValue)
         {
             var methodExecutionArgsSetReturnValueMethodRef =
-                _referenceFinder.GetMethodReference(newMethodExectionArgsBlockChain.PersistedType,
+                _referenceFinder.GetMethodReference(newMethodExecutionArgsBlockChain.PersistedType,
                     md => md.Name == "set_ReturnValue");
             var callSetReturnValueBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetReturnValueMethodRef,
-                newMethodExectionArgsBlockChain,
+                newMethodExecutionArgsBlockChain,
                 new VariablePersistable(loadReturnValue.Variable));
 
             var block = new InstructionBlockChain();
@@ -286,7 +284,8 @@ namespace MethodBoundaryAspect.Fody
             return callAspectOnExitBlockChain;
         }
 
-        public InstructionBlockChain CallAspectOnException(AspectData aspectData,
+        public InstructionBlockChain CallAspectOnException(
+            AspectData aspectData,
             IPersistable executionArgs)
         {
             var onExceptionMethodRef = _referenceFinder.GetMethodReference(aspectData.Info.AspectAttribute.AttributeType,
@@ -299,19 +298,23 @@ namespace MethodBoundaryAspect.Fody
             return callAspectOnExceptionBlockChain;
         }
 
-        public InstructionBlockChain CallMethodWithLocalParameters(MethodDefinition method,
-            MethodDefinition targetMethod, ILoadable instance, IPersistable resultVariable)
+        public InstructionBlockChain CallMethodWithLocalParameters(
+            MethodDefinition method,
+            MethodDefinition targetMethod,
+            ILoadable instance,
+            IPersistable resultVariable)
         {
-            int instanceOffset = (method.IsStatic ? 0 : 1);
-            ILoadable[] args = new ILoadable[method.Parameters.Count];
+            var instanceOffset = method.IsStatic ? 0 : 1;
+            var args = new ILoadable[method.Parameters.Count];
 
-            for (int i = 0; i < args.Length; ++i)
+            for (var i = 0; i < args.Length; ++i)
                 args[i] = new ArgumentLoadable(i + instanceOffset, method.Parameters[i], _method.Body.GetILProcessor());
 
             return CallMethodWithReturn(targetMethod, instance, resultVariable, args);
         }
 
-        public InstructionBlockChain CallMethodWithReturn(MethodReference method,
+        public InstructionBlockChain CallMethodWithReturn(
+            MethodReference method,
             ILoadable instance,
             IPersistable returnValue,
             params ILoadable[] arguments)
@@ -319,12 +322,9 @@ namespace MethodBoundaryAspect.Fody
             var type = FixTypeReference(method.DeclaringType);
             method = FixMethodReference(type, method);
 
-            InstructionBlock block;
-            
-            if (method.Resolve().IsStatic)
-                block = _creator.CallStaticMethod(method, returnValue, arguments);
-            else
-                block = _creator.CallInstanceMethod(method, instance, returnValue, arguments);
+            var block = method.Resolve().IsStatic
+                ? _creator.CallStaticMethod(method, returnValue, arguments)
+                : _creator.CallInstanceMethod(method, instance, returnValue, arguments);
 
             var chain = new InstructionBlockChain();
             chain.Add(block);
@@ -357,7 +357,7 @@ namespace MethodBoundaryAspect.Fody
 
             if (behaviors.Length == 0)
                 return flowBehaviorHandler;
-            for (int i = 0; i < behaviors.Length - 1; ++i)
+            for (var i = 0; i < behaviors.Length - 1; ++i)
             {
                 flowBehaviorHandler.Add(flowBehaviorLocal.Load(false));
                 flowBehaviorHandler.Add(new InstructionBlock("FlowBehavior", Instruction.Create(OpCodes.Ldc_I4, behaviors[i])));

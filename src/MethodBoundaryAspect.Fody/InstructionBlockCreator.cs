@@ -231,10 +231,10 @@ namespace MethodBoundaryAspect.Fody
             var parameterCount = 0;
             foreach (var argument in arguments)
             {
-                bool paramIsByRef = methodReference.Parameters[parameterCount].ParameterType.IsByReference;
+                var paramIsByRef = methodReference.Parameters[parameterCount].ParameterType.IsByReference;
 
                 loadArgumentsInstructions.AddRange(argument.Load(false).Instructions);
-                TypeReference varType = argument.PersistedType;
+                var varType = argument.PersistedType;
                 if (varType.IsByReference && !paramIsByRef)
                 {
                     varType = ((ByReferenceType)varType).ElementType;
@@ -257,8 +257,8 @@ namespace MethodBoundaryAspect.Fody
                     : OpCodes.Call,
                 methodReference);
 
-            bool methodReturnsVoid = IsVoid(methodDefinition.ReturnType);
-            bool returnValueShouldBeStored = (returnValue != null);
+            var methodReturnsVoid = IsVoid(methodDefinition.ReturnType);
+            var returnValueShouldBeStored = (returnValue != null);
 
             List<Instruction> HandleReturnValue(List<Instruction> methodWork)
             {
@@ -295,15 +295,16 @@ namespace MethodBoundaryAspect.Fody
             return HandleReturnValue(instructions);
         }
 
-        private static IEnumerable<Instruction> CastValueCurrentlyOnStack(TypeReference fromType, TypeReference toType)
+        public static IEnumerable<Instruction> CastValueCurrentlyOnStack(TypeReference fromType, TypeReference toType)
         {
             if (fromType.Equals(toType) || fromType.FullName.Equals(toType.FullName))
-                return new Instruction[0];
+                return Enumerable.Empty<Instruction>();
 
-            if (fromType.FullName == typeof(Object).FullName)
+            if (fromType.FullName == typeof(object).FullName)
             {
                 if (toType.IsValueType || toType.IsGenericParameter)
                     return new[] { Instruction.Create(OpCodes.Unbox_Any, toType) };
+                
                 return new[] { Instruction.Create(OpCodes.Castclass, toType) };
             }
 
@@ -325,9 +326,9 @@ namespace MethodBoundaryAspect.Fody
                     _processor.Create(OpCodes.Stloc, array)
                 };
 
-                OpCode stelem = elementType.GetStElemCode();
+                var stelem = elementType.GetStElemCode();
 
-                for (int i = 0; i < args.Length; ++i)
+                for (var i = 0; i < args.Length; ++i)
                 {
                     var parameter = args[i];
                     createArrayInstructions.Add(_processor.Create(OpCodes.Ldloc, array));
@@ -371,7 +372,7 @@ namespace MethodBoundaryAspect.Fody
                 var valueType = arg.Type;
                 if (arg.Value is TypeReference)
                     valueType = _referenceFinder.GetTypeReference(typeof(Type));
-                bool isEnum = valueType.IsEnum(out _);
+                var isEnum = valueType.IsEnum(out _);
                 valueType = valueType.CleanEnumsInTypeRef();
                 var instructions = LoadValueOnStack(valueType, arg.Value);
                 if (valueType.IsValueType || (!valueType.IsArray && isEnum))
@@ -403,7 +404,7 @@ namespace MethodBoundaryAspect.Fody
                 case MetadataType.UInt32:
                     return new[] { _processor.Create(OpCodes.Ldc_I4, (int)(uint)value) };
                 case MetadataType.Int64:
-                    long longVal = (long)value;
+                    var longVal = (long)value;
                     if (longVal <= Int32.MaxValue && longVal >= Int32.MinValue)
                         return new[]
                         {
@@ -412,7 +413,7 @@ namespace MethodBoundaryAspect.Fody
                         };
                     return new[] { _processor.Create(OpCodes.Ldc_I8, longVal) };
                 case MetadataType.UInt64:
-                    ulong ulongVal = (ulong)value;
+                    var ulongVal = (ulong)value;
                     if (ulongVal <= Int32.MaxValue)
                         return new[]
                         {

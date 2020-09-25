@@ -1,23 +1,26 @@
 ﻿using Mono.Cecil;
 using Mono.Cecil.Cil;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace MethodBoundaryAspect.Fody
 {
     public class VariablePersistable : IPersistable
     {
-        VariableDefinition _def;
+        private VariableDefinition _def;
 
         public VariablePersistable(VariableDefinition def)
         {
             _def = def;
         }
 
+        public TypeReference PersistedType => _def.VariableType;
+
         public InstructionBlock Load(bool forDereferencing)
         {
-            return new InstructionBlock("Load", Instruction.Create(
-                _def.VariableType.IsValueType && forDereferencing ? OpCodes.Ldloca : OpCodes.Ldloc, _def));
+            var opCode = _def.VariableType.IsValueType && forDereferencing
+                ? OpCodes.Ldloca 
+                : OpCodes.Ldloc;
+            return new InstructionBlock("Load", Instruction.Create(opCode, _def));
         }
 
         public InstructionBlock Store(InstructionBlock loadNewValueOntoStack, TypeReference typeOnStack)
@@ -39,7 +42,5 @@ namespace MethodBoundaryAspect.Fody
             list.Add(postInstruction);
             return new InstructionBlock("Store", list);
         }
-
-        public TypeReference PersistedType { get => _def.VariableType; }
     }
 }

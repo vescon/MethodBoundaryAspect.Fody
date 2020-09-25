@@ -62,7 +62,11 @@ namespace MethodBoundaryAspect.Fody
 
         protected override void Setup() { }
 
-        protected override void HandleBody(VariableDefinition returnValue, out Instruction instructionCallStart, out Instruction instructionCallEnd)
+        protected override void HandleBody(
+            NamedInstructionBlockChain arguments,
+            VariableDefinition returnValue,
+            out Instruction instructionCallStart,
+            out Instruction instructionCallEnd)
         {
             instructionCallEnd = _ilProcessor.Body.Instructions.Last();
             if (instructionCallEnd.OpCode == OpCodes.Ret)
@@ -85,6 +89,7 @@ namespace MethodBoundaryAspect.Fody
                 chain.Prepend(_ilProcessor);
             else
                 chain.InsertAfter(_setupPointer, _ilProcessor);
+
             _setupPointer = chain.Last;
         }
 
