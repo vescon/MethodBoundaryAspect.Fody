@@ -17,7 +17,7 @@ namespace MethodBoundaryAspect.Fody
         protected readonly ILProcessor _ilProcessor;
         protected readonly IList<AspectData> _aspects;
 
-        protected bool HasMultipleAspects { get => _aspects.Count > 1; }
+        protected bool HasMultipleAspects => _aspects.Count > 1;
         protected IPersistable ExecutionArgs { get; set; }
 
         public int WeaveCounter { get; private set; }
@@ -52,9 +52,9 @@ namespace MethodBoundaryAspect.Fody
 
             WeaveOnEntry(returnValue);
             
-            HandleBody(returnValue?.Variable, out Instruction instructionCallStart, out Instruction instructionCallEnd);
+            HandleBody(returnValue?.Variable, out var instructionCallStart, out var instructionCallEnd);
 
-            Instruction instructionAfterCall = WeaveOnExit(hasReturnValue, returnValue);
+            var instructionAfterCall = WeaveOnExit(hasReturnValue, returnValue);
 
             HandleReturnValue(hasReturnValue, returnValue);
 
@@ -124,35 +124,35 @@ namespace MethodBoundaryAspect.Fody
                 //  Selects the combination of all variance flags. This value is the result of using logical OR to combine the following flags: Contravariant and Covariant. 
                 foreach (var parameter in method.GenericParameters)
                 {
-                    var clonedparameter = new GenericParameter(parameter.Name, clonedMethod);
+                    var clonedParameter = new GenericParameter(parameter.Name, clonedMethod);
                     if (parameter.HasConstraints)
                     {
                         foreach (var parameterConstraint in parameter.Constraints)
                         {
-                            clonedparameter.Attributes = parameter.Attributes;
-                            clonedparameter.Constraints.Add(parameterConstraint);
+                            clonedParameter.Attributes = parameter.Attributes;
+                            clonedParameter.Constraints.Add(parameterConstraint);
                         }
                     }
 
                     if (parameter.HasReferenceTypeConstraint)
                     {
-                        clonedparameter.Attributes |= GenericParameterAttributes.ReferenceTypeConstraint;
-                        clonedparameter.HasReferenceTypeConstraint = true;
+                        clonedParameter.Attributes |= GenericParameterAttributes.ReferenceTypeConstraint;
+                        clonedParameter.HasReferenceTypeConstraint = true;
                     }
 
                     if (parameter.HasNotNullableValueTypeConstraint)
                     {
-                        clonedparameter.Attributes |= GenericParameterAttributes.NotNullableValueTypeConstraint;
-                        clonedparameter.HasNotNullableValueTypeConstraint = true;
+                        clonedParameter.Attributes |= GenericParameterAttributes.NotNullableValueTypeConstraint;
+                        clonedParameter.HasNotNullableValueTypeConstraint = true;
                     }
 
                     if (parameter.HasDefaultConstructorConstraint)
                     {
-                        clonedparameter.Attributes |= GenericParameterAttributes.DefaultConstructorConstraint;
-                        clonedparameter.HasDefaultConstructorConstraint = true;
+                        clonedParameter.Attributes |= GenericParameterAttributes.DefaultConstructorConstraint;
+                        clonedParameter.HasDefaultConstructorConstraint = true;
                     }
 
-                    clonedMethod.GenericParameters.Add(clonedparameter);
+                    clonedMethod.GenericParameters.Add(clonedParameter);
                 }
             }
 
@@ -203,31 +203,31 @@ namespace MethodBoundaryAspect.Fody
         private void WeaveOnEntry(IPersistable returnValue)
         {
             var aspectsWithOnEntry = _aspects
-                .Select((asp, index)=> new { aspect = asp, index = index })
+                .Select((asp, index)=> new { aspect = asp, index })
                 .Where(x => (x.aspect.AspectMethods & AspectMethods.OnEntry) != 0)
                 .ToList();
-            for (int i = 0; i < aspectsWithOnEntry.Count; ++i)
+            foreach (var entry in aspectsWithOnEntry)
             {
-                var aspect = aspectsWithOnEntry[i].aspect;
+                var aspect = entry.aspect;
                 var call = _creator.CallAspectOnEntry(aspect, ExecutionArgs);
                 AddToSetup(call);
 
                 if (HasMultipleAspects)
                     AddToSetup(_creator.SaveMethodExecutionArgsTagToPersistable(ExecutionArgs, aspect.TagPersistable));
                 
-                InstructionBlockChain nopChain = new InstructionBlockChain();
+                var nopChain = new InstructionBlockChain();
                 nopChain.Add(new InstructionBlock(null, Instruction.Create(OpCodes.Nop)));
 
-                InstructionBlockChain flowChain = new InstructionBlockChain();
-                InstructionBlockChain onExitChain = new InstructionBlockChain();
+                var flowChain = new InstructionBlockChain();
+                var onExitChain = new InstructionBlockChain();
 
                 if (_method.ReturnType.IsByReference)
                 {
                     var notSupportedExceptionCtorString =
                         _module.ImportReference(
-                        _creator.GetExceptionTypeReference<NotSupportedException>()
-                        .Resolve().Methods
-                        .FirstOrDefault(m => m.IsConstructor && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.FullName == "System.String"));
+                            _creator.GetExceptionTypeReference<NotSupportedException>()
+                                .Resolve().Methods
+                                .FirstOrDefault(m => m.IsConstructor && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.FullName == "System.String"));
                     onExitChain.Add(new InstructionBlock("Throw NotSupported",
                         Instruction.Create(OpCodes.Ldstr, "Weaving early return from a method with a byref return type is not supported."),
                         Instruction.Create(OpCodes.Newobj, notSupportedExceptionCtorString),
@@ -235,15 +235,15 @@ namespace MethodBoundaryAspect.Fody
                 }
                 else
                 {
-                    for (int j = aspectsWithOnEntry[i].index-1; j >= 0; --j)
+                    for (var i = entry.index-1; i >= 0; --i)
                     {
-                        var onExitAspect = _aspects[j];
-                        if ((onExitAspect.AspectMethods & AspectMethods.OnExit) != 0)
-                        {
-                            if (HasMultipleAspects)
-                                onExitChain.Add(_creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs, onExitAspect.TagPersistable));
-                            onExitChain.Add(_creator.CallAspectOnExit(onExitAspect, ExecutionArgs));
-                        }
+                        var onExitAspect = _aspects[i];
+                        if ((onExitAspect.AspectMethods & AspectMethods.OnExit) == 0) 
+                            continue;
+
+                        if (HasMultipleAspects)
+                            onExitChain.Add(_creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs, onExitAspect.TagPersistable));
+                        onExitChain.Add(_creator.CallAspectOnExit(onExitAspect, ExecutionArgs));
                     }
                 }
 
@@ -326,12 +326,6 @@ namespace MethodBoundaryAspect.Fody
 
         protected virtual void WeaveOnException(IList<AspectData> allAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall, IPersistable returnValue)
         {
-            List<int> ints = allAspects.Select((asp, index) => new { a = asp, ind = index })
-                .Where(x => (x.a.AspectMethods & AspectMethods.OnException) != 0)
-                .Select(x => x.ind)
-                .Reverse()
-                .ToList();
-            
             var realInstructionAfterCall = instructionAfterCall ?? instructionCallEnd.Next;
             var tryLeaveInstruction = Instruction.Create(OpCodes.Leave, realInstructionAfterCall);
             _ilProcessor.InsertAfter(instructionCallEnd, tryLeaveInstruction);
@@ -351,9 +345,15 @@ namespace MethodBoundaryAspect.Fody
                 returnAfterHandling.Add(returnValue.Load(false));
             returnAfterHandling.Add(new InstructionBlock("Return", Instruction.Create(OpCodes.Ret)));
 
-            for (int i = 0; i < ints.Count; ++i)
+            var indices = allAspects
+                .Select((asp, index) => new { asp, index })
+                .Where(x => (x.asp.AspectMethods & AspectMethods.OnException) != 0)
+                .Select(x => x.index)
+                .Reverse()
+                .ToList();
+            foreach (var index in indices)
             {
-                var onExceptionAspect = allAspects[ints[i]];
+                var onExceptionAspect = allAspects[index];
                 if (HasMultipleAspects)
                 {
                     var load = _creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs,
@@ -366,15 +366,14 @@ namespace MethodBoundaryAspect.Fody
                 var nop = new InstructionBlock("Nop", Instruction.Create(OpCodes.Nop));
 
                 var callOnExitsAndReturn = new InstructionBlockChain();
-                for (int j = ints[i]-1; j >= 0; --j)
+                for (var i = index-1; i >= 0; --i)
                 {
-                    var jthAspect = allAspects[j];
-                    if ((jthAspect.AspectMethods & AspectMethods.OnExit) != 0)
-                    {
-                        if (HasMultipleAspects)
-                            callOnExitsAndReturn.Add(_creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs, jthAspect.TagPersistable));
-                        callOnExitsAndReturn.Add(_creator.CallAspectOnExit(jthAspect, ExecutionArgs));
-                    }
+                    var jthAspect = allAspects[i];
+                    if ((jthAspect.AspectMethods & AspectMethods.OnExit) == 0) 
+                        continue;
+                    if (HasMultipleAspects)
+                        callOnExitsAndReturn.Add(_creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs, jthAspect.TagPersistable));
+                    callOnExitsAndReturn.Add(_creator.CallAspectOnExit(jthAspect, ExecutionArgs));
                 }
 
                 if (returnValue != null)
@@ -409,11 +408,11 @@ namespace MethodBoundaryAspect.Fody
         private void Optimize()
         {
             // add DebuggerStepThrough attribute to avoid compiler searching for
-            // non existing soure code for weaved il code
+            // non existing source code for weaved il code
             var attributeCtor = _creator.GetDebuggerStepThroughAttributeCtorReference();
 
             // Only add DebuggerStepThrough if not already present.
-            if (!_method.CustomAttributes.Any(a => a.AttributeType.FullName == attributeCtor.DeclaringType.FullName))
+            if (_method.CustomAttributes.All(a => a.AttributeType.FullName != attributeCtor.DeclaringType.FullName))
                 _method.CustomAttributes.Add(new CustomAttribute(attributeCtor));
 
             _method.Body.InitLocals = true;
