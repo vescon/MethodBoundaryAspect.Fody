@@ -27,6 +27,7 @@ You can easily write your own aspects for
     - on class
     - on method
 - Change method behavior
+    - Overwrite input argument values to be forwarded to the method.
     - Overwrite return value to be returned from the method.
 
 Feel free to make a [Fork](https://github.com/vescon/MethodBoundaryAspect.Fody/fork) of this repository.
