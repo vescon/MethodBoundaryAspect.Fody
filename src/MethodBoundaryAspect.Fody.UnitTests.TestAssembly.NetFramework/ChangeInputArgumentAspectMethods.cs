@@ -17,5 +17,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework
         {
             Result = arg2;
         }
+        
+        [ChangeFirstInputArgumentToArrayAspect]
+        public void InstanceMethodCallFirstArgumentArray(ref object arg1)
+        {
+            Result = arg1;
+        }
     }
 }

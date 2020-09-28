@@ -36,5 +36,24 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
             // Assert
             result.Should().Be("42");
         }
+        
+        [Fact]
+        public void IfInstanceMethodWithRefArgumentIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
+        {
+            // Arrange
+            const string testMethodName = "InstanceMethodCallFirstArgumentArray";
+            WeaveAssemblyMethodAndLoad(TestMethodsType, testMethodName);
+
+            // Act
+            var result = AssemblyLoader.InvokeMethod(TestMethodsType.TypeInfo(), testMethodName, new TestData());
+
+            // Assert
+            result.Should().BeOfType<object[]>();
+        }
+
+        [Serializable]
+        private class TestData
+        {
+        }
     }
 }
