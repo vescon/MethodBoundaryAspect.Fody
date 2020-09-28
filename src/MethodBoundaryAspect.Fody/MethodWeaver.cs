@@ -276,23 +276,32 @@ namespace MethodBoundaryAspect.Fody
                 thisVariable = thisVariableBlock.Variable;
             }
 
-            // get arguments from ExecutionArgs because they could have been changed in aspect code
-            var args = _method.Parameters
-                .Select((x,i) => new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator))
-                .Cast<ILoadable>()
-                .ToArray();
+            InstructionBlockChain callSourceMethod;
 
-            var callSourceMethod = _creator.CallMethodWithReturn(
-                _clonedMethod,
-                thisVariable == null ? null : new VariablePersistable(thisVariable),
-                returnValue == null ? null : new VariablePersistable(returnValue),
-                args);
+            var allowChangingInputArguments = _aspects.Any(x => x.Info.AllowChangingInputArguments);
+            if (allowChangingInputArguments)
+            {
+                // get arguments from ExecutionArgs because they could have been changed in aspect code
+                var args = _method.Parameters
+                    .Select((x, i) => new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator))
+                    .Cast<ILoadable>()
+                    .ToArray();
 
-            ////var callSourceMethod = _creator.CallMethodWithLocalParameters(
-            ////    _method,
-            ////    _clonedMethod,
-            ////    thisVariable == null ? null : new VariablePersistable(thisVariable),
-            ////    returnValue == null ? null : new VariablePersistable(returnValue));
+                callSourceMethod = _creator.CallMethodWithReturn(
+                    _clonedMethod,
+                    thisVariable == null ? null : new VariablePersistable(thisVariable),
+                    returnValue == null ? null : new VariablePersistable(returnValue),
+                    args);
+            }
+            else
+            {
+                callSourceMethod = _creator.CallMethodWithLocalParameters(
+                    _method,
+                    _clonedMethod,
+                    thisVariable == null ? null : new VariablePersistable(thisVariable),
+                    returnValue == null ? null : new VariablePersistable(returnValue));
+            }
+
             callSourceMethod.Append(_ilProcessor);
             instructionCallStart = callSourceMethod.First;
             instructionCallEnd = callSourceMethod.Last;

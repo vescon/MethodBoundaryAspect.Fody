@@ -19,5 +19,8 @@
 
         public static string AspectOrderIndexAttribute =>
             "MethodBoundaryAspect.Fody.Attributes.AspectOrderIndexAttribute";
+
+        public static string AllowChangingInputArguments =>
+            "MethodBoundaryAspect.Fody.Attributes.AllowChangingInputArgumentsAttribute";
     }
 }

@@ -2,6 +2,7 @@
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.Aspects
 {
+    [AllowChangingInputArguments]
     public class ChangeInputArgumentAspect : OnMethodBoundaryAspect
     {
         public int Index { get; set; }

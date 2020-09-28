@@ -2,12 +2,11 @@
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.Aspects
 {
-    [AllowChangingInputArguments]
-    public class ChangeFirstInputArgumentToArrayAspect : OnMethodBoundaryAspect
+    public class ChangeInputArgumentsNotAllowedAspect : OnMethodBoundaryAspect
     {
         public override void OnEntry(MethodExecutionArgs arg)
         {
-            arg.Arguments[0] = new object[10];
+            arg.Arguments[0] = "XXX";
         }
     }
 }

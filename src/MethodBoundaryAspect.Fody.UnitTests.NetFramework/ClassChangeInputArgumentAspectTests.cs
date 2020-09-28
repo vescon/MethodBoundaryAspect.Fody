@@ -45,15 +45,25 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
             WeaveAssemblyMethodAndLoad(TestMethodsType, testMethodName);
 
             // Act
-            var result = AssemblyLoader.InvokeMethod(TestMethodsType.TypeInfo(), testMethodName, new TestData());
+            var result = AssemblyLoader.InvokeMethod(TestMethodsType.TypeInfo(), testMethodName, new object());
 
             // Assert
             result.Should().BeOfType<object[]>();
         }
 
-        [Serializable]
-        private class TestData
+        [Fact]
+        public void IfInstanceMethodWithAspectNotAllowedChangingInputArgumentsIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
+            // Arrange
+            const string testMethodName = "InstanceMethodCallNotAllowedChangingInputArguments";
+            WeaveAssemblyMethodAndLoad(TestMethodsType, testMethodName);
+
+            // Act
+            var guid = Guid.NewGuid();
+            var result = AssemblyLoader.InvokeMethod(TestMethodsType.TypeInfo(), testMethodName, guid);
+
+            // Assert
+            result.Should().Be(guid);
         }
     }
 }
