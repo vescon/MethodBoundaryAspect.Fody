@@ -10,17 +10,19 @@ namespace MethodBoundaryAspect.Fody
         private readonly int _index;
         private readonly ParameterDefinition _parameter;
         private readonly ILProcessor _processor;
+        private readonly InstructionBlockChainCreator _creator;
 
         public ArrayElementLoadable(
             VariableDefinition arrayVariableDefinition,
             int index,
             ParameterDefinition parameterDefinition,
-            ILProcessor methodProcessor)
+            ILProcessor methodProcessor, InstructionBlockChainCreator creator)
         {
             _arrayVariableDefinition = arrayVariableDefinition;
             _index = index;
             _parameter = parameterDefinition;
             _processor = methodProcessor;
+            _creator = creator;
         }
 
         public TypeReference PersistedType => _parameter.ParameterType;
@@ -34,15 +36,25 @@ namespace MethodBoundaryAspect.Fody
                 _processor.Create(OpCodes.Ldelem_Ref)
             };
 
-            // using "_parameter.ParameterType" won't work for generic types
-            // because in the method definition we only have the generic types, not the actual used one
-            // so casting from object to e.g. "List<T>" makes no sense.
-            // How do we get the closed generic type here for correct casting?
-            // Reproduce via executing unit tests in class "GenericClassWithArity1Tests"
+            var arrayTypeReference = (ArrayType)_arrayVariableDefinition.VariableType;
+            var castFromType = arrayTypeReference.ElementType;
+
+            var parameterType = _parameter.ParameterType;
+            var castToType = parameterType;
+            if (parameterType.IsByReference) // support for ref-Arguments
+                castToType = ((ByReferenceType) castToType).ElementType;
+
             var castOrUnbox = InstructionBlockCreator.CastValueCurrentlyOnStack(
-                _arrayVariableDefinition.VariableType.GetElementType(), // object
-                _parameter.ParameterType); // concrete type
+                castFromType,
+                castToType);
             instructions.AddRange(castOrUnbox);
+
+            if (parameterType.IsByReference) // support for ref-Arguments
+            {
+                var variable = _creator.CreateVariable(castToType).Variable;
+                instructions.Add(_processor.Create(OpCodes.Stloc, variable));
+                instructions.Add(_processor.Create(OpCodes.Ldloca, variable));
+            }
 
             return new InstructionBlock($"Load {_index}", instructions);
         }

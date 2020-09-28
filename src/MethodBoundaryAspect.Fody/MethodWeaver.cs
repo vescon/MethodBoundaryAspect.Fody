@@ -278,7 +278,7 @@ namespace MethodBoundaryAspect.Fody
 
             // get arguments from ExecutionArgs because they could have been changed in aspect code
             var args = _method.Parameters
-                .Select((x,i) => new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor()))
+                .Select((x,i) => new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator))
                 .Cast<ILoadable>()
                 .ToArray();
 
