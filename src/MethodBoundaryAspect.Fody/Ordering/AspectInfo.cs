@@ -26,15 +26,16 @@ namespace MethodBoundaryAspect.Fody.Ordering
             InitOrder(aspectAttributes);
             InitSkipProperties(aspectAttributes);
             InitTargetMembers();
+            InitChangingInputArguments(aspectAttributes);
         }
-        
+
         public TypeDefinition AspectTypeDefinition { get; }
 
         public string Name { get; private set; }
 
         public string Role { get; private set; }
 
-        public bool SkipProperties { get; set; }
+        public bool SkipProperties { get; private set; }
 
         public CustomAttribute AspectAttribute { get; private set; }
 
@@ -44,7 +45,9 @@ namespace MethodBoundaryAspect.Fody.Ordering
         public AspectOrder Order { get; private set; }
 #pragma warning restore 0618
 
-        public int? OrderIndex { get; set; }
+        public int? OrderIndex { get; private set; }
+
+        public bool AllowChangingInputArguments { get; private set; }
 
         public IEnumerable<MethodAttributes> AttributeTargetMemberAttributes { get; set; } =
             new List<MethodAttributes>
@@ -188,6 +191,13 @@ namespace MethodBoundaryAspect.Fody.Ordering
             }
 
             AttributeTargetMemberAttributes = memberAttributes;
+        }
+
+        private void InitChangingInputArguments(IEnumerable<CustomAttribute> aspectAttributes)
+        {
+            AllowChangingInputArguments = aspectAttributes
+                .Any(c => c.AttributeType.FullName == AttributeFullNames.AllowChangingInputArguments);
+
         }
     }
 }

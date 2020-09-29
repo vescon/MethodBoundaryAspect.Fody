@@ -29,7 +29,7 @@ namespace MethodBoundaryAspect.Fody
 
         //    try
         //    {
-        //        var returnValue = OriginalMethod(param1, param2, param3);
+        //        var returnValue = OriginalMethod(args[0], args[1], args[2]);
         //        methodExecutionArgs.ReturnValue = returnValue;
         //    }
         //    catch (Exception ex)

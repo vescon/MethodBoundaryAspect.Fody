@@ -52,7 +52,7 @@ namespace MethodBoundaryAspect.Fody
 
             WeaveOnEntry(returnValue);
             
-            HandleBody(returnValue?.Variable, out var instructionCallStart, out var instructionCallEnd);
+            HandleBody(arguments, returnValue?.Variable, out var instructionCallStart, out var instructionCallEnd);
 
             var instructionAfterCall = WeaveOnExit(hasReturnValue, returnValue);
 
@@ -262,7 +262,11 @@ namespace MethodBoundaryAspect.Fody
             }
         }
         
-        protected virtual void HandleBody(VariableDefinition returnValue, out Instruction instructionCallStart, out Instruction instructionCallEnd)
+        protected virtual void HandleBody(
+            NamedInstructionBlockChain arguments,
+            VariableDefinition returnValue,
+            out Instruction instructionCallStart,
+            out Instruction instructionCallEnd)
         {
             VariableDefinition thisVariable = null;
             if (!_method.IsStatic)
@@ -272,11 +276,32 @@ namespace MethodBoundaryAspect.Fody
                 thisVariable = thisVariableBlock.Variable;
             }
 
-            var callSourceMethod = _creator.CallMethodWithLocalParameters(
-                _method,
-                _clonedMethod,
-                thisVariable == null ? null : new VariablePersistable(thisVariable),
-                returnValue == null ? null : new VariablePersistable(returnValue));
+            InstructionBlockChain callSourceMethod;
+
+            var allowChangingInputArguments = _aspects.Any(x => x.Info.AllowChangingInputArguments);
+            if (allowChangingInputArguments)
+            {
+                // get arguments from ExecutionArgs because they could have been changed in aspect code
+                var args = _method.Parameters
+                    .Select((x, i) => new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator))
+                    .Cast<ILoadable>()
+                    .ToArray();
+
+                callSourceMethod = _creator.CallMethodWithReturn(
+                    _clonedMethod,
+                    thisVariable == null ? null : new VariablePersistable(thisVariable),
+                    returnValue == null ? null : new VariablePersistable(returnValue),
+                    args);
+            }
+            else
+            {
+                callSourceMethod = _creator.CallMethodWithLocalParameters(
+                    _method,
+                    _clonedMethod,
+                    thisVariable == null ? null : new VariablePersistable(thisVariable),
+                    returnValue == null ? null : new VariablePersistable(returnValue));
+            }
+
             callSourceMethod.Append(_ilProcessor);
             instructionCallStart = callSourceMethod.First;
             instructionCallEnd = callSourceMethod.Last;

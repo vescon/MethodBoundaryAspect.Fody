@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Mono.Cecil;
-using Mono.Cecil.Rocks;
 
 namespace MethodBoundaryAspect.Fody
 {
@@ -23,8 +20,7 @@ namespace MethodBoundaryAspect.Fody
 
         public static MethodReference MakeGeneric (this MethodReference self, params TypeReference [] arguments)
         {
-            MethodReference baseReference = self.DeclaringType.Module.ImportReference(self);
-
+            var baseReference = self.DeclaringType.Module.ImportReference(self);
             var reference = new GenericInstanceMethod(baseReference);
             
             foreach (var genericParameter in baseReference.GenericParameters)

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2010
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30503.244
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody", "MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj", "{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}"
 EndProject
@@ -26,6 +26,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External", "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External.csproj", "{98C6DD8D-41E8-468B-9176-873D9DDAC82E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.UnitTests.Shared", "MethodBoundaryAspect.Fody.UnitTests.Shared\MethodBoundaryAspect.Fody.UnitTests.Shared.csproj", "{4824FDD3-D225-4812-B75C-C0E455B25B7A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -84,6 +86,18 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CBC73200-4396-409C-B950-274CB692AEF3} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
+		{0920DE73-E0E1-4BC7-9394-5EF78D680CE9} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
+		{744CD551-374B-4801-B565-0A008F1DD656} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
+		{1F6B3319-7B51-418F-8E0E-77B36E26117A} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
+		{90FD3D63-52FD-4E91-99AB-CF160876EBEB} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
+		{145B9419-BE49-48A2-B9F9-EF32C07EDE30} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
+		{1DD27780-A534-4DA0-9524-F09654A8DE59} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
+		{0421F8A5-8698-4D92-9223-872FBA18572B} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
+		{98C6DD8D-41E8-468B-9176-873D9DDAC82E} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
+		{4824FDD3-D225-4812-B75C-C0E455B25B7A} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EABEE29A-E6EB-4EF1-805C-34D6FF8F3E57}
