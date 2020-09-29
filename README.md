@@ -27,7 +27,9 @@ You can easily write your own aspects for
     - on class
     - on method
 - Change method behavior (see examples below)
-    - Overwrite input arguments values (byValue and byRef) to be forwarded to the method. (requires aspect to be annotated with [AllowChangingInputArgumentsAttribute](https://github.com/vescon/MethodBoundaryAspect.Fody/blob/master/src/MethodBoundaryAspect/Attributes/AllowChangingInputArgumentsAttribute.cs)
+    - Overwrite input arguments values (byValue and byRef) to be forwarded to the method.
+        - no async support
+        - requires aspect to be annotated with [AllowChangingInputArgumentsAttribute](https://github.com/vescon/MethodBoundaryAspect.Fody/blob/master/src/MethodBoundaryAspect/Attributes/AllowChangingInputArgumentsAttribute.cs)        
     - Overwrite return value to be returned from the method.
 
 Feel free to make a [Fork](https://github.com/vescon/MethodBoundaryAspect.Fody/fork) of this repository.
@@ -268,7 +270,9 @@ Detailed Log 2";
 
 #### Changing input arguments
 In order to change the return value of a method, hook into its `OnEntry` handler and modify the elements of the `Arguments` property of the MethodExecutionArgs.  
-Important: You have to annotate your aspect with the 'AllowChangingInputArgumentsAttribute' because the weaver has to generate additional code. For non-modifying aspects this code is unnecessary and would only cost performance.
+Important:  
+No async support!  
+And you have to annotate your aspect with the 'AllowChangingInputArgumentsAttribute' because the weaver has to generate additional code. For non-modifying aspects this code is unnecessary and would only cost performance.
 
 ```csharp
 using System;
