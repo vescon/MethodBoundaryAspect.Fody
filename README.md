@@ -16,7 +16,7 @@ You can easily write your own aspects for
 ### Supported features
 - Hook into method start and end
 - Hook into raised exceptions in a method
-- Access method information like
+- Access method information like [MethodExecutionArgs](https://github.com/vescon/MethodBoundaryAspect.Fody/blob/master/src/MethodBoundaryAspect/Attributes/MethodExecutionArgs.cs)
     - applied object instance
     - the method itself ([System.Reflection.MethodBase](https://msdn.microsoft.com/en-us/library/system.reflection.methodbase))
     - the passed method arguments
@@ -26,8 +26,8 @@ You can easily write your own aspects for
     - globally in `AssemblyInfo.cs`
     - on class
     - on method
-- Change method behavior
-    - Overwrite input argument values to be forwarded to the method. (requires aspect to be annotated with AllowChangingInputArgumentsAttribute)
+- Change method behavior (see examples below)
+    - Overwrite input arguments values (byValue and byRef) to be forwarded to the method. (requires aspect to be annotated with [AllowChangingInputArgumentsAttribute](https://github.com/vescon/MethodBoundaryAspect.Fody/blob/master/src/MethodBoundaryAspect/Attributes/AllowChangingInputArgumentsAttribute.cs)
     - Overwrite return value to be returned from the method.
 
 Feel free to make a [Fork](https://github.com/vescon/MethodBoundaryAspect.Fody/fork) of this repository.
@@ -236,7 +236,7 @@ public sealed class LogAttribute : OnMethodBoundaryAspect
 ```
 
 ### Altering Method Behavior
-
+#### Changing return values
 In order to change the return value of a method, hook into its `OnExit` handler and set the `ReturnValue` property of the `MethodExecutionArgs`.
 
 ```csharp
@@ -262,6 +262,60 @@ Detailed Log 2";
     public static void Main(string[] args)
     {
         WriteLine(GetLogs()); // Output: "  Detailed Log 1\n  Detailed Log 2";
+    }
+}
+```
+
+#### Changing input arguments
+In order to change the return value of a method, hook into its `OnEntry` handler and modify the elements of the `Arguments` property of the MethodExecutionArgs.  
+Important: You have to annotate your aspect with the 'AllowChangingInputArgumentsAttribute' because the weaver has to generate additional code. For non-modifying aspects this code is unnecessary and would only cost performance.
+```
+using System;
+using MethodBoundaryAspect.Fody.Attributes;
+
+[AllowChangingInputArguments]
+public sealed class InputArgumentIncrementorAttribute : OnMethodBoundaryAspect
+{
+    public int Increment { get; set; }
+
+    public override void OnEntry(MethodExecutionArgs args)
+    {
+        var inputArguments = args.Arguments;
+        for (var i = 0; i < inputArguments.Length; i++)
+        {
+            var value = inputArguments[i];
+            if (value is int v)
+                inputArguments[i] = v + Increment;
+        }
+    }
+}
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        // ByValue
+        MethodByValue(10);
+
+        // ByRef
+        // Limitation 
+        // Modified ref value in aspect will only be forwarded into weaved method
+        // but not returned to caller method
+        var value = 10;
+        MethodByRef(ref value);
+        // here "value" has still init value of 10
+    }
+
+    [InputArgumentIncrementorAttribute(Increment = 1)]
+    public static void MethodByValue(int i)
+    {
+        Console.WriteLine(i); // Output: 11
+    }
+
+    [InputArgumentIncrementorAttribute(Increment = 10)]
+    public static void MethodByRef(ref int i)
+    {
+        Console.WriteLine(i); // Output: 20
     }
 }
 ```
