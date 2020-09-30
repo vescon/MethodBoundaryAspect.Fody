@@ -45,7 +45,7 @@ namespace MethodBoundaryAspect.Fody
         public List<string> PropertyFilter { get; } = new List<string>();
         public List<string> MethodFilters { get; } = new List<string>();
         public List<string> TypeFilters { get; } = new List<string>();
-
+        
         public override void Execute()
         {
             Execute(ModuleDefinition);
@@ -319,9 +319,32 @@ namespace MethodBoundaryAspect.Fody
             return false;
         }
 
-        private static bool IsIgnoredByWeaving(ICustomAttributeProvider method)
+        private static bool IsIgnoredByWeaving(MethodDefinition method)
         {
-            return method.CustomAttributes.Any(x => x.AttributeType.FullName == AttributeFullNames.DisableWeavingAttribute);
+            if (ContainsDisableWeavingAttribute(method.CustomAttributes))
+                return true;
+
+            var currentClass = method.DeclaringType;
+            do
+            {
+                if (ContainsDisableWeavingAttribute(currentClass.CustomAttributes))
+                    return true;
+
+                currentClass = currentClass.DeclaringType;
+            } while (currentClass != null);
+
+            if (ContainsDisableWeavingAttribute(method.Module.CustomAttributes))
+                return true;
+
+            if (ContainsDisableWeavingAttribute(method.Module.Assembly.CustomAttributes))
+                return true;
+
+            return false;
+        }
+
+        private static bool ContainsDisableWeavingAttribute(IEnumerable<CustomAttribute> customAttributes)
+        {
+            return customAttributes.Any(x => x.AttributeType.FullName == AttributeFullNames.DisableWeavingAttribute);
         }
 
         private static MethodAttributes GetMethodVisibility(MethodDefinition method) =>
