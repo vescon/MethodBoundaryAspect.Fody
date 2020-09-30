@@ -227,8 +227,8 @@ public class Program
 #### Changing input arguments
 In order to change the return value of a method, hook into its `OnEntry` handler and modify the elements of the `Arguments` property of the MethodExecutionArgs.  
 Important:  
-No async support!  
-And you have to annotate your aspect with the 'AllowChangingInputArgumentsAttribute' because the weaver has to generate additional code. For non-modifying aspects this code is unnecessary and would only cost performance.
+And you have to annotate your aspect with the `AllowChangingInputArgumentsAttribute` because the weaver has to generate additional code. For non-modifying aspects this code is unnecessary and would only cost performance.
+No async support yet!
 
 ```csharp
 using System;
