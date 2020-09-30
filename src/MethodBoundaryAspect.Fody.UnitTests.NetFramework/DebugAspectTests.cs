@@ -1,9 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.Shared;
-using MethodBoundaryAspect.Fody.UnitTests.TestProgram;
 using MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework;
 using Xunit;
 
@@ -11,14 +9,15 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
 {
     public class DebugAspectTests : MethodBoundaryAspectNetFrameworkTestBase
     {
-        [Fact(Skip = "Needs to be clarified")]
+        [Fact(Skip = "Should be used only for manual testing")]
+        ////[Fact]
         public void IfWeavedTestProgramIsExecuted_ThenTheDebugSymbolsShouldWorkAndTheDebuggerShouldBeAttachable()
         {
-            // 1) Run unittest without debugger, then in opened dialog attach with current visual studio instance.
+            // 1) Run unit test without debugger, then in opened dialog attach with current visual studio instance.
             // 2) Put breakpoint in LogAttribute
 
             // Arrange
-            var weavedProgramPath = WeaveAssembly(typeof(TestClass));
+            var weavedProgramPath = WeaveAssembly(typeof(LogTest));
 
             // Act
             var process = Process.Start(weavedProgramPath);
@@ -28,11 +27,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
             process.ExitCode.Should().Be(0);
         }
 
-        [Fact(Skip = "Needs to be clarified")]
+        [Fact(Skip = "Should be used only for manual testing")]
         public void IfAssemblyIsWeaved_ThenWeaverDebuggerShouldBePossible()
         {
             // Arrange
-            var assemblyPath = @"c:\???";
+            const string assemblyPath = @"c:\???";
 
             Weaver = new ModuleWeaver();
             Weaver.AddClassFilter("???");

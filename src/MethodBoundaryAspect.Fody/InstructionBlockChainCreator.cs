@@ -359,12 +359,12 @@ namespace MethodBoundaryAspect.Fody
                 return flowBehaviorHandler;
             for (var i = 0; i < behaviors.Length - 1; ++i)
             {
-                flowBehaviorHandler.Add(flowBehaviorLocal.Load(false));
+                flowBehaviorHandler.Add(flowBehaviorLocal.Load(false, false));
                 flowBehaviorHandler.Add(new InstructionBlock("FlowBehavior", Instruction.Create(OpCodes.Ldc_I4, behaviors[i])));
                 flowBehaviorHandler.Add(new InstructionBlock("If == then goto the 'then' block", Instruction.Create(OpCodes.Beq_S, thenBody.First)));
             }
             
-            flowBehaviorHandler.Add(flowBehaviorLocal.Load(false));
+            flowBehaviorHandler.Add(flowBehaviorLocal.Load(false, false));
             flowBehaviorHandler.Add(new InstructionBlock("FlowBehavior", Instruction.Create(OpCodes.Ldc_I4, behaviors[behaviors.Length - 1])));
             flowBehaviorHandler.Add(new InstructionBlock("If != then skip", Instruction.Create(OpCodes.Bne_Un, nextInstruction)));
 

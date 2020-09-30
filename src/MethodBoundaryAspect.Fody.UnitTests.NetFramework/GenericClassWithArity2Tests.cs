@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
 using Xunit;
 

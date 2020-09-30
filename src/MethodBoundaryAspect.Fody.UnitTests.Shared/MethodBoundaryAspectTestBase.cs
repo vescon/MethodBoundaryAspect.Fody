@@ -9,9 +9,9 @@ using MethodBoundaryAspect.Fody.UnitTests.Shared.Attributes;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.Shared
 {
-    public class MethodBoundaryAspectTestBase : IDisposable
+    public abstract class MethodBoundaryAspectTestBase : IDisposable
     {
-        public MethodBoundaryAspectTestBase()
+        protected MethodBoundaryAspectTestBase()
         {
             var url = Path.GetDirectoryName(GetType().Assembly.CodeBase);
             var path = url.Substring(@"file:\\".Length - 1);

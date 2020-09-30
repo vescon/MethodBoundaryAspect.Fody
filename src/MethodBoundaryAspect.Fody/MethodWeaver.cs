@@ -250,7 +250,7 @@ namespace MethodBoundaryAspect.Fody
                 if (returnValue != null)
                 {
                     onExitChain.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue));
-                    onExitChain.Add(returnValue.Load(false));
+                    onExitChain.Add(returnValue.Load(false, false));
                 }
 
                 onExitChain.Add(new InstructionBlock("Return", Instruction.Create(OpCodes.Ret)));
@@ -278,11 +278,12 @@ namespace MethodBoundaryAspect.Fody
 
             InstructionBlockChain callSourceMethod;
 
+            ILoadable[] args = null;
             var allowChangingInputArguments = _aspects.Any(x => x.Info.AllowChangingInputArguments);
             if (allowChangingInputArguments)
             {
                 // get arguments from ExecutionArgs because they could have been changed in aspect code
-                var args = _method.Parameters
+                args = _method.Parameters
                     .Select((x, i) => new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator))
                     .Cast<ILoadable>()
                     .ToArray();
@@ -300,6 +301,29 @@ namespace MethodBoundaryAspect.Fody
                     _clonedMethod,
                     thisVariable == null ? null : new VariablePersistable(thisVariable),
                     returnValue == null ? null : new VariablePersistable(returnValue));
+            }
+            
+            if (allowChangingInputArguments)
+            {
+                // write byref variables back for origin source method
+                var copyBackInstructions = new List<Instruction>();
+                foreach (var parameter in _method.Parameters.Where(x => x.ParameterType.IsByReference))
+                {
+                    var arg = args[parameter.Index];
+                    copyBackInstructions.Add(_ilProcessor.Create(OpCodes.Ldarg, parameter));
+
+                    var loadBlock = arg.Load(false, true);
+                    copyBackInstructions.AddRange(loadBlock.Instructions);
+
+                    var storeOpCode = parameter.ParameterType.MetadataType.GetStIndCode();
+                    copyBackInstructions.Add(_ilProcessor.Create(storeOpCode));
+                }
+
+                if (copyBackInstructions.Any())
+                {
+                    var copyBackBlock = new InstructionBlock("Copy back ref values", copyBackInstructions);
+                    callSourceMethod.Add(copyBackBlock);
+                }
             }
 
             callSourceMethod.Append(_ilProcessor);
@@ -367,7 +391,7 @@ namespace MethodBoundaryAspect.Fody
             
             var returnAfterHandling = new InstructionBlockChain();
             if (returnValue != null)
-                returnAfterHandling.Add(returnValue.Load(false));
+                returnAfterHandling.Add(returnValue.Load(false, false));
             returnAfterHandling.Add(new InstructionBlock("Return", Instruction.Create(OpCodes.Ret)));
 
             var indices = allAspects

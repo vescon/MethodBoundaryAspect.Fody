@@ -19,7 +19,7 @@ namespace MethodBoundaryAspect.Fody
             TypeReference = typeReference;
         }
 
-        InstructionBlock ILoadable.Load(bool forDereferencing) => Persistable.Load(forDereferencing);
+        InstructionBlock ILoadable.Load(bool forDereferencing, bool onlyValue) => Persistable.Load(forDereferencing, onlyValue);
 
         InstructionBlock IPersistable.Store(InstructionBlock loadNewValueOntoStack, TypeReference typeOnStack) => Persistable.Store(loadNewValueOntoStack, typeOnStack);
 

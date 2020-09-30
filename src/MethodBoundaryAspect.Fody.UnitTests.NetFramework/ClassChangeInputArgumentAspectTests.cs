@@ -48,7 +48,12 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
             var result = AssemblyLoader.InvokeMethod(TestMethodsType.TypeInfo(), testMethodName, new object());
 
             // Assert
-            result.Should().BeOfType<object[]>();
+            result.Should().BeOfType<int[]>();
+            var arguments = AssemblyLoader.Arguments;
+            arguments[0].Should().BeOfType<int[]>();
+
+            var modifiedArgument = arguments[0];
+            modifiedArgument.Should().BeEquivalentTo(result); // testing for referential equality is not possible here because of different app domains
         }
 
         [Fact]

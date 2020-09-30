@@ -267,7 +267,7 @@ namespace MethodBoundaryAspect.Fody
                     return OpCodes.Stelem_Ref;
             }
         }
-
+        
         public static Instruction GetStIndInstruction(this TypeReference typeRef)
         {
             if (typeRef.IsGenericParameter)
@@ -280,7 +280,7 @@ namespace MethodBoundaryAspect.Fody
             return Instruction.Create(OpCodes.Stind_Ref);
         }
 
-        static OpCode GetStIndCode(this MetadataType type)
+        public static OpCode GetStIndCode(this MetadataType type)
         {
             switch (type)
             {

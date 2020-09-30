@@ -8,8 +8,8 @@ namespace MethodBoundaryAspect.Fody
     {
         public List<InstructionBlock> InstructionBlocks { get; }
 
-        public Instruction First => InstructionBlocks.First().First;
-        public Instruction Last => InstructionBlocks.Last().Last;
+        public Instruction First => InstructionBlocks.First(x => x.Instructions.Any()).First;
+        public Instruction Last => InstructionBlocks.Last(x => x.Instructions.Any()).Last;
 
         public InstructionBlockChain()
         {

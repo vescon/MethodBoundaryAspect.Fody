@@ -13,7 +13,7 @@ namespace MethodBoundaryAspect.Fody
 
         public TypeReference PersistedType { get; private set; }
 
-        public InstructionBlock Load(bool forDereferencing)
+        public InstructionBlock Load(bool forDereferencing, bool onlyValue)
         {
             return new InstructionBlock("Load", Instruction.Create(OpCodes.Ldarg_0));
         }

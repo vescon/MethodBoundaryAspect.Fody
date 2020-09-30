@@ -1,5 +1,4 @@
 using System;
-using MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects;
 using MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.Shared;
 
 [assembly: ExceptionAssembly]
@@ -7,14 +6,12 @@ using MethodBoundaryAspect.Fody.UnitTests.TestProgramAspects.Shared;
 namespace MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework
 {
     [LogClass]
-    public class TestClass
+    public class LogTest
     {
-        public delegate void DoNothing();
-
         [LogMethod]
-        public void DoIt(int zahl)
+        public void DoIt(int number)
         {
-            Console.WriteLine("<method body called with arg '{0}'>", zahl);
+            Console.WriteLine($"{nameof(DoIt)} - class - method body called with arg '{number}'");
         }
     }
 }

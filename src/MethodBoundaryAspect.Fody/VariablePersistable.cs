@@ -15,7 +15,7 @@ namespace MethodBoundaryAspect.Fody
 
         public TypeReference PersistedType => _def.VariableType;
 
-        public InstructionBlock Load(bool forDereferencing)
+        public InstructionBlock Load(bool forDereferencing, bool onlyValue)
         {
             var opCode = _def.VariableType.IsValueType && forDereferencing
                 ? OpCodes.Ldloca 

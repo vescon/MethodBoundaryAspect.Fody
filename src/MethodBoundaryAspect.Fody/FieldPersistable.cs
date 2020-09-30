@@ -18,9 +18,9 @@ namespace MethodBoundaryAspect.Fody
         public FieldReference Field { get; }
         public TypeReference PersistedType => Field.FieldType;
 
-        public InstructionBlock Load(bool forDereferencing)
+        public InstructionBlock Load(bool forDereferencing, bool onlyValue)
         {
-            var instructions = _instance.Load(true).Instructions
+            var instructions = _instance.Load(true, onlyValue).Instructions
                 .Concat(new[] { Instruction.Create(OpCodes.Ldfld, Field) })
                 .ToList();
             return new InstructionBlock("Load", instructions);
@@ -29,7 +29,7 @@ namespace MethodBoundaryAspect.Fody
         public InstructionBlock Store(InstructionBlock loadNewValueOntoStack, TypeReference typeOnStack)
         {
             var list = new List<Instruction>();
-            list.AddRange(_instance.Load(true).Instructions);
+            list.AddRange(_instance.Load(true, false).Instructions);
             list.AddRange(loadNewValueOntoStack.Instructions);
             list.Add(Instruction.Create(OpCodes.Stfld, Field));
             return new InstructionBlock("Store", list);

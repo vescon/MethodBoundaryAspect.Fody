@@ -27,7 +27,7 @@ namespace MethodBoundaryAspect.Fody
 
         public TypeReference PersistedType => _parameter.ParameterType;
 
-        public InstructionBlock Load(bool forDereferencing)
+        public InstructionBlock Load(bool forDereferencing, bool onlyValue)
         {
             var instructions = new List<Instruction>
             {
@@ -49,7 +49,7 @@ namespace MethodBoundaryAspect.Fody
                 castToType);
             instructions.AddRange(castOrUnbox);
 
-            if (parameterType.IsByReference) // support for ref-Arguments
+            if (!onlyValue && parameterType.IsByReference) // support for ref-Arguments
             {
                 var variable = _creator.CreateVariable(castToType).Variable;
                 instructions.Add(_processor.Create(OpCodes.Stloc, variable));

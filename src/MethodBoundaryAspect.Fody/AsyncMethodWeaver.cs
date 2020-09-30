@@ -185,7 +185,7 @@ namespace MethodBoundaryAspect.Fody
                     thenBody.Add(_creator.ReadReturnValue(onExceptionAspect.GetMoveNextExecutionArgs(ExecutionArgs), returnValue));
                 thenBody.Add(loadBuilder.Clone());
                 if (setResultMethod.Parameters.Count == 1)
-                    thenBody.Add(returnValue.Load(false));
+                    thenBody.Add(returnValue.Load(false, false));
                 thenBody.Add(new InstructionBlock("Call SetResult", Instruction.Create(OpCodes.Call, setResultMethod)));
                 thenBody.Add(new InstructionBlock("Leave peacefully", Instruction.Create(OpCodes.Leave, handler.HandlerEnd)));
 

@@ -1,6 +1,5 @@
 using System;
 using FluentAssertions;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
 using Xunit;
 

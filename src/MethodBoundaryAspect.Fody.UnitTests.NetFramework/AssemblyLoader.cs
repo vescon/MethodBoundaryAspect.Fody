@@ -11,6 +11,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
         private AppDomain _domain;
         private string _assemblyPath;
 
+        public object[] Arguments { get; private set; }
+
         public void SetDomain(AppDomain domain)
         {
             _domain = domain;
@@ -80,6 +82,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
             arguments = arguments
                 .Select(x => x is ObjectHandle handle ? handle.Unwrap() : x)
                 .ToArray();
+            Arguments = arguments;
 
             if (methodInfo.IsGenericMethod)
             {

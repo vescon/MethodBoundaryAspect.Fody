@@ -18,7 +18,7 @@ namespace MethodBoundaryAspect.Fody
 
         public TypeReference PersistedType => _parameter.ParameterType;
 
-        public InstructionBlock Load(bool forDereferencing)
+        public InstructionBlock Load(bool forDereferencing, bool onlyValue)
         {
             return new InstructionBlock($"Load {_index}", _processor.Create(OpCodes.Ldarg_S, (byte)_index));
         }

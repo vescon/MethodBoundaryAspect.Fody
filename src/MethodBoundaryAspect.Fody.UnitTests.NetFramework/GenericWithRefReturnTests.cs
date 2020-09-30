@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
 using FluentAssertions;
-using MethodBoundaryAspect.Fody.UnitTests.TestAssembly;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
-using MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly;
 using MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework;
 using Xunit;
 

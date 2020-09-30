@@ -34,7 +34,7 @@ namespace MethodBoundaryAspect.Fody
             var aspectTypeReference = _module.ImportReference(Info.AspectAttribute.AttributeType);
             _aspectField = _module.ImportReference(_stateMachine.AddPublicInstanceField(aspectTypeReference));
 
-            var loadMachine = new VariablePersistable(_stateMachineLocal).Load(true);
+            var loadMachine = new VariablePersistable(_stateMachineLocal).Load(true, false);
 
             var newObjectAspectBlock = _creator.CreateAndNewUpAspect(Info.AspectAttribute);
             var loadOnStack = new InstructionBlock("Load on stack", Instruction.Create(OpCodes.Ldloc, newObjectAspectBlock.Variable));

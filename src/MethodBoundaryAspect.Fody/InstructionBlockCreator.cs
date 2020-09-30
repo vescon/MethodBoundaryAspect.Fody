@@ -225,7 +225,7 @@ namespace MethodBoundaryAspect.Fody
         {
             InstructionBlock loadVariableInstruction = null;
             if (instance != null)
-                loadVariableInstruction = instance.Load(true);
+                loadVariableInstruction = instance.Load(true, false);
 
             var loadArgumentsInstructions = new List<Instruction>();
             var parameterCount = 0;
@@ -233,7 +233,7 @@ namespace MethodBoundaryAspect.Fody
             {
                 var paramIsByRef = methodReference.Parameters[parameterCount].ParameterType.IsByReference;
 
-                loadArgumentsInstructions.AddRange(argument.Load(false).Instructions);
+                loadArgumentsInstructions.AddRange(argument.Load(false, false).Instructions);
                 var varType = argument.PersistedType;
                 if (varType.IsByReference && !paramIsByRef)
                 {
