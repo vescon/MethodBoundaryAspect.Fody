@@ -153,6 +153,131 @@ On exception
 
 Note that the `OnExit` handler is not called when an exception is thrown.
 
+### Altering Method Behavior
+#### Changing return values
+In order to change the return value of a method, hook into its `OnExit` handler and set the `ReturnValue` property of the `MethodExecutionArgs`.
+
+```csharp
+using MethodBoundaryAspect.Fody.Attributes;
+using System;
+using System.Linq;
+using static System.Console;
+
+public sealed class IndentAttribute : OnMethodBoundaryAspect
+{
+    public override void OnExit(MethodExecutionArgs args)
+    {
+        args.ReturnValue = String.Concat(args.ReturnValue.ToString().Split('\n').Select(line => "  " + line));
+    }
+}
+
+public class Program
+{
+    [Indent]
+    public static string GetLogs() => @"Detailed Log 1
+Detailed Log 2";
+
+    public static void Main(string[] args)
+    {
+        WriteLine(GetLogs()); // Output: "  Detailed Log 1\n  Detailed Log 2";
+    }
+}
+```  
+
+This can also be used on async methods to add additional processing or exception-handling.
+
+```csharp
+using MethodBoundaryAspect.Fody.Attributes;
+using System;
+using System.Linq;
+using static System.Console;
+
+public sealed class HandleExceptionAttribute : OnMethodBoundaryAspect
+{
+    public override void OnExit(MethodExecutionArgs args)
+    {
+        if (args.ReturnValue is Task<string> task)
+        {
+          args.ReturnValue = task.ContinueWith(t =>
+          {
+            if (t.IsFaulted)
+              return "An error happened: " + t.Exception.Message;
+            return t.Result;
+          });
+        }
+    }
+}
+
+public class Program
+{
+    [HandleException]
+    public static async Task<string> Process()
+    {
+      await Task.Delay(10);
+      throw new Exception("Bad data");
+    }
+
+    public static async Task Main(string[] args)
+    {
+        WriteLine(await Process()); // Output: "An error happened: Bad data"
+    }
+}
+```  
+
+#### Changing input arguments
+In order to change the return value of a method, hook into its `OnEntry` handler and modify the elements of the `Arguments` property of the MethodExecutionArgs.  
+Important:  
+No async support!  
+And you have to annotate your aspect with the 'AllowChangingInputArgumentsAttribute' because the weaver has to generate additional code. For non-modifying aspects this code is unnecessary and would only cost performance.
+
+```csharp
+using System;
+using MethodBoundaryAspect.Fody.Attributes;
+
+[AllowChangingInputArguments]
+public sealed class InputArgumentIncrementorAttribute : OnMethodBoundaryAspect
+{
+    public int Increment { get; set; }
+
+    public override void OnEntry(MethodExecutionArgs args)
+    {
+        var inputArguments = args.Arguments;
+        for (var i = 0; i < inputArguments.Length; i++)
+        {
+            var value = inputArguments[i];
+            if (value is int v)
+                inputArguments[i] = v + Increment;
+        }
+    }
+}
+
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        // ByValue
+        MethodByValue(10);
+
+        // ByRef
+        var value = 10;
+        MethodByRef(ref value);
+        Console.WriteLine("after method call: " + value); // Output: 20
+    }
+
+    [InputArgumentIncrementor(Increment = 1)]
+    public static void MethodByValue(int i)
+    {
+        Console.WriteLine(i); // Output: 11
+    }
+
+    [InputArgumentIncrementor(Increment = 10)]
+    public static void MethodByRef(ref int i)
+    {
+        Console.WriteLine(i); // Output: 20
+    }
+}
+```
+  
 ### Asynchronous Sample
 
 Consider the same aspect as above but now applied to this method:
@@ -233,134 +358,6 @@ public sealed class LogAttribute : OnMethodBoundaryAspect
     public override void OnException(MethodExecutionArgs args)
     {
         WriteLine("On exception");
-    }
-}
-```
-
-### Altering Method Behavior
-#### Changing return values
-In order to change the return value of a method, hook into its `OnExit` handler and set the `ReturnValue` property of the `MethodExecutionArgs`.
-
-```csharp
-using MethodBoundaryAspect.Fody.Attributes;
-using System;
-using System.Linq;
-using static System.Console;
-
-public sealed class IndentAttribute : OnMethodBoundaryAspect
-{
-    public override void OnExit(MethodExecutionArgs args)
-    {
-        args.ReturnValue = String.Concat(args.ReturnValue.ToString().Split('\n').Select(line => "  " + line));
-    }
-}
-
-public class Program
-{
-    [Indent]
-    public static string GetLogs() => @"Detailed Log 1
-Detailed Log 2";
-
-    public static void Main(string[] args)
-    {
-        WriteLine(GetLogs()); // Output: "  Detailed Log 1\n  Detailed Log 2";
-    }
-}
-```
-
-#### Changing input arguments
-In order to change the return value of a method, hook into its `OnEntry` handler and modify the elements of the `Arguments` property of the MethodExecutionArgs.  
-Important:  
-No async support!  
-And you have to annotate your aspect with the 'AllowChangingInputArgumentsAttribute' because the weaver has to generate additional code. For non-modifying aspects this code is unnecessary and would only cost performance.
-
-```csharp
-using System;
-using MethodBoundaryAspect.Fody.Attributes;
-
-[AllowChangingInputArguments]
-public sealed class InputArgumentIncrementorAttribute : OnMethodBoundaryAspect
-{
-    public int Increment { get; set; }
-
-    public override void OnEntry(MethodExecutionArgs args)
-    {
-        var inputArguments = args.Arguments;
-        for (var i = 0; i < inputArguments.Length; i++)
-        {
-            var value = inputArguments[i];
-            if (value is int v)
-                inputArguments[i] = v + Increment;
-        }
-    }
-}
-
-public class Program
-{
-    public static void Main(string[] args)
-    {
-        // ByValue
-        MethodByValue(10);
-
-        // ByRef
-        // Limitation 
-        // Modified ref value in aspect will only be forwarded into weaved method
-        // but not returned to caller method
-        var value = 10;
-        MethodByRef(ref value);
-        // here "value" has still init value of 10
-    }
-
-    [InputArgumentIncrementorAttribute(Increment = 1)]
-    public static void MethodByValue(int i)
-    {
-        Console.WriteLine(i); // Output: 11
-    }
-
-    [InputArgumentIncrementorAttribute(Increment = 10)]
-    public static void MethodByRef(ref int i)
-    {
-        Console.WriteLine(i); // Output: 20
-    }
-}
-```
-
-This can also be used on async methods to add additional processing or exception-handling.
-
-```csharp
-using MethodBoundaryAspect.Fody.Attributes;
-using System;
-using System.Linq;
-using static System.Console;
-
-public sealed class HandleExceptionAttribute : OnMethodBoundaryAspect
-{
-    public override void OnExit(MethodExecutionArgs args)
-    {
-        if (args.ReturnValue is Task<string> task)
-        {
-          args.ReturnValue = task.ContinueWith(t =>
-          {
-            if (t.IsFaulted)
-              return "An error happened: " + t.Exception.Message;
-            return t.Result;
-          });
-        }
-    }
-}
-
-public class Program
-{
-    [HandleException]
-    public static async Task<string> Process()
-    {
-      await Task.Delay(10);
-      throw new Exception("Bad data");
-    }
-
-    public static async Task Main(string[] args)
-    {
-        WriteLine(await Process()); // Output: "An error happened: Bad data"
     }
 }
 ```
