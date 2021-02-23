@@ -33,6 +33,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework
             Console.WriteLine($"{nameof(InputArgumentsTest.MethodWithByRefTwice)} - caller after:");
             InputArgumentsTest.DumpArray(array2);
 
+            var d = new DebugInfoTest();
+            d.Execute(7);
+
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
         }
