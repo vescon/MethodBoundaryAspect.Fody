@@ -163,6 +163,15 @@ namespace MethodBoundaryAspect.Fody
             }
 
             clonedMethod.DebugInformation.Scope = new ScopeDebugInformation(method.Body.Instructions.First(), method.Body.Instructions.Last());
+
+            if (method.DebugInformation?.Scope?.Variables != null)
+            {
+                foreach (var variableDebugInformation in method.DebugInformation.Scope.Variables)
+                {
+                    clonedMethod.DebugInformation.Scope.Variables.Add(variableDebugInformation);
+                }
+            }
+
             return clonedMethod;
         }
 
@@ -473,7 +482,6 @@ namespace MethodBoundaryAspect.Fody
         {
             _clonedMethod.Body.InitLocals = true;
             _clonedMethod.Body.Optimize();
-            Catel.Fody.CecilExtensions.UpdateDebugInfo(_clonedMethod);
         }
         
         private void AddToEnd(InstructionBlockChain chain)
