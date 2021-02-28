@@ -9,19 +9,19 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v2
-    
-    # needed for gitversion    
-    - name: Fetch all history for all tags and branches
-      run: git fetch --prune --unshallow
-    - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v0.9.2
+    steps:    
+    - name: Checkout
+      uses: actions/checkout@v2
       with:
-          versionSpec: '5.2.x'
+        fetch-depth: 0 # needed for gitversion, checks out all branches and tags
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v0.9.7
+      with:
+          versionSpec: '5.x'
     - name: Use GitVersion
       id: gitversion # step id used as reference for output values
-      uses: gittools/actions/gitversion/execute@v0.9.2
+      uses: gittools/actions/gitversion/execute@v0.9.7
 
     - name: Build solution
       run: dotnet build --configuration Release src/MethodBoundaryAspect.Fody.sln
