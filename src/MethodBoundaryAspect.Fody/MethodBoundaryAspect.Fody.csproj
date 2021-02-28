@@ -1,21 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
-    <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\MethodBoundaryAspect.Fody.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
       
   <ItemGroup>
     <PackageReference Include="FodyHelpers" Version="6.0.5" developmentDependency="true" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <Authors>Ralf Kornelius, Marcell Spies</Authors>
-    <Company>VESCON GmbH</Company>
-    <Copyright>VESCON GmbH</Copyright>
-    <Product>MethodBoundaryAspect.Fody</Product>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <PackageId>MethodBoundaryAspect.Fody</PackageId>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-  </PropertyGroup>
 </Project>
