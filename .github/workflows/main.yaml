@@ -36,8 +36,7 @@ jobs:
       run: dotnet pack --configuration Release --no-build src\MethodBoundaryAspect\MethodBoundaryAspect.csproj -o Artifacts/Packages
     
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2 
-      if: startsWith(github.ref, 'refs/tags/v')
+      uses: actions/upload-artifact@v2
       with:
         name: nupkg
         path: 'Artifacts/Packages/**/*.nupkg'
