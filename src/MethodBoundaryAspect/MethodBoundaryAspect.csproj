@@ -1,26 +1,31 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net452;netstandard1.0</TargetFrameworks>
-    <SignAssembly>true</SignAssembly>
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <AssemblyOriginatorKeyFile>..\MethodBoundaryAspect.Fody.snk</AssemblyOriginatorKeyFile>
-  </PropertyGroup>
+  </PropertyGroup>  
 
   <PropertyGroup>
-    <Authors>Ralf Kornelius, Marcell Spies</Authors>
-    <Company>VESCON GmbH</Company>
-    <Copyright>VESCON GmbH</Copyright>
     <Product>MethodBoundaryAspect</Product>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <Description>A Fody weaver which allows to decorate methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.</Description>
+    <PackageId>MethodBoundaryAspect.Fody</PackageId>
+    <Authors>Ralf Kornelius, Marcell Spies, Martin Ayasse, Contributors</Authors>
+    <Company>VESCON GmbH</Company>
+    <Copyright>Copyright © $([System.DateTime]::Now.ToString(yyyy)) VESCON GmbH</Copyright>
+    <PackageDescription>A Fody weaver which allows to decorate methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.</PackageDescription>
     <PackageTags>il weaving fody aspect aop method-invocation method boundary</PackageTags>
-    <GitHubOrganization>VESCON</GitHubOrganization>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    
+    <RepositoryUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</RepositoryUrl>
     <PackageProjectUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</PackageProjectUrl>
     <PackageIconUrl>https://github.com/vescon/MethodBoundaryAspect.Fody/raw/master/docs/images/NuGetIcon.png</PackageIconUrl>
-    <RepositoryUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</RepositoryUrl>
+    <GitHubOrganization>VESCON</GitHubOrganization>    
+
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
 
-  
   <!--Fixes problems with buildorder when using dotnet build-->
   <ItemGroup>
     <ProjectReference Include="..\MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj">
@@ -37,5 +42,6 @@
   <ItemGroup>
     <PackageReference Include="Fody" Version="6.0.5" PrivateAssets="None" />
     <PackageReference Include="FodyPackaging" Version="6.0.5" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0" PrivateAssets="All"/>
   </ItemGroup>
 </Project>
