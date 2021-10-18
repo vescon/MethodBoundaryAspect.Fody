@@ -29,6 +29,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.U
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.Benchmark", "MethodBoundaryAspect.Fody.Benchmark\MethodBoundaryAspect.Fody.Benchmark.csproj", "{7C147C05-6200-4873-ACBE-771E287C4900}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,10 @@ Global
 		{4824FDD3-D225-4812-B75C-C0E455B25B7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4824FDD3-D225-4812-B75C-C0E455B25B7A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4824FDD3-D225-4812-B75C-C0E455B25B7A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C147C05-6200-4873-ACBE-771E287C4900}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C147C05-6200-4873-ACBE-771E287C4900}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C147C05-6200-4873-ACBE-771E287C4900}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C147C05-6200-4873-ACBE-771E287C4900}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

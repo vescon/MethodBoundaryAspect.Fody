@@ -29,7 +29,7 @@ namespace MethodBoundaryAspect.Fody
     /// Optimize weaving: Dont generate code of "OnXXX()" method is empty or not used -> ok
     /// Optimize weaving: remove runtime dependency on "MethodBoundaryAspect.Attributes" assembly
     /// Optimize weaving: only put arguments in MethodExecutionArgs if they are accessed in "OnXXX()" method
-    /// Optimize weaving: store GetCurrentMethod() result in static Dictionary in MethodBoundaryAspect with generated id for lookup to prevent reflection penalty
+    /// Optimize weaving: store GetCurrentMethod() result in static Dictionary in MethodBoundaryAspect with generated id for lookup to prevent reflection penalty -> ok
     /// </summary>
     public class ModuleWeaver : BaseModuleWeaver
     {
