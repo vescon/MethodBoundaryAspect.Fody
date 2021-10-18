@@ -77,6 +77,28 @@ namespace MethodBoundaryAspect.Fody
             if (_fieldsCache.Any())
                 CreateStaticCtor();
         }
+        
+        public bool CanWeave(MethodDefinition method)
+        {
+            // no support for open generic types
+            if (IsOpenType(method))
+                return false;
+
+            var parentType = method.DeclaringType;
+            while (parentType != null)
+            {
+                if (IsOpenType(parentType))
+                    return false;
+                parentType = parentType.DeclaringType;
+            }
+
+            return true;
+        }
+
+        private static bool IsOpenType(IGenericParameterProvider method)
+        {
+            return method.GenericParameters.Any(x => x.IsGenericParameter);
+        }
 
         private string CreateIdentifier(MemberReference method)
         {

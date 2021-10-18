@@ -40,7 +40,7 @@ namespace MethodBoundaryAspect.Fody
             InitLogging();
         }
 
-        public bool DisableCompileTimeMethodInfos { get; set; } = true;
+        public bool DisableCompileTimeMethodInfos { get; set; }
         
         public int TotalWeavedTypes { get; private set; }
         public int TotalWeavedMethods { get; private set; }

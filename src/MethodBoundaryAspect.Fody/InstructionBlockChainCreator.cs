@@ -144,7 +144,7 @@ namespace MethodBoundaryAspect.Fody
             var methodBaseVariable = _creator.CreateVariable(methodBaseTypeRef);
             InstructionBlock callGetCurrentMethodBlock;
             var variablePersistable = new VariablePersistable(methodBaseVariable);
-            if (methodInfoCompileTimeWeaver?.IsEnabled != true)
+            if (methodInfoCompileTimeWeaver?.IsEnabled != true || !methodInfoCompileTimeWeaver.CanWeave(method))
             {
                 // fallback: slow GetCurrentMethod
                 var methodBaseGetCurrentMethod = _referenceFinder.GetMethodReference(methodBaseTypeRef,
