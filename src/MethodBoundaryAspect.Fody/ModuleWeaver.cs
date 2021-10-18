@@ -40,7 +40,7 @@ namespace MethodBoundaryAspect.Fody
             InitLogging();
         }
 
-        public bool DisableCompileTimeMethodInfos { get; set; }
+        public bool DisableCompileTimeMethodInfos { get; set; } = true;
         
         public int TotalWeavedTypes { get; private set; }
         public int TotalWeavedMethods { get; private set; }
@@ -52,12 +52,7 @@ namespace MethodBoundaryAspect.Fody
         
         public override void Execute()
         {
-            _methodInfoCompileTimeWeaver = new MethodInfoCompileTimeWeaver(ModuleDefinition);
-            _methodInfoCompileTimeWeaver.IsEnabled = !DisableCompileTimeMethodInfos;
-
             Execute(ModuleDefinition);
-
-            _methodInfoCompileTimeWeaver.Finish();
         }
 
         public override IEnumerable<string> GetAssembliesForScanning()
@@ -149,10 +144,17 @@ namespace MethodBoundaryAspect.Fody
 
         private void Execute(ModuleDefinition module)
         {
+            _methodInfoCompileTimeWeaver = new MethodInfoCompileTimeWeaver(module)
+            {
+                IsEnabled = !DisableCompileTimeMethodInfos
+            };
+
             var assemblyMethodBoundaryAspects = module.Assembly.CustomAttributes;
 
             foreach (var type in module.Types.ToList())
                 WeaveTypeAndNestedTypes(module, type, assemblyMethodBoundaryAspects);
+
+            _methodInfoCompileTimeWeaver.Finish();
         }
 
         private void WeaveTypeAndNestedTypes(ModuleDefinition module, TypeDefinition type,
