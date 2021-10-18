@@ -33,10 +33,14 @@ namespace MethodBoundaryAspect.Fody
     /// </summary>
     public class ModuleWeaver : BaseModuleWeaver
     {
+        private MethodInfoCompileTimeWeaver _methodInfoCompileTimeWeaver;
+
         public ModuleWeaver()
         {
             InitLogging();
         }
+
+        public bool DisableCompileTimeMethodInfos { get; set; }
         
         public int TotalWeavedTypes { get; private set; }
         public int TotalWeavedMethods { get; private set; }
@@ -48,7 +52,12 @@ namespace MethodBoundaryAspect.Fody
         
         public override void Execute()
         {
+            _methodInfoCompileTimeWeaver = new MethodInfoCompileTimeWeaver(ModuleDefinition);
+            _methodInfoCompileTimeWeaver.IsEnabled = !DisableCompileTimeMethodInfos;
+
             Execute(ModuleDefinition);
+
+            _methodInfoCompileTimeWeaver.Finish();
         }
 
         public override IEnumerable<string> GetAssembliesForScanning()
@@ -142,7 +151,7 @@ namespace MethodBoundaryAspect.Fody
         {
             var assemblyMethodBoundaryAspects = module.Assembly.CustomAttributes;
 
-            foreach (var type in module.Types)
+            foreach (var type in module.Types.ToList())
                 WeaveTypeAndNestedTypes(module, type, assemblyMethodBoundaryAspects);
         }
 
@@ -207,14 +216,15 @@ namespace MethodBoundaryAspect.Fody
                     .ToList();
                 if (aspectInfos.Count == 0)
                     continue;
-
+                
                 foreach (var aspectInfo in aspectInfos)
                     aspectInfo.InitOrderIndex(assemblyMethodBoundaryAspects, classMethodBoundaryAspects, methodMethodBoundaryAspects);
 
                 weavedAtLeastOneMethod = WeaveMethod(
                     module,
                     method,
-                    aspectInfos);
+                    aspectInfos,
+                    _methodInfoCompileTimeWeaver);
             }   
 
             if (weavedAtLeastOneMethod)
@@ -222,16 +232,17 @@ namespace MethodBoundaryAspect.Fody
         }
 
         private bool WeaveMethod(
-            ModuleDefinition module, 
+            ModuleDefinition module,
             MethodDefinition method,
-            List<AspectInfo> aspectInfos)
+            List<AspectInfo> aspectInfos,
+            MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver)
         {
             aspectInfos = AspectOrderer.Order(aspectInfos);
             var aspectInfosWithMethods = aspectInfos
                 .Where(x => !x.SkipProperties || (!method.IsGetter && !method.IsSetter))
                 .ToList();
 
-            var methodWeaver = MethodWeaverFactory.MakeWeaver(module, method, aspectInfosWithMethods);
+            var methodWeaver = MethodWeaverFactory.MakeWeaver(module, method, aspectInfosWithMethods, methodInfoCompileTimeWeaver);
             methodWeaver.Weave();
             if (methodWeaver.WeaveCounter == 0)
                 return false;

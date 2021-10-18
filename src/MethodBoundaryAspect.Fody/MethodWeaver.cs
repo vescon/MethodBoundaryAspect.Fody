@@ -16,19 +16,25 @@ namespace MethodBoundaryAspect.Fody
         protected readonly InstructionBlockChainCreator _creator;
         protected readonly ILProcessor _ilProcessor;
         protected readonly IList<AspectData> _aspects;
+        private readonly MethodInfoCompileTimeWeaver _methodInfoCompileTimeWeaver;
 
         protected bool HasMultipleAspects => _aspects.Count > 1;
         protected IPersistable ExecutionArgs { get; set; }
 
         public int WeaveCounter { get; private set; }
 
-        public MethodWeaver(ModuleDefinition module, MethodDefinition method, IList<AspectData> aspects)
+        public MethodWeaver(
+            ModuleDefinition module,
+            MethodDefinition method,
+            IList<AspectData> aspects,
+            MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver)
         {
             _module = module;
             _method = method;
             _creator = new InstructionBlockChainCreator(method, module);
             _ilProcessor = _method.Body.GetILProcessor();
             _aspects = aspects;
+            _methodInfoCompileTimeWeaver = methodInfoCompileTimeWeaver;
         }
 
         public void Weave()
@@ -192,7 +198,9 @@ namespace MethodBoundaryAspect.Fody
         {
             var executionArgs = _creator.CreateMethodExecutionArgsInstance(
                 arguments,
-                _aspects[0].Info.AspectAttribute.AttributeType);
+                _aspects[0].Info.AspectAttribute.AttributeType,
+                _method,
+                _methodInfoCompileTimeWeaver);
             AddToSetup(executionArgs);
             ExecutionArgs = executionArgs;
         }

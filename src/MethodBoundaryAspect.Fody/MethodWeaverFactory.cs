@@ -8,7 +8,10 @@ namespace MethodBoundaryAspect.Fody
 {
     public static class MethodWeaverFactory
     {
-        public static MethodWeaver MakeWeaver(ModuleDefinition module, MethodDefinition method, IEnumerable<AspectInfo> aspects)
+        public static MethodWeaver MakeWeaver(ModuleDefinition module,
+            MethodDefinition method,
+            IEnumerable<AspectInfo> aspects,
+            MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver)
         {
             var filteredAspects = from a in aspects
                                   let methods = GetUsedAspectMethods(a.AspectAttribute.AttributeType)
@@ -19,12 +22,17 @@ namespace MethodBoundaryAspect.Fody
             if (asyncAttribute == null)
             {
                 var aspectList = filteredAspects.Select(a => new AspectData(a.Aspect, a.Methods, method, module)).ToList();
-                return new MethodWeaver(module, method, aspectList);
+                return new MethodWeaver(module, method, aspectList, methodInfoCompileTimeWeaver);
             }
 
             var moveNextMethod = ((TypeDefinition)asyncAttribute.ConstructorArguments[0].Value).Methods.First(m => m.Name == "MoveNext");
-            return new AsyncMethodWeaver(module, method, moveNextMethod,
-                filteredAspects.Select(a => new AspectDataOnAsyncMethod(moveNextMethod, a.Aspect, a.Methods, method, module)).ToList<AspectData>());
+            var aspectDatas = filteredAspects.Select(a => new AspectDataOnAsyncMethod(moveNextMethod, a.Aspect, a.Methods, method, module)).ToList<AspectData>();
+            return new AsyncMethodWeaver(
+                module,
+                method,
+                moveNextMethod,
+                aspectDatas,
+                methodInfoCompileTimeWeaver);
         }
 
         static AspectMethods GetUsedAspectMethods(TypeReference aspectTypeDefinition)

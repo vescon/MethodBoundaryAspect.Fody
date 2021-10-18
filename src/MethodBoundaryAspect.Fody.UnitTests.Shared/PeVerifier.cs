@@ -42,10 +42,12 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
             var folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
             var possiblePeVerifyPaths = new[]
             {
+                $@"{folderPath}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\peverify.exe",
                 $@"{folderPath}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.7.2 Tools\peverify.exe",
                 $@"{folderPath}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.7.1 Tools\peverify.exe",
                 $@"{folderPath}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.7 Tools\peverify.exe",
                 $@"{folderPath}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\peverify.exe",
+                $@"{folderPath}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.2 Tools\peverify.exe",
                 $@"{folderPath}\Microsoft SDKs\Windows\v8.1A\bin\NETFX 4.5.1 Tools\peverify.exe"
             };
 

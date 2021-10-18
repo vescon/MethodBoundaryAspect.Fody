@@ -10,16 +10,26 @@ namespace MethodBoundaryAspect.Fody
 {
     public class AsyncMethodWeaver : MethodWeaver
     {
-        MethodDefinition _moveNext;
-        Instruction _setupPointer;
-        FieldReference _executionArgsField;
-        VariableDefinition _stateMachineLocal;
-        TypeReference _stateMachine;
+        private readonly MethodDefinition _moveNext;
+        private readonly MethodInfoCompileTimeWeaver _methodInfoCompileTimeWeaver;
+        
+        private readonly VariableDefinition _stateMachineLocal;
+        private readonly TypeReference _stateMachine;
 
-        public AsyncMethodWeaver(ModuleDefinition module, MethodDefinition method, MethodDefinition moveNext, IList<AspectData> aspects) :
-            base(module, method, aspects)
+        private Instruction _setupPointer;
+        private FieldReference _executionArgsField;
+
+        public AsyncMethodWeaver(
+            ModuleDefinition module,
+            MethodDefinition method,
+            MethodDefinition moveNext,
+            IList<AspectData> aspects,
+            MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver) :
+            base(module, method, aspects, methodInfoCompileTimeWeaver)
         {
             _moveNext = moveNext;
+            _methodInfoCompileTimeWeaver = methodInfoCompileTimeWeaver;
+
             var instructions = _ilProcessor.Body.Instructions;
             if (instructions.Count < 2)
                 throw new InvalidOperationException($"Async state machine on {method.FullName} not in expected configuration.");
@@ -99,7 +109,9 @@ namespace MethodBoundaryAspect.Fody
         {
             var executionArgs = _creator.CreateMethodExecutionArgsInstance(
                 arguments,
-                _aspects[0].Info.AspectAttribute.AttributeType);
+                _aspects[0].Info.AspectAttribute.AttributeType,
+                _method,
+                _methodInfoCompileTimeWeaver);
 
             _executionArgsField = _module.ImportReference(_stateMachine.AddPublicInstanceField(executionArgs.Variable.VariableType));
             executionArgs.Add(new InstructionBlock("", Instruction.Create(OpCodes.Ldloc, executionArgs.Variable)));
