@@ -65,39 +65,49 @@ namespace MethodBoundaryAspect.Fody
         public InstructionBlock PushMethodInfoOnStack(MethodDefinition method, VariablePersistable variablePersistable)
         {
             var fieldDefinition = _fieldsCache[method];
-            var instruction = Instruction.Create(OpCodes.Ldsfld, fieldDefinition);
+            var getMethodFromHandle2 = ImportGetMethodFromHandleArg2();
+
+            var instructions = new List<Instruction>();
+            if (ContainsOpenTypeRecursive(method))
+            {
+                instructions.Add(Instruction.Create(OpCodes.Ldtoken, method));
+                instructions.Add(Instruction.Create(OpCodes.Ldtoken, method.DeclaringType));
+                instructions.Add(Instruction.Create(OpCodes.Call, getMethodFromHandle2));
+            }
+            else
+                instructions.Add(Instruction.Create(OpCodes.Ldsfld, fieldDefinition));
+            
             var store = variablePersistable.Store(
-                new InstructionBlock("", instruction),
+                new InstructionBlock("", instructions),
                 variablePersistable.PersistedType);
             return new InstructionBlock($"Load method info for '{method.Name}'", store.Instructions);
         }
 
         public void Finish()
         {
-            if (_fieldsCache.Any())
-                CreateStaticCtor();
+            CreateStaticCtor();
         }
-        
-        public bool CanWeave(MethodDefinition method)
+
+        private static bool ContainsOpenTypeRecursive(MethodDefinition method)
         {
-            // no support for open generic types
-            if (IsOpenType(method))
-                return false;
+            if (ContainsOpenType(method))
+                return true;
 
             var parentType = method.DeclaringType;
             while (parentType != null)
             {
-                if (IsOpenType(parentType))
-                    return false;
+                if (ContainsOpenType(parentType))
+                    return true;
+
                 parentType = parentType.DeclaringType;
             }
 
-            return true;
+            return false;
         }
 
-        private static bool IsOpenType(IGenericParameterProvider method)
+        private static bool ContainsOpenType(IGenericParameterProvider method)
         {
-            return method.GenericParameters.Any(x => x.IsGenericParameter);
+            return method.GenericParameters.Any(x => x.ContainsGenericParameter);
         }
 
         private string CreateIdentifier(MemberReference method)
@@ -120,14 +130,20 @@ namespace MethodBoundaryAspect.Fody
             var cctor = new MethodDefinition(".cctor", staticConstructorAttributes, typeReferenceVoid);
 
             // taken from https://gist.github.com/jbevain/390902
-            var getMethodFromHandle = ImportGetMethodFromHandle();
+            var getMethodFromHandle = ImportGetMethodFromHandleArg1();
             var cctorInstructions = new List<Instruction>();
             foreach (var entry in _fieldsCache)
             {
+                if (ContainsOpenTypeRecursive(entry.Key))
+                    continue; // method info has to be resolved during runtime so we don't need a cache entry
+
                 cctorInstructions.Add(Instruction.Create(OpCodes.Ldtoken, entry.Key));
                 cctorInstructions.Add(Instruction.Create(OpCodes.Call, getMethodFromHandle));
                 cctorInstructions.Add(Instruction.Create(OpCodes.Stsfld, entry.Value));
             }
+
+            if (!cctorInstructions.Any())
+                return;
 
             cctorInstructions.Add(Instruction.Create(OpCodes.Ret));
 
@@ -153,18 +169,24 @@ namespace MethodBoundaryAspect.Fody
                     return _mainModule.TypeSystem.Void;
                 default:
                 {
-                    var splitted = name.Split('.');
-                    var namespaceName = string.Join(".", splitted.Take(splitted.Length - 1));
-                    var typeName = splitted.Last();
+                    var split = name.Split('.');
+                    var namespaceName = string.Join(".", split.Take(split.Length - 1));
+                    var typeName = split.Last();
                     return new TypeReference(namespaceName, typeName, _mainModule, _mainModule.TypeSystem.CoreLibrary);
                 }
             }
         }
 
-        private MethodReference ImportGetMethodFromHandle()
+        private MethodReference ImportGetMethodFromHandleArg1()
         {
             return _mainModule.ImportReference(typeof(MethodBase)
                 .GetMethod("GetMethodFromHandle", new[] {typeof(RuntimeMethodHandle)}));
+        }
+
+        private MethodReference ImportGetMethodFromHandleArg2()
+        {
+            return _mainModule.ImportReference(typeof(MethodBase)
+                .GetMethod("GetMethodFromHandle", new[] {typeof(RuntimeMethodHandle),typeof(RuntimeTypeHandle)}));
         }
     }
 }

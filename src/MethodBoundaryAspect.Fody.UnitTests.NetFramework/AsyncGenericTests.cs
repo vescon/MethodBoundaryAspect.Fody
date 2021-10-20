@@ -23,7 +23,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
         }
 
         [Fact]
-        public void IfGenericClassIsWeavedForOnExit_ThenTaskIsPasedToAspectReturnValue()
+        public void IfGenericClassIsWeavedForOnExit_ThenTaskIsPassedToAspectReturnValue()
         {
             // Act
             WeaveAssemblyClassAndLoad(OpenClass);
