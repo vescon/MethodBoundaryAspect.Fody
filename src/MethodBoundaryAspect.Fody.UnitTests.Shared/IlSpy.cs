@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.Shared
@@ -10,12 +11,14 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
 
         public static void ShowMethod(string methodName, string assemblyPath)
         {
-            RunInternal(assemblyPath, "/navigateTo:M:" + methodName);
+            var navigateTo = $"/navigateTo:M:\"{methodName}\"";
+            RunInternal(assemblyPath, navigateTo);
         }
 
         public static void ShowType(string typeName, string assemblyPath)
         {
-            RunInternal(assemblyPath, "/navigateTo:T:" + typeName);
+            var navigateTo = $"/navigateTo:T:\"{typeName}\"";
+            RunInternal(assemblyPath, navigateTo);
         }
 
 #pragma warning disable CS0162 // Unreachable code detected
@@ -25,7 +28,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
                 if (!ShouldRunIlSpyOnPeVerifyError)
                     return;
 
-            var args = new[]
+            var args = new List<string>
             {
                 assemblyPath,
                 "/separate",
@@ -33,9 +36,10 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
                 "/language:IL",
                 navigateTo
             };
+
             var arg = string.Join(" ", args);
 
-            var currentDirectory = Environment.CurrentDirectory+ @"\..\..\..\..\Tools\ILSpy";
+            var currentDirectory = Environment.CurrentDirectory + @"\..\..\..\..\..\Tools\ILSpy";
             var psi = new ProcessStartInfo
             {
                 WorkingDirectory = currentDirectory ,

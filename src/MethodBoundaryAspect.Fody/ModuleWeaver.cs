@@ -215,6 +215,7 @@ namespace MethodBoundaryAspect.Fody
                     .Where(IsMethodBoundaryAspect)
                     .Select(x => new AspectInfo(x))
                     .Where(info => info.HasTargetMemberAttribute(methodVisibility))
+                    .Where(x => !IsSelfWeaving(type, x))
                     .ToList();
                 if (aspectInfos.Count == 0)
                     continue;
@@ -231,6 +232,11 @@ namespace MethodBoundaryAspect.Fody
 
             if (weavedAtLeastOneMethod)
                 TotalWeavedTypes++;
+        }
+
+        private static bool IsSelfWeaving(TypeDefinition targetType, AspectInfo aspectInfo)
+        {
+            return targetType.FullName == aspectInfo.AspectTypeDefinition.FullName;
         }
 
         private bool WeaveMethod(

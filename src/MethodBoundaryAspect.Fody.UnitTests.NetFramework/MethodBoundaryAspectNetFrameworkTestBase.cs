@@ -22,6 +22,15 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
             base.Dispose();
         }
         
+        public void LoadWeavedAssembly()
+        {
+            _testDomain = new TestDomain();
+
+            AssemblyLoader = _testDomain.CreateAssemblyLoader();
+            AssemblyLoader.SetDomain(_testDomain.AppDomain);
+            AssemblyLoader.Load(WeavedAssemblyPath);
+        }
+
         protected void WeaveAssemblyClassWithNestedTypesAndLoad(Type type)
         {
             WeaveAssemblyAndVerify(type, null, null, true);
@@ -44,15 +53,6 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
         {
             WeaveAssemblyAndVerify(type, null, propertyName, false);
             LoadWeavedAssembly();
-        }
-        
-        private void LoadWeavedAssembly()
-        {
-            _testDomain = new TestDomain();
-
-            AssemblyLoader = _testDomain.CreateAssemblyLoader();
-            AssemblyLoader.SetDomain(_testDomain.AppDomain);
-            AssemblyLoader.Load(WeavedAssemblyPath);
         }
     }
 }
