@@ -7,10 +7,17 @@ namespace MethodBoundaryAspect.Fody.Benchmark
     public class InvocationBenchmark
     {
         [Benchmark]
-        public int MethodCallWithAspect() => TestClass.ExecuteWithAspect(5);
+        public int CallWithoutAspect() => TestClass.ExecuteWithoutAspect(5);
 
         [Benchmark]
-        public int MethodCallWithoutAspect() => TestClass.ExecuteWithoutAspect(5);
+        public int CallWithAspect() => TestClass.ExecuteWithAspect(5);
+
+        [Benchmark]
+        public object OpenGenericCallWithoutAspect() =>
+            TestOpenGenericClass<int>.OpenGenericWithoutAspect(new object());
+
+        [Benchmark]
+        public object OpenGenericCallWithAspect() => TestOpenGenericClass<int>.OpenGenericWithAspect(new object());
     }
 
     public class Program
@@ -21,26 +28,49 @@ namespace MethodBoundaryAspect.Fody.Benchmark
         }
     }
 
-    
     class TestClass
     {
+        public static int Sum;
+
         [TestAspect]
         public static int ExecuteWithAspect(int x)
         {
-            var sum = 0;
-            for (var i = 0; i < 100; i++) 
-                sum += i * x;
-
-            return sum;
+            return DoWork(x);
         }
-        
+
         public static int ExecuteWithoutAspect(int x)
         {
-            var sum = 0;
-            for (var i = 0; i < 100; i++) 
-                sum += i * x;
+            return DoWork(x);
+        }
 
-            return sum;
+        private static int DoWork(int x)
+        {
+            for (var i = 0; i < 100; i++)
+                Sum += x;
+            return Sum;
+        }
+    }
+
+    class TestOpenGenericClass<TOuter>
+    {
+        public static int Sum;
+
+        [TestAspect]
+        public static T OpenGenericWithAspect<T>(T x)
+        {
+            return DoWorkGeneric(x);
+        }
+
+        public static object OpenGenericWithoutAspect(object x)
+        {
+            return DoWorkGeneric(x);
+        }
+
+        public static T DoWorkGeneric<T>(T x)
+        {
+            for (var i = 0; i < 100; i++)
+                Sum++;
+            return default;
         }
     }
 
@@ -48,12 +78,10 @@ namespace MethodBoundaryAspect.Fody.Benchmark
     {
         public override void OnEntry(MethodExecutionArgs arg)
         {
-            base.OnEntry(arg);
         }
 
         public override void OnExit(MethodExecutionArgs arg)
         {
-            base.OnEntry(arg);
         }
     }
 }
