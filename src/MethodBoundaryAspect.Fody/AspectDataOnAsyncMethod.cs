@@ -83,7 +83,7 @@ namespace MethodBoundaryAspect.Fody
         public InstructionBlockChain CallOnExceptionInMoveNext(IPersistable executionArgs, VariableDefinition exceptionLocal)
         {
             var onExceptionMethodRef = _referenceFinder.GetMethodReference(Info.AspectAttribute.AttributeType,
-                md => md.Name == "OnException");
+                AspectMethodCriteria.IsOnExceptionMethod);
 
             var setMethod = _referenceFinder.GetMethodReference(executionArgs.PersistedType,
                 md => md.Name == "set_Exception");

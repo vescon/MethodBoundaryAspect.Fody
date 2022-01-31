@@ -44,7 +44,7 @@ namespace MethodBoundaryAspect.Fody
             {
                 var typeDefinition = currentType.Resolve();
                 var methods = typeDefinition.Methods
-                    .Where(x => x.IsVirtual)
+                    .Where(AspectMethodCriteria.MatchesSignature)
                     .ToList();
                 foreach (var method in methods)
                 {
@@ -58,11 +58,11 @@ namespace MethodBoundaryAspect.Fody
             } while (currentType.FullName != AttributeFullNames.OnMethodBoundaryAspect);
 
             var aspectMethods = AspectMethods.None;
-            if (overloadedMethods.ContainsKey("OnEntry"))
+            if (overloadedMethods.ContainsKey(AspectMethodCriteria.OnEntryMethodName))
                 aspectMethods |= AspectMethods.OnEntry;
-            if (overloadedMethods.ContainsKey("OnExit"))
+            if (overloadedMethods.ContainsKey(AspectMethodCriteria.OnExitMethodName))
                 aspectMethods |= AspectMethods.OnExit;
-            if (overloadedMethods.ContainsKey("OnException"))
+            if (overloadedMethods.ContainsKey(AspectMethodCriteria.OnExceptionMethodName))
                 aspectMethods |= AspectMethods.OnException;
             return aspectMethods;
         }

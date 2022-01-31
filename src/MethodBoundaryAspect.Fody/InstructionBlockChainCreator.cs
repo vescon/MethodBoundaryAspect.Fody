@@ -114,7 +114,7 @@ namespace MethodBoundaryAspect.Fody
 
             // MethodExecutionArgs instance
             var onEntryMethodTypeRef =
-                anyAspectTypeDefinition.Resolve().BaseType.Resolve().Methods.Single(x => x.Name == "OnEntry");
+                anyAspectTypeDefinition.Resolve().BaseType.Resolve().Methods.Single(AspectMethodCriteria.IsOnEntryMethod);
             var firstParameterType = onEntryMethodTypeRef.Parameters.Single().ParameterType;
             var methodExecutionArgsTypeRef = _moduleDefinition.ImportReference(firstParameterType);
             
@@ -272,11 +272,13 @@ namespace MethodBoundaryAspect.Fody
             return block;
         }
 
-        public InstructionBlockChain CallAspectOnEntry(AspectData aspectInstance,
+        public InstructionBlockChain CallAspectOnEntry(
+            AspectData aspectInstance,
             IPersistable executionArgs)
         {
-            var onEntryMethodRef = _referenceFinder.GetMethodReference(aspectInstance.Info.AspectAttribute.AttributeType,
-                md => md.Name == "OnEntry");
+            var onEntryMethodRef = _referenceFinder.GetMethodReference(
+                aspectInstance.Info.AspectAttribute.AttributeType,
+                AspectMethodCriteria.IsOnEntryMethod);
             var callOnEntryBlock = _creator.CallVoidInstanceMethod(onEntryMethodRef,
                 aspectInstance.AspectPersistable, executionArgs);
 
@@ -288,8 +290,9 @@ namespace MethodBoundaryAspect.Fody
         public InstructionBlockChain CallAspectOnExit(AspectData aspectData,
             IPersistable executionArgs)
         {
-            var onExitMethodRef = _referenceFinder.GetMethodReference(aspectData.Info.AspectAttribute.AttributeType,
-                md => md.Name == "OnExit");
+            var onExitMethodRef = _referenceFinder.GetMethodReference(
+                aspectData.Info.AspectAttribute.AttributeType,
+                AspectMethodCriteria.IsOnExitMethod);
             var callOnExitBlock = _creator.CallVoidInstanceMethod(onExitMethodRef,
                 aspectData.AspectPersistable, executionArgs);
 
@@ -302,8 +305,9 @@ namespace MethodBoundaryAspect.Fody
             AspectData aspectData,
             IPersistable executionArgs)
         {
-            var onExceptionMethodRef = _referenceFinder.GetMethodReference(aspectData.Info.AspectAttribute.AttributeType,
-                md => md.Name == "OnException");
+            var onExceptionMethodRef = _referenceFinder.GetMethodReference(
+                aspectData.Info.AspectAttribute.AttributeType,
+                AspectMethodCriteria.IsOnExceptionMethod);
             var callOnExceptionBlock = _creator.CallVoidInstanceMethod(onExceptionMethodRef,
                 aspectData.AspectPersistable, executionArgs);
 
