@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30503.244
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody", "MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj", "{30BA4684-A95A-4EC3-8EA7-CDE5B1F7E988}"
 EndProject
@@ -29,7 +29,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.U
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.Benchmark", "MethodBoundaryAspect.Fody.Benchmark\MethodBoundaryAspect.Fody.Benchmark.csproj", "{7C147C05-6200-4873-ACBE-771E287C4900}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.Benchmark", "MethodBoundaryAspect.Fody.Benchmark\MethodBoundaryAspect.Fody.Benchmark.csproj", "{7C147C05-6200-4873-ACBE-771E287C4900}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.RuntimeTests.NetCore", "MethodBoundaryAspect.Fody.RuntimeTests.NetCore\MethodBoundaryAspect.Fody.RuntimeTests.NetCore.csproj", "{B5E3B551-F31D-4BE5-A78E-E50ACE4EE7B9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -89,6 +91,10 @@ Global
 		{7C147C05-6200-4873-ACBE-771E287C4900}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C147C05-6200-4873-ACBE-771E287C4900}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C147C05-6200-4873-ACBE-771E287C4900}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B5E3B551-F31D-4BE5-A78E-E50ACE4EE7B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5E3B551-F31D-4BE5-A78E-E50ACE4EE7B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5E3B551-F31D-4BE5-A78E-E50ACE4EE7B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5E3B551-F31D-4BE5-A78E-E50ACE4EE7B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -104,6 +110,7 @@ Global
 		{0421F8A5-8698-4D92-9223-872FBA18572B} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
 		{98C6DD8D-41E8-468B-9176-873D9DDAC82E} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
 		{4824FDD3-D225-4812-B75C-C0E455B25B7A} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
+		{B5E3B551-F31D-4BE5-A78E-E50ACE4EE7B9} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EABEE29A-E6EB-4EF1-805C-34D6FF8F3E57}
