@@ -170,8 +170,17 @@ namespace MethodBoundaryAspect.Fody
                 var inst = _moveNext.Body.Instructions[i];
                 if (inst.OpCode == OpCodes.Leave_S)
                 {
+                    var newLeave = Instruction.Create(OpCodes.Leave, inst.Operand as Instruction);
                     _moveNext.Body.Instructions.RemoveAt(i);
-                    _moveNext.Body.Instructions.Insert(i, Instruction.Create(OpCodes.Leave, inst.Operand as Instruction));
+                    _moveNext.Body.Instructions.Insert(i, newLeave);
+
+                    for (int j = 0; _moveNext.Body.Instructions[j] != handler.HandlerStart; j++)
+                    {
+                        if (_moveNext.Body.Instructions[j].Operand is Instruction target && target == inst)
+                        {
+                            _moveNext.Body.Instructions[j].Operand = newLeave;
+                        }
+                    }
                 }
             }
 
