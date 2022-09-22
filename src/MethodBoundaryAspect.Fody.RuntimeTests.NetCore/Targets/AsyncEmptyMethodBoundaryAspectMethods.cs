@@ -26,5 +26,46 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Targets
                 await Task.CompletedTask;
             }
         }
+
+        [EmptyMethodBoundaryAspect]
+        public async Task TryCatchEmptyMethodBoundaryAspectMethod()
+        {
+            try
+            {
+                await Task.CompletedTask;
+            }
+            catch
+            {
+            }
+        }
+
+        [EmptyMethodBoundaryAspect]
+        public async Task TryFinallyEmptyMethodBoundaryAspectMethod()
+        {
+            try
+            {
+                await Task.CompletedTask;
+            }
+            finally
+            {
+                await Task.CompletedTask;
+            }
+        }
+
+        [EmptyMethodBoundaryAspect]
+        public async Task TryCatchFinallyEmptyMethodBoundaryAspectMethod()
+        {
+            try
+            {
+                await Task.CompletedTask;
+            }
+            catch
+            {
+            }
+            finally
+            {
+                await Task.CompletedTask;
+            }
+        }
     }
 }

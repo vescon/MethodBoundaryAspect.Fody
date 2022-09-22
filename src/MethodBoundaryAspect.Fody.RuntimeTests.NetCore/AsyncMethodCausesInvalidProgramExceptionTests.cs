@@ -31,5 +31,35 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.NetCore
 
             await ifElseAction.Should().NotThrowAsync();
         }
+
+        [Fact]
+        public async Task AsyncTryCatchBlockShouldNotThrow()
+        {
+            var target = new Targets.AsyncEmptyMethodBoundaryAspectMethods();
+
+            Func<Task> tryCatchAction = () => target.TryCatchEmptyMethodBoundaryAspectMethod();
+
+            await tryCatchAction.Should().NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task AsyncTryFinallyBlockShouldNotThrow()
+        {
+            var target = new Targets.AsyncEmptyMethodBoundaryAspectMethods();
+
+            Func<Task> tryFinallyAction = () => target.TryFinallyEmptyMethodBoundaryAspectMethod();
+
+            await tryFinallyAction.Should().NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task AsyncTryCatchFinallyBlockShouldNotThrow()
+        {
+            var target = new Targets.AsyncEmptyMethodBoundaryAspectMethods();
+
+            Func<Task> tryCatchFinallyAction = () => target.TryCatchFinallyEmptyMethodBoundaryAspectMethod();
+
+            await tryCatchFinallyAction.Should().NotThrowAsync();
+        }
     }
 }
