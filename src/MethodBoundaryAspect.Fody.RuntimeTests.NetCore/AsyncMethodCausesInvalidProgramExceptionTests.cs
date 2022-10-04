@@ -1,5 +1,6 @@
 using FluentAssertions;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -60,6 +61,46 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.NetCore
             Func<Task> tryCatchFinallyAction = () => target.TryCatchFinallyEmptyMethodBoundaryAspectMethod();
 
             await tryCatchFinallyAction.Should().NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task AsyncTryCatchFinallyBlockWReturnShouldNotThrow()
+        {
+            var target = new Targets.AsyncEmptyMethodBoundaryAspectMethods();
+
+            Func<Task<bool>> tryCatchFinallyFunction = () => target.TryCatchFinallyEmptyMethodBoundaryAspectMethodWResult();
+
+            await tryCatchFinallyFunction.Should().NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task AsyncForeachBlockWReturnShouldNotThrow()
+        {
+            var target = new Targets.AsyncEmptyMethodBoundaryAspectMethods();
+
+            Func<Task> foreachAction = () => target.ForeachEmptyMethodBoundaryAspectMethod(Enumerable.Empty<object>());
+
+            await foreachAction.Should().NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task AsyncSwitchExprBlockWReturnShouldNotThrow()
+        {
+            var target = new Targets.AsyncEmptyMethodBoundaryAspectMethods();
+
+            Func<Task> switchExprAction = () => target.SwitchExprMethodBoundaryAspectMethod(true);
+
+            await switchExprAction.Should().NotThrowAsync();
+        }
+
+        [Fact]
+        public async Task AsyncUsingBlockWReturnShouldNotThrow()
+        {
+            var target = new Targets.AsyncEmptyMethodBoundaryAspectMethods();
+
+            Func<Task> usingAction = () => target.UsingMethodBoundaryAspectMethod();
+
+            await usingAction.Should().NotThrowAsync();
         }
     }
 }
