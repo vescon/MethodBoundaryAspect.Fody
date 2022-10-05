@@ -12,7 +12,7 @@ namespace MethodBoundaryAspect.Fody
     {
         private readonly MethodDefinition _moveNext;
         private readonly MethodInfoCompileTimeWeaver _methodInfoCompileTimeWeaver;
-        
+
         private readonly VariableDefinition _stateMachineLocal;
         private readonly TypeReference _stateMachine;
 
@@ -36,7 +36,7 @@ namespace MethodBoundaryAspect.Fody
 
             _stateMachineLocal = method.Body.Variables.Single(v => v.VariableType.Resolve() == _moveNext.DeclaringType);
             _stateMachine = _stateMachineLocal.VariableType;
-            
+
             // If state machine is a reference type, then we need to insert our
             // instructions after it is newed up and stored so that we can access
             // the instance.
@@ -124,7 +124,7 @@ namespace MethodBoundaryAspect.Fody
             AddToSetup(chain);
             ExecutionArgs = field;
         }
-        
+
         private Instruction GetFirstInstructionToSetException(ExceptionHandler handler, out MethodReference setResultMethod,
             out InstructionBlock loadBuilder)
         {
@@ -170,8 +170,7 @@ namespace MethodBoundaryAspect.Fody
                 var inst = _moveNext.Body.Instructions[i];
                 if (inst.OpCode == OpCodes.Leave_S)
                 {
-                    _moveNext.Body.Instructions.RemoveAt(i);
-                    _moveNext.Body.Instructions.Insert(i, Instruction.Create(OpCodes.Leave, inst.Operand as Instruction));
+                    inst.OpCode = OpCodes.Leave;
                 }
             }
 
