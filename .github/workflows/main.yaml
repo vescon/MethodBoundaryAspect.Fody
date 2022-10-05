@@ -32,6 +32,9 @@ jobs:
     - name: Run tests - NetCore
       run: dotnet test src\MethodBoundaryAspect.Fody.UnitTests.NetCore --configuration Release --no-build
 
+    - name: Run tests - NetCore Runtime
+      run: dotnet test src\MethodBoundaryAspect.Fody.RuntimeTests.NetCore --configuration Release --no-build
+
     - name: Create the nuget package
       run: dotnet pack --configuration Release --no-build src\MethodBoundaryAspect\MethodBoundaryAspect.csproj -o Artifacts/Packages
     
