@@ -98,7 +98,7 @@ namespace MethodBoundaryAspect.Fody
             };
 
             foreach (var parameter in method.Parameters)
-                clonedMethod.Parameters.Add(parameter);   
+                clonedMethod.Parameters.Add(parameter);
 
             foreach (var variable in method.Body.Variables)
                 clonedMethod.Body.Variables.Add(variable);
@@ -162,7 +162,22 @@ namespace MethodBoundaryAspect.Fody
                 }
             }
 
-            clonedMethod.DebugInformation.Scope = method.DebugInformation.Scope;
+            if (method.DebugInformation.HasSequencePoints)
+            {
+                foreach (var sequencePoint in method.DebugInformation.SequencePoints)
+                    clonedMethod.DebugInformation.SequencePoints.Add(sequencePoint);
+            }
+
+            clonedMethod.DebugInformation.Scope = new ScopeDebugInformation(method.Body.Instructions.First(), method.Body.Instructions.Last());
+
+            if (method.DebugInformation?.Scope?.Variables != null)
+            {
+                foreach (var variableDebugInformation in method.DebugInformation.Scope.Variables)
+                {
+                    clonedMethod.DebugInformation.Scope.Variables.Add(variableDebugInformation);
+                }
+            }
+
             return clonedMethod;
         }
 
