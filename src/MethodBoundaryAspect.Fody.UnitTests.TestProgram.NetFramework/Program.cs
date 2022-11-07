@@ -12,9 +12,6 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework
                 Debugger.Launch();
             Debugger.Break();
 
-            var t0 = new WrongDebugVariableNames();
-            t0.Call();
-
             var t1 = new LogTest();
             t1.DoIt(7);
 
