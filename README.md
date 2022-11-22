@@ -360,3 +360,20 @@ public sealed class LogAttribute : OnMethodBoundaryAspect
     }
 }
 ```
+
+## Benchmarks
+
+* BenchmarkDotNet=v0.13.2, OS=Windows 10 (10.0.19043.1766/21H1/May2021Update)
+* Intel Core i7-10700K CPU 3.80GHz, 1 CPU, 16 logical and 8 physical cores
+* .NET SDK=7.0.100
+    * [Host] : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
+    * DefaultJob : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
+
+
+|                       Method |     Mean |   Error |  StdDev |
+|----------------------------- |---------:|--------:|--------:|
+|            CallWithoutAspect | 108.8 ns | 0.50 ns | 0.44 ns |
+|               CallWithAspect | 136.3 ns | 2.72 ns | 3.98 ns |
+| OpenGenericCallWithoutAspect | 105.5 ns | 1.03 ns | 0.91 ns |
+|    OpenGenericCallWithAspect | 201.0 ns | 3.37 ns | 2.82 ns |
+
