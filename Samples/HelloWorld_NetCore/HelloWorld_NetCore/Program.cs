@@ -16,6 +16,7 @@ namespace HelloWorld_NetCore
         /// Exited method: Main
         /// </summary>
         /// <param name="args"></param>
+        // ReSharper disable once UnusedParameter.Local
         static void Main(string[] args)
         {
             PrintHelloWorld();
