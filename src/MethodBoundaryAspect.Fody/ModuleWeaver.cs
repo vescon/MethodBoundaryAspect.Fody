@@ -37,7 +37,6 @@ namespace MethodBoundaryAspect.Fody
 
         public ModuleWeaver()
         {
-            InitLogging();
         }
 
         public bool DisableCompileTimeMethodInfos { get; set; }
@@ -130,16 +129,6 @@ namespace MethodBoundaryAspect.Fody
         public void AddPropertyFilter(string propertyFilter)
         {
             PropertyFilter.Add(propertyFilter);
-        }
-
-        private void InitLogging()
-        {
-            LogDebug = m => Debug.WriteLine(m);
-            LogInfo = LogDebug;
-            LogWarning = LogDebug;
-            LogWarningPoint = (m, p) => { };
-            LogError = LogDebug;
-            LogErrorPoint = (m, p) => { };
         }
 
         private void Execute(ModuleDefinition module)
