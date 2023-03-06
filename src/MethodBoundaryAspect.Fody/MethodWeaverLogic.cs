@@ -1,7 +1,4 @@
-﻿using System;
-using System.Reflection;
-
-namespace MethodBoundaryAspect.Fody
+﻿namespace MethodBoundaryAspect.Fody
 {
     /// <summary>
     /// Flow of weaved method
