@@ -2,7 +2,7 @@
 [![NuGet](https://img.shields.io/nuget/v/MethodBoundaryAspect.Fody.svg)](https://www.nuget.org/packages/MethodBoundaryAspect.Fody/)
 
 ## MethodBoundaryAspect.Fody
-> A [Fody weaver](https://github.com/Fody/Fody) which allows to decorate methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.
+> A [Fody weaver](https://github.com/Fody/Fody) which allows to decorate assemblies, classes and methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.
 
 You can easily write your own aspects for
 - transaction handling
@@ -25,6 +25,10 @@ You can easily write your own aspects for
     - globally in `AssemblyInfo.cs`
     - on class
     - on method
+- Filter which methods to include in weaving, using Regex patterns
+    - NamespaceFilter
+    - TypeNameFilter
+    - MethodNameFilter
 - Change method behavior (see examples below)
     - Overwrite input arguments values (byValue and byRef) to be forwarded to the method.
         - no async support
