@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Fody;
 using MethodBoundaryAspect.Fody.Ordering;
 using Mono.Cecil;
@@ -204,6 +205,9 @@ namespace MethodBoundaryAspect.Fody
                     .Where(IsMethodBoundaryAspect)
                     .Select(x => new AspectInfo(x))
                     .Where(info => info.HasTargetMemberAttribute(methodVisibility))
+                    .Where(info => string.IsNullOrEmpty(info.NamespaceFilter) || Regex.IsMatch(type.Namespace, info.NamespaceFilter))
+                    .Where(info => string.IsNullOrEmpty(info.TypeNameFilter) || Regex.IsMatch(type.Name, info.TypeNameFilter))
+                    .Where(info => string.IsNullOrEmpty(info.MethodNameFilter) || Regex.IsMatch(method.Name, info.MethodNameFilter))
                     .Where(x => !IsSelfWeaving(type, x))
                     .ToList();
                 if (aspectInfos.Count == 0)
