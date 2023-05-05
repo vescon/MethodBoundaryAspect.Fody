@@ -11,17 +11,17 @@ jobs:
     runs-on: windows-latest
     steps:    
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0 # needed for gitversion, checks out all branches and tags
 
     - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v0.9.7
+      uses: gittools/actions/gitversion/setup@v0.10.2
       with:
           versionSpec: '5.x'
     - name: Use GitVersion
       id: gitversion # step id used as reference for output values
-      uses: gittools/actions/gitversion/execute@v0.9.7
+      uses: gittools/actions/gitversion/execute@v0.10.2
 
     - name: Build solution
       run: dotnet build --configuration Release src/MethodBoundaryAspect.Fody.sln
@@ -39,7 +39,7 @@ jobs:
       run: dotnet pack --configuration Release --no-build src\MethodBoundaryAspect\MethodBoundaryAspect.csproj -o Artifacts/Packages
     
     - name: Upload Artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: nupkg
         path: 'Artifacts/Packages/**/*.nupkg'
@@ -47,11 +47,5 @@ jobs:
       run: dotnet nuget push Artifacts/Packages/**/*.nupkg --api-key ${{secrets.NUGET_ORG_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate
       if: startsWith(github.ref, 'refs/tags/v')
     - name: Publish to github packages
-      run: |
-        for f in Artifacts/Packages/*.nupkg
-        do
-          echo "Uploading package: $f"
-          curl -vX PUT -u "user:${{secrets.GITHUB_TOKEN}}" -F package=@$f https://nuget.pkg.github.com/vescon/
-        done        
-      shell: bash
+      run: dotnet nuget push Artifacts/Packages/**/*.nupkg -s https://nuget.pkg.github.com/vescon/index.json --skip-duplicate
       if: startsWith(github.ref, 'refs/tags/v')
