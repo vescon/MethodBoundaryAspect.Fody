@@ -258,7 +258,10 @@ namespace MethodBoundaryAspect.Fody
 
         private bool IsMethodBoundaryAspect(TypeDefinition attributeTypeDefinition)
         {
-            var currentType = attributeTypeDefinition.BaseType;
+            var currentType = attributeTypeDefinition?.BaseType;
+            if (currentType == null) // can be null for Visual Basic Winforms projects, see https://github.com/vescon/MethodBoundaryAspect.Fody/issues/126
+                return false;
+
             do
             {
                 if (currentType.FullName == AttributeFullNames.OnMethodBoundaryAspect)
