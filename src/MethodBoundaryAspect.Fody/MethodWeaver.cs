@@ -178,6 +178,14 @@ namespace MethodBoundaryAspect.Fody
                 }
             }
 
+            if (method.DebugInformation?.Scope?.Scopes != null)
+            {
+                foreach (var scopeDebugInformation in method.DebugInformation.Scope.Scopes)
+                {
+                    clonedMethod.DebugInformation.Scope.Scopes.Add(scopeDebugInformation);
+                }
+            }
+
             return clonedMethod;
         }
 
