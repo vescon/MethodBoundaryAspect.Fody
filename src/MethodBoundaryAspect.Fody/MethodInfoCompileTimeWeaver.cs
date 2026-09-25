@@ -179,14 +179,29 @@ namespace MethodBoundaryAspect.Fody
 
         private MethodReference ImportGetMethodFromHandleArg1()
         {
-            return _mainModule.ImportReference(typeof(MethodBase)
-                .GetMethod("GetMethodFromHandle", new[] {typeof(RuntimeMethodHandle)}));
+            return ImportGetMethodFromHandle(typeof(RuntimeMethodHandle));
         }
 
         private MethodReference ImportGetMethodFromHandleArg2()
         {
-            return _mainModule.ImportReference(typeof(MethodBase)
-                .GetMethod("GetMethodFromHandle", new[] {typeof(RuntimeMethodHandle),typeof(RuntimeTypeHandle)}));
+            return ImportGetMethodFromHandle(typeof(RuntimeMethodHandle), typeof(RuntimeTypeHandle));
+        }
+
+        // Resolve from the target module's core library. Importing typeof(MethodBase).GetMethod(...)
+        // would reference the core library of the runtime hosting the weaver, i.e. System.Private.CoreLib
+        // when Fody runs under Core MSBuild (dotnet build), which a .NET Framework target cannot load.
+        private MethodReference ImportGetMethodFromHandle(params Type[] parameterTypes)
+        {
+            var methodBaseDefinition = GetTypeReference(typeof(MethodBase)).Resolve()
+                ?? throw new InvalidOperationException(
+                    $"Could not resolve '{typeof(MethodBase).FullName}' from core library '{_mainModule.TypeSystem.CoreLibrary.Name}'.");
+
+            var parameterTypeNames = parameterTypes.Select(t => t.FullName);
+            var getMethodFromHandle = methodBaseDefinition.Methods.Single(m =>
+                m.Name == nameof(MethodBase.GetMethodFromHandle)
+                && m.Parameters.Select(p => p.ParameterType.FullName).SequenceEqual(parameterTypeNames));
+
+            return _mainModule.ImportReference(getMethodFromHandle);
         }
     }
 }
