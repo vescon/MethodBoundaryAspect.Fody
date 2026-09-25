@@ -41,6 +41,12 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfNetFrameworkAssemblyIsWeavedOnNetCoreHost_ThenHostCoreLibraryIsNotAnAssemblyReference()
+        {
+            _weavedModule.AssemblyReferences.Select(r => r.Name).Should().NotContain(HostCoreLibrary);
+        }
+
+        [Fact]
         public void IfNetFrameworkAssemblyIsWeavedOnNetCoreHost_ThenGetMethodFromHandleIsResolvedFromTargetCoreLibrary()
         {
             var getMethodFromHandleCalls = GetCalledMethods()
