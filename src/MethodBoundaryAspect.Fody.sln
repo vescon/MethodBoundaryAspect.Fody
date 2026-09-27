@@ -33,6 +33,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.RuntimeTests.NetCore", "MethodBoundaryAspect.Fody.RuntimeTests.NetCore\MethodBoundaryAspect.Fody.RuntimeTests.NetCore.csproj", "{B5E3B551-F31D-4BE5-A78E-E50ACE4EE7B9}"
 EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.VisualBasic", "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.VisualBasic\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.VisualBasic.vbproj", "{2098EBFE-977A-4DB4-B108-72771F8F960A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -95,6 +97,10 @@ Global
 		{B5E3B551-F31D-4BE5-A78E-E50ACE4EE7B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5E3B551-F31D-4BE5-A78E-E50ACE4EE7B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B5E3B551-F31D-4BE5-A78E-E50ACE4EE7B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2098EBFE-977A-4DB4-B108-72771F8F960A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2098EBFE-977A-4DB4-B108-72771F8F960A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2098EBFE-977A-4DB4-B108-72771F8F960A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2098EBFE-977A-4DB4-B108-72771F8F960A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -111,6 +117,7 @@ Global
 		{98C6DD8D-41E8-468B-9176-873D9DDAC82E} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
 		{4824FDD3-D225-4812-B75C-C0E455B25B7A} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
 		{B5E3B551-F31D-4BE5-A78E-E50ACE4EE7B9} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
+		{2098EBFE-977A-4DB4-B108-72771F8F960A} = {0C4D4E38-5A54-4A51-A308-1D4FA1AD3A4E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {EABEE29A-E6EB-4EF1-805C-34D6FF8F3E57}

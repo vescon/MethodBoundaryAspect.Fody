@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.csproj" />
+    <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.VisualBasic\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.VisualBasic.vbproj" />
     <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework\MethodBoundaryAspect.Fody.UnitTests.TestProgram.NetFramework.csproj" />
     <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework\MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework.csproj" />
     <ProjectReference Include="..\MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj" />

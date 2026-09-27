@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net462</TargetFramework>
+    <!-- Directory.Build.props sets the C# LangVersion 8, which is not a valid Visual Basic version -->
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>MethodBoundaryAspect.Fody.UnitTests.TestAssembly.VisualBasic</RootNamespace>
+    <OptionStrict>On</OptionStrict>
+    <DisableFody>True</DisableFody>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
+  </ItemGroup>
+
+</Project>
