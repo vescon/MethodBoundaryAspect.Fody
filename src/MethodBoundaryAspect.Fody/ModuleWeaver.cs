@@ -41,7 +41,13 @@ namespace MethodBoundaryAspect.Fody
         }
 
         public bool DisableCompileTimeMethodInfos { get; set; }
-        
+
+        /// <summary>
+        /// Suppresses the warning for weaved methods using ref struct values (e.g. Span&lt;T&gt;).
+        /// Configurable in FodyWeavers.xml: &lt;MethodBoundaryAspect SuppressRefStructWarnings="true" /&gt;
+        /// </summary>
+        public bool SuppressRefStructWarnings { get; set; }
+
         public int TotalWeavedTypes { get; private set; }
         public int TotalWeavedMethods { get; private set; }
         public int TotalWeavedProperties { get; private set; }
@@ -134,6 +140,9 @@ namespace MethodBoundaryAspect.Fody
 
         private void Execute(ModuleDefinition module)
         {
+            if (bool.TryParse(Config?.Attribute(nameof(SuppressRefStructWarnings))?.Value, out var suppressRefStructWarnings))
+                SuppressRefStructWarnings = suppressRefStructWarnings;
+
             _methodInfoCompileTimeWeaver = new MethodInfoCompileTimeWeaver(module)
             {
                 IsEnabled = !DisableCompileTimeMethodInfos
@@ -212,7 +221,20 @@ namespace MethodBoundaryAspect.Fody
                     .ToList();
                 if (aspectInfos.Count == 0)
                     continue;
-                
+
+                var byRefLikeValues = method.GetByRefLikeValueNames().ToList();
+                if (byRefLikeValues.Any() && !SuppressRefStructWarnings)
+                {
+                    // Ref structs (e.g. Span<T>) cannot be boxed into MethodExecutionArgs,
+                    // they are weaved as null, see https://github.com/vescon/MethodBoundaryAspect.Fody/issues/129
+                    WriteWarning(
+                        $"Method '{method.FullName}' uses ref struct values which cannot be passed to the aspect ({string.Join(", ", byRefLikeValues)}). " +
+                        "They are null in MethodExecutionArgs and changes to them are ignored. " +
+                        "To suppress this warning add SuppressRefStructWarnings=\"true\" to the MethodBoundaryAspect element in FodyWeavers.xml, " +
+                        "or exclude the method from weaving with [DisableWeaving].",
+                        method);
+                }
+
                 foreach (var aspectInfo in aspectInfos)
                     aspectInfo.InitOrderIndex(assemblyMethodBoundaryAspects, classMethodBoundaryAspects, methodMethodBoundaryAspects);
 

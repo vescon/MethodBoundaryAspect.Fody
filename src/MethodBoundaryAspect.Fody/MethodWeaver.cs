@@ -308,9 +308,12 @@ namespace MethodBoundaryAspect.Fody
             if (allowChangingInputArguments)
             {
                 // get arguments from ExecutionArgs because they could have been changed in aspect code
+                // (except ref structs which cannot be passed via ExecutionArgs)
+                var instanceOffset = _method.IsStatic ? 0 : 1;
                 args = _method.Parameters
-                    .Select((x, i) => new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator))
-                    .Cast<ILoadable>()
+                    .Select((x, i) => x.ParameterType.IsByRefLike()
+                        ? (ILoadable)new ArgumentLoadable(i + instanceOffset, x, _method.Body.GetILProcessor())
+                        : new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator))
                     .ToArray();
 
                 callSourceMethod = _creator.CallMethodWithReturn(
@@ -332,7 +335,7 @@ namespace MethodBoundaryAspect.Fody
             {
                 // write byref variables back for origin source method
                 var copyBackInstructions = new List<Instruction>();
-                foreach (var parameter in _method.Parameters.Where(x => x.ParameterType.IsByReference))
+                foreach (var parameter in _method.Parameters.Where(x => x.ParameterType.IsByReference && !x.ParameterType.IsByRefLike()))
                 {
                     var arg = args[parameter.Index];
                     copyBackInstructions.Add(_ilProcessor.Create(OpCodes.Ldarg, parameter));
@@ -364,7 +367,8 @@ namespace MethodBoundaryAspect.Fody
                             .ToList();
 
             Instruction instructionAfterCall = null;
-            if (hasReturnValue && onExitAspects.Any())
+            // ref structs cannot be boxed, ReturnValue stays null
+            if (hasReturnValue && onExitAspects.Any() && !_method.ReturnType.IsByRefLike())
             {
                 var loadReturnValue = _creator.LoadValueOnStack(returnValue);
 
