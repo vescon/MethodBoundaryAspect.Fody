@@ -1,11 +1,11 @@
 using FluentAssertions;
-using MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Aspects;
-using MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Targets;
+using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
+using MethodBoundaryAspect.Fody.RuntimeTests.Targets;
 using System;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.RuntimeTests.NetCore
+namespace MethodBoundaryAspect.Fody.RuntimeTests
 {
     /// <summary>
     /// https://github.com/vescon/MethodBoundaryAspect.Fody/issues/129

@@ -1,7 +1,7 @@
-using MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Aspects;
+using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 using System;
 
-namespace MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Targets
+namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
 {
     /// <summary>
     /// Class level aspect which also hits methods using ref structs,

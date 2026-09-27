@@ -22,9 +22,11 @@
     </PackageReference>
   </ItemGroup>
 
-  <!-- Span<T> for the ref struct tests (#129); must match the System.Memory binding redirect of the SDK's net48 testhost -->
+  <!-- Span<T> for the ref struct tests (#129) and ValueTask for the async tests (#111);
+       versions must match the binding redirects of the SDK's net48 testhost -->
   <ItemGroup Condition="'$(TargetFrameworkIdentifier)' == '.NETFramework'">
     <PackageReference Include="System.Memory" Version="4.6.3" />
+    <PackageReference Include="System.Threading.Tasks.Extensions" Version="4.6.3" />
   </ItemGroup>
 
   <ItemGroup>

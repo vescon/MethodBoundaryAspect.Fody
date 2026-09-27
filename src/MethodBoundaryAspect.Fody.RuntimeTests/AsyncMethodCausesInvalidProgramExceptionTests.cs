@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.RuntimeTests.NetCore
+namespace MethodBoundaryAspect.Fody.RuntimeTests
 {
     /// <summary>
     /// These tests prove a defect where async methods ending with a block cause a System.InvalidProgramException

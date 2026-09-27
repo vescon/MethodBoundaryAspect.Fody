@@ -1,11 +1,11 @@
 using FluentAssertions;
-using MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Aspects;
-using MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Targets;
+using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
+using MethodBoundaryAspect.Fody.RuntimeTests.Targets;
 using System;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace MethodBoundaryAspect.Fody.RuntimeTests.NetCore
+namespace MethodBoundaryAspect.Fody.RuntimeTests
 {
     /// <summary>
     /// "async ValueTask" methods use AsyncValueTaskMethodBuilder(`1) instead of AsyncTaskMethodBuilder(`1).

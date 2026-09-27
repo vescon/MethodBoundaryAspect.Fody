@@ -1,7 +1,7 @@
 using MethodBoundaryAspect.Fody.Attributes;
 using System.Collections.Generic;
 
-namespace MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Aspects
+namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
 {
     public class ValueTaskRecordingAspect : OnMethodBoundaryAspect
     {

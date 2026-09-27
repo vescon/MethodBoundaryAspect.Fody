@@ -1,6 +1,6 @@
 ﻿using MethodBoundaryAspect.Fody.Attributes;
 
-namespace MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Aspects
+namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
 {
     public class EmptyMethodBoundaryAspect : OnMethodBoundaryAspect
     {

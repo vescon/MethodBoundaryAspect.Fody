@@ -1,9 +1,9 @@
-﻿using MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Aspects;
+﻿using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-namespace MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Targets
+namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
 {
     public class AsyncEmptyMethodBoundaryAspectMethods
     {

@@ -31,7 +31,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0C4D4E38
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MethodBoundaryAspect.Fody.Benchmark", "MethodBoundaryAspect.Fody.Benchmark\MethodBoundaryAspect.Fody.Benchmark.csproj", "{7C147C05-6200-4873-ACBE-771E287C4900}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.RuntimeTests.NetCore", "MethodBoundaryAspect.Fody.RuntimeTests.NetCore\MethodBoundaryAspect.Fody.RuntimeTests.NetCore.csproj", "{B5E3B551-F31D-4BE5-A78E-E50ACE4EE7B9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MethodBoundaryAspect.Fody.RuntimeTests", "MethodBoundaryAspect.Fody.RuntimeTests\MethodBoundaryAspect.Fody.RuntimeTests.csproj", "{B5E3B551-F31D-4BE5-A78E-E50ACE4EE7B9}"
 EndProject
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.VisualBasic", "MethodBoundaryAspect.Fody.UnitTests.TestAssembly.VisualBasic\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.VisualBasic.vbproj", "{2098EBFE-977A-4DB4-B108-72771F8F960A}"
 EndProject

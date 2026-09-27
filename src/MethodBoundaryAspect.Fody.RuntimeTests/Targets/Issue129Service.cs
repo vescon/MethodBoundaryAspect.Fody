@@ -1,7 +1,7 @@
-using MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Aspects;
+using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 using System.Threading.Tasks;
 
-namespace MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Targets
+namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
 {
     public class Issue129Place
     {
