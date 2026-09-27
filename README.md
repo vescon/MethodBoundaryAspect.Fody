@@ -1,65 +1,152 @@
 [![.github/workflows/main.yaml](https://github.com/vescon/MethodBoundaryAspect.Fody/actions/workflows/main.yaml/badge.svg?branch=master)](https://github.com/vescon/MethodBoundaryAspect.Fody/actions/workflows/main.yaml)
 [![NuGet](https://img.shields.io/nuget/v/MethodBoundaryAspect.Fody.svg)](https://www.nuget.org/packages/MethodBoundaryAspect.Fody/)
 
-## MethodBoundaryAspect.Fody
-> A [Fody weaver](https://github.com/Fody/Fody) which allows to decorate assemblies, classes and methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.
+# MethodBoundaryAspect.Fody
 
-You can easily write your own aspects for
-- transaction handling
-- logging
-- measuring method execution time
-- exception wrapping
-- displaying wait cursor
-- and much more ...
-
-### Supported features
-- Hook into method start and end
-- Hook into raised exceptions in a method
-- Access method information like [MethodExecutionArgs](https://github.com/vescon/MethodBoundaryAspect.Fody/blob/master/src/MethodBoundaryAspect/Attributes/MethodExecutionArgs.cs)
-    - applied object instance
-    - the method itself ([System.Reflection.MethodBase](https://msdn.microsoft.com/en-us/library/system.reflection.methodbase))
-    - the passed method arguments
-    - the thrown exception
-    - some custom object, which can be set at the start of the method and accessed at the end (e.g. useful for transactions or timers)
-- Apply aspects at different levels
-    - globally in `AssemblyInfo.cs`
-    - on class
-    - on method
-- Filter which methods to include in weaving, using Regex patterns
-    - NamespaceFilter
-    - TypeNameFilter
-    - MethodNameFilter
-- Change method behavior (see examples below)
-    - Overwrite input arguments values (byValue and byRef) to be forwarded to the method.
-        - no async support
-        - requires aspect to be annotated with [AllowChangingInputArgumentsAttribute](https://github.com/vescon/MethodBoundaryAspect.Fody/blob/master/src/MethodBoundaryAspect/Attributes/AllowChangingInputArgumentsAttribute.cs)        
-    - Overwrite return value to be returned from the method.
-- Low overhead: only the `MethodExecutionArgs` properties used by the aspects are provided at runtime (see [Performance](#performance-only-used-methodexecutionargs-properties-are-provided))
-
-Feel free to make a [Fork](https://github.com/vescon/MethodBoundaryAspect.Fody/fork) of this repository.
-
-### Breaking changes in version 3
-
-Version 3 only provides the `MethodExecutionArgs` properties that the aspects of a method use (see [Performance](#performance-only-used-methodexecutionargs-properties-are-provided)). Which properties are used is determined when the project using the aspect is weaved. This changes the runtime behavior in these cases:
-
-- **The aspect code changes without the weaved project being weaved again.** If the aspect's assembly is replaced by a newer version (e.g. a plugin, a separately deployed library, or a binding redirect) and the project using the aspect is not rebuilt, the new aspect version gets `null` for the properties the old version didn't use (`Arguments`, `Method`, `Instance`, `ReturnValue`), and a `ReturnValue` it sets is ignored. Rebuild all projects using the aspect after changing it, or [disable the optimization](#disabling-the-optimization) for this aspect.
-- **The method body is skipped without a return value.** If an aspect skips the method body (`FlowBehavior.Return` in `OnEntry`, or `FlowBehavior.Continue`/`FlowBehavior.Return` in `OnException`) and no aspect sets `args.ReturnValue`, the method returns the default value of its return type. Version 2 threw a `NullReferenceException` for value types in this case.
-
-The configuration in `FodyWeavers.xml` is unchanged; the optimization is enabled by default.
-
-### Quickstart
-
-1. Install the MethodBoundaryAspect.Fody NuGet package (`Install-Package MethodBoundaryAspect.Fody`)
-2. Create `FodyWeavers.xml` in your project and add the Weaver `MethodBoundaryAspect` to it ([further details](https://github.com/Fody/Fody))
-3. Write your custom aspects by deriving from `OnMethodBoundaryAspect` and decorate your methods (see sample below)
-
-### Sample
-
-Short sample how a transaction aspect could be implemented.
-
-#### The aspect code
+Run your own code when a method starts, ends or throws, by putting an attribute on it:
 
 ```csharp
+[Log]
+public int Add(int a, int b) => a + b;
+```
+
+MethodBoundaryAspect.Fody is a [Fody](https://github.com/Fody/Fody) weaver: the calls to your aspect are woven into the IL of the method **at build time**. There is no runtime proxy, no dependency injection container and no interface or virtual method required. It works for static, private, generic and async methods of any class, on .NET Framework 4.6.2+ and .NET (Core) / .NET Standard 2.0+.
+
+Typical aspects: logging, measuring execution time, transaction handling, exception wrapping, showing a wait cursor, argument validation, caching.
+
+> Upgrading from version 2? See [Upgrading to version 3](#upgrading-to-version-3).
+
+## Contents
+
+- [Quickstart](#quickstart)
+- [How it works](#how-it-works)
+- [Writing aspects](#writing-aspects)
+- [Applying aspects](#applying-aspects)
+- [Changing the method behavior](#changing-the-method-behavior)
+- [Async methods](#async-methods)
+- [Ref structs](#ref-structs-spant-readonlyspant-)
+- [Performance](#performance)
+- [Configuration reference](#configuration-reference)
+- [Upgrading to version 3](#upgrading-to-version-3)
+- [Contributing](#contributing)
+
+## Quickstart
+
+1. Add the NuGet package (it brings Fody along):
+
+   ```
+   dotnet add package MethodBoundaryAspect.Fody
+   ```
+
+2. Add a `FodyWeavers.xml` file to the project root:
+
+   ```xml
+   <Weavers>
+     <MethodBoundaryAspect />
+   </Weavers>
+   ```
+
+3. Write an aspect by deriving from `OnMethodBoundaryAspect`:
+
+   ```csharp
+   using System;
+   using MethodBoundaryAspect.Fody.Attributes;
+
+   public sealed class LogAttribute : OnMethodBoundaryAspect
+   {
+       public override void OnEntry(MethodExecutionArgs args) =>
+           Console.WriteLine($"Entering {args.Method.Name}({string.Join(", ", args.Arguments)})");
+
+       public override void OnExit(MethodExecutionArgs args) =>
+           Console.WriteLine($"{args.Method.Name} returned {args.ReturnValue}");
+
+       public override void OnException(MethodExecutionArgs args) =>
+           Console.WriteLine($"{args.Method.Name} failed: {args.Exception.Message}");
+   }
+   ```
+
+4. Apply it and build:
+
+   ```csharp
+   public class Calculator
+   {
+       [Log]
+       public int Add(int a, int b) => a + b;
+   }
+
+   new Calculator().Add(1, 2);
+   // Entering Add(1, 2)
+   // Add returned 3
+   ```
+
+Complete projects: [Samples/HelloWorld_NetCore](Samples/HelloWorld_NetCore) and [Samples/HelloWorld_NetFramework](Samples/HelloWorld_NetFramework).
+
+## How it works
+
+When the project is built, Fody runs the weaver on the compiled assembly. For every method hit by an aspect, the original body is moved into a new private method and the method is rewritten to call the aspect around it. Simplified, the `Add` method above becomes:
+
+```csharp
+public int Add(int a, int b)
+{
+    var aspect = new LogAttribute();           // a new aspect instance for every call
+    var args = new MethodExecutionArgs
+    {
+        Instance = this,
+        Method = /* cached MethodBase of Add */,
+        Arguments = new object[] { a, b }
+    };
+
+    aspect.OnEntry(args);
+    try
+    {
+        var result = $_executor_Add(a, b);     // the original method body
+        args.ReturnValue = result;
+        aspect.OnExit(args);
+        return (int)args.ReturnValue;
+    }
+    catch (Exception ex)                       // only woven if the aspect overrides OnException
+    {
+        args.Exception = ex;
+        aspect.OnException(args);
+        throw;
+    }
+}
+```
+
+Consequences worth knowing:
+
+- The aspect's constructor arguments and properties from the attribute (e.g. `[Log(Level = "Debug")]`) are applied to the new instance on every call. Instance fields of an aspect are **not** shared between calls; use `args.MethodExecutionTag` to pass data from `OnEntry` to `OnExit`/`OnException`.
+- Only overridden aspect methods are called, and only the `MethodExecutionArgs` properties the aspects actually use are filled (see [Performance](#performance)).
+- Async methods are woven differently, see [Async methods](#async-methods).
+
+## Writing aspects
+
+Derive from `OnMethodBoundaryAspect` and override any of `OnEntry`, `OnExit` and `OnException`. All three get the same [MethodExecutionArgs](src/MethodBoundaryAspect/Attributes/MethodExecutionArgs.cs) instance per call:
+
+| Property | Content |
+|---|---|
+| `Instance` | the object the method is called on, `null` for static methods |
+| `Method` | the called method as [MethodBase](https://learn.microsoft.com/dotnet/api/system.reflection.methodbase) |
+| `Arguments` | the argument values as `object[]` (can be changed, see [Changing input arguments](#changing-input-arguments)) |
+| `ReturnValue` | the return value in `OnExit` (for async methods the returned `Task`), can be overwritten |
+| `Exception` | the thrown exception in `OnException` |
+| `FlowBehavior` | controls what happens after the aspect method, see [FlowBehavior](#skipping-the-method-or-swallowing-exceptions-flowbehavior) |
+| `MethodExecutionTag` | any object you want to pass from `OnEntry` to `OnExit`/`OnException` of the same call |
+
+### When the aspect methods are called
+
+| | Synchronous method | Async method |
+|---|---|---|
+| `OnEntry` | before the method body | when the method is called |
+| `OnExit` | after the method body completed successfully (**not** after an exception) | when the method returns its `Task` to the caller, usually before the asynchronous work is done, also if it fails later |
+| `OnException` | when the method body throws | when the asynchronous work fails, possibly long after `OnExit` |
+
+### Passing data between the aspect methods: `MethodExecutionTag`
+
+A transaction aspect creates the scope in `OnEntry` and completes or disposes it at the end:
+
+```csharp
+using System.Transactions;
 using MethodBoundaryAspect.Fody.Attributes;
 
 public sealed class TransactionScopeAttribute : OnMethodBoundaryAspect
@@ -72,7 +159,6 @@ public sealed class TransactionScopeAttribute : OnMethodBoundaryAspect
     public override void OnExit(MethodExecutionArgs args)
     {
         var transactionScope = (TransactionScope)args.MethodExecutionTag;
-
         transactionScope.Complete();
         transactionScope.Dispose();
     }
@@ -80,168 +166,116 @@ public sealed class TransactionScopeAttribute : OnMethodBoundaryAspect
     public override void OnException(MethodExecutionArgs args)
     {
         var transactionScope = (TransactionScope)args.MethodExecutionTag;
-
         transactionScope.Dispose();
     }
 }
-```
 
-#### The applied aspect
-
-```csharp
-public class Sample
+public class Repository
 {
     [TransactionScope]
-    public void Method()
+    public void Save()
     {
-        Debug.WriteLine("Do some database stuff isolated in surrounding transaction");
+        // database work isolated in the surrounding transaction
     }
 }
 ```
 
-### Additional Sample
+Each aspect has its own `MethodExecutionTag`, even if several aspects are applied to the same method.
 
-Consider an aspect written like this.
+## Applying aspects
 
-#### The aspect code
+### Methods, classes, properties and assemblies
 
 ```csharp
-using static System.Console;
-using MethodBoundaryAspect.Fody.Attributes;
+[assembly: Log]                   // all methods of all types in the assembly
 
-public sealed class LogAttribute : OnMethodBoundaryAspect
+[Log]                             // all methods of the class (and of its nested classes)
+public class OrderService
 {
-    public override void OnEntry(MethodExecutionArgs args)
-    {
-        WriteLine("On entry");
-    }
+    [Log]                         // this method only
+    public void PlaceOrder() { }
 
-    public override void OnExit(MethodExecutionArgs args)
-    {
-        WriteLine("On exit");
-    }
-
-    public override void OnException(MethodExecutionArgs args)
-    {
-        WriteLine("On exception");
-    }
+    [Log]                         // getter and setter
+    public string Name { get; set; }
 }
 ```
 
-#### The applied aspect
+Class and assembly aspects also hit property getters and setters. To exclude them, annotate the aspect class with `[AspectSkipProperties(true)]`.
 
-Suppose the aspect is applied to this method:
+Not woven: constructors, abstract and interface methods, `extern` methods, compiler-generated methods (lambdas, local functions) and the methods of the aspect class itself.
+
+### Excluding methods: `[DisableWeaving]`
+
+`[DisableWeaving]` excludes a method, a class (including its nested classes) or a whole assembly from weaving, e.g. to skip a hot path that is hit by an assembly-wide aspect.
+
+### Filtering by name and visibility
+
+Aspects applied to a class or assembly can be narrowed down with regular expressions, which are matched against the namespace, the type name and the method name (property accessors are named `get_Name`/`set_Name`):
 
 ```csharp
-using static System.Console;
+[assembly: Log(NamespaceFilter = @"^MyApp\.Services", TypeNameFilter = "Service$", MethodNameFilter = "^(?!get_|set_)")]
+```
 
-public class Sample
+`AttributeTargetMemberAttributes` restricts the visibility of the methods, e.g. only public and internal methods:
+
+```csharp
+[assembly: Log(AttributeTargetMemberAttributes = MulticastAttributes.Public | MulticastAttributes.Internal)]
+```
+
+### Several aspects on one method
+
+Without further configuration the aspects are called in the order assembly → class → method, and in declaration order on the same level. `OnExit` and `OnException` are called in reverse order.
+
+To define the order explicitly, use `[AspectOrderIndex]` on the assembly, class or method (the lower index runs `OnEntry` first; a method level index overrides a class level index, which overrides an assembly level index). If one aspect of a method has an index, all aspects of the method need a unique one:
+
+```csharp
+[AspectOrderIndex(typeof(TransactionScopeAttribute), 1)]
+[AspectOrderIndex(typeof(LogAttribute), 2)]
+public class OrderService
 {
-    [Log]
-    public void Method()
-    {
-        WriteLine("Entering original method");
-        OtherClass.DoSomeOtherWork();
-        WriteLine("Exiting original method");
-    }
+    [Log, TransactionScope]
+    public void PlaceOrder() { }  // TransactionScope.OnEntry, Log.OnEntry, body, Log.OnExit, TransactionScope.OnExit
 }
 ```
 
-We would expect the method call to output this:
+`[ProvideAspectRole]` and `[AspectRoleDependency]` are obsolete, use `[AspectOrderIndex]` instead.
 
-```
-On entry
-Entering original method
-Exiting original method
-On exit
-```
+## Changing the method behavior
 
-If, however, the call to `OtherClass.DoSomeOtherWork()` throws an exception, then it will look like this instead:
+### Changing return values
 
-```
-On entry
-Entering original method
-On exception
-```
-
-Note that the `OnExit` handler is not called when an exception is thrown.
-
-### Altering Method Behavior
-#### Changing return values
-In order to change the return value of a method, hook into its `OnExit` handler and set the `ReturnValue` property of the `MethodExecutionArgs`.
+Set `args.ReturnValue` in `OnExit`:
 
 ```csharp
-using MethodBoundaryAspect.Fody.Attributes;
 using System;
 using System.Linq;
-using static System.Console;
+using MethodBoundaryAspect.Fody.Attributes;
 
 public sealed class IndentAttribute : OnMethodBoundaryAspect
 {
     public override void OnExit(MethodExecutionArgs args)
     {
-        args.ReturnValue = String.Concat(args.ReturnValue.ToString().Split('\n').Select(line => "  " + line));
+        args.ReturnValue = string.Concat(args.ReturnValue.ToString().Split('\n').Select(line => "  " + line));
     }
 }
 
 public class Program
 {
     [Indent]
-    public static string GetLogs() => @"Detailed Log 1
-Detailed Log 2";
+    public static string GetLogs() => "Detailed Log 1\nDetailed Log 2";
 
-    public static void Main(string[] args)
+    public static void Main()
     {
-        WriteLine(GetLogs()); // Output: "  Detailed Log 1\n  Detailed Log 2";
+        Console.WriteLine(GetLogs()); // "  Detailed Log 1\n  Detailed Log 2"
     }
 }
-```  
+```
 
-This can also be used on async methods to add additional processing or exception-handling.
+For async methods, `args.ReturnValue` is the returned `Task` and can be replaced by a continuation, see [Async methods](#async-methods).
 
-```csharp
-using MethodBoundaryAspect.Fody.Attributes;
-using System;
-using System.Linq;
-using static System.Console;
+### Changing input arguments
 
-public sealed class HandleExceptionAttribute : OnMethodBoundaryAspect
-{
-    public override void OnExit(MethodExecutionArgs args)
-    {
-        if (args.ReturnValue is Task<string> task)
-        {
-          args.ReturnValue = task.ContinueWith(t =>
-          {
-            if (t.IsFaulted)
-              return "An error happened: " + t.Exception.Message;
-            return t.Result;
-          });
-        }
-    }
-}
-
-public class Program
-{
-    [HandleException]
-    public static async Task<string> Process()
-    {
-      await Task.Delay(10);
-      throw new Exception("Bad data");
-    }
-
-    public static async Task Main(string[] args)
-    {
-        WriteLine(await Process()); // Output: "An error happened: Bad data"
-    }
-}
-```  
-
-#### Changing input arguments
-In order to change the return value of a method, hook into its `OnEntry` handler and modify the elements of the `Arguments` property of the MethodExecutionArgs.  
-Important:  
-And you have to annotate your aspect with the `AllowChangingInputArgumentsAttribute` because the weaver has to generate additional code. For non-modifying aspects this code is unnecessary and would only cost performance.
-No async support yet!
+Change the elements of `args.Arguments` in `OnEntry`. The aspect class has to be annotated with `[AllowChangingInputArguments]`, because the weaver has to generate additional code to pass the changed values to the method (unnecessary and slower for aspects which don't change them). `ref` and `out` values are written back to the caller. Not supported for async methods.
 
 ```csharp
 using System;
@@ -254,130 +288,159 @@ public sealed class InputArgumentIncrementorAttribute : OnMethodBoundaryAspect
 
     public override void OnEntry(MethodExecutionArgs args)
     {
-        var inputArguments = args.Arguments;
-        for (var i = 0; i < inputArguments.Length; i++)
+        var arguments = args.Arguments;
+        for (var i = 0; i < arguments.Length; i++)
         {
-            var value = inputArguments[i];
-            if (value is int v)
-                inputArguments[i] = v + Increment;
+            if (arguments[i] is int value)
+                arguments[i] = value + Increment;
         }
     }
 }
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static void Main()
     {
-        // ByValue
-        MethodByValue(10);
+        MethodByValue(10);                              // prints 11
 
-        // ByRef
         var value = 10;
-        MethodByRef(ref value);
-        Console.WriteLine("after method call: " + value); // Output: 20
+        MethodByRef(ref value);                         // prints 20
+        Console.WriteLine("after method call: " + value); // prints 20
     }
 
     [InputArgumentIncrementor(Increment = 1)]
-    public static void MethodByValue(int i)
-    {
-        Console.WriteLine(i); // Output: 11
-    }
+    public static void MethodByValue(int i) => Console.WriteLine(i);
 
     [InputArgumentIncrementor(Increment = 10)]
-    public static void MethodByRef(ref int i)
-    {
-        Console.WriteLine(i); // Output: 20
-    }
-}
-```
-  
-### Asynchronous Sample
-
-Consider the same aspect as above but now applied to this method:
-
-```csharp
-using static System.Console;
-
-public class Sample
-{
-    [Log]
-    public async Task MethodAsync()
-    {
-        WriteLine("Entering original method");
-        await OtherClass.DoSomeOtherWorkAsync();
-        WriteLine("Exiting original method");
-    }
+    public static void MethodByRef(ref int i) => Console.WriteLine(i);
 }
 ```
 
-The `On entry` line will be written when `MethodAsync` is first called on the main thread.
+### Skipping the method or swallowing exceptions: `FlowBehavior`
 
-The `Entering original method` line will be written shortly thereafter, on the main thread.
+| Set in | `args.FlowBehavior` | Effect |
+|---|---|---|
+| `OnEntry` | `FlowBehavior.Return` | the method body (and the `OnEntry` of the following aspects) is skipped, the method returns `args.ReturnValue` |
+| `OnException` | `FlowBehavior.Continue` or `FlowBehavior.Return` | the exception is swallowed, the method returns `args.ReturnValue` |
+| `OnException` | `FlowBehavior.Default` or `FlowBehavior.RethrowException` | the exception is rethrown (default) |
 
-The `Exiting original method` line will be written only after the task returned by `OtherClass.DoSomeOtherWorkAsync` has completed. Depending on your context and whether the given task was already complete when it was returned, this may or may not be on the main thread.
-
-The `On exit` line will be written when `MethodAsync` returns to its caller, which may be slightly after or long before the long-running task has completed, but it will occur synchronously on the main thread.
-
-The `On exception` line will be written if `OtherClass.DoSomeOtherWorkAsync` throws an exception, returns null (thus causing a `NullReferenceException` when it is `await`ed), or returns a faulted task. As such, this may occur long after `MethodAsync` itself has returned its `Task` to its caller. The call to `OnException` will take place on whichever thread the synchronization context was running when the exception occurred.
-
-Note that, unlike for synchronous methods, an aspect for an asynchronous method will have its `OnExit` handler called whether or not its `OnException` is called. Furthermore, unlike synchronous methods, the call to `OnException` may take place long after the call to `OnExit`. If this behavior is undesirable, consider using the `MethodExecutionTag` to track whether the `OnExit` has run before the `OnException`. One such solution looks like this.
+If no aspect sets `args.ReturnValue`, the method returns the default value of its return type. With several aspects, the `OnExit` of the aspects ordered before the aspect that set `FlowBehavior` is still called. For async methods see [below](#flowbehavior-in-async-methods).
 
 ```csharp
-using static System.Console;
+using System.Collections.Concurrent;
 using MethodBoundaryAspect.Fody.Attributes;
 
-public sealed class LogAttribute : OnMethodBoundaryAspect
+public sealed class CacheAttribute : OnMethodBoundaryAspect
 {
+    private static readonly ConcurrentDictionary<string, object> Cache = new ConcurrentDictionary<string, object>();
+
     public override void OnEntry(MethodExecutionArgs args)
     {
-        WriteLine("On entry");
-        arg.MethodExecutionTag = false;
+        var key = args.Method.Name + string.Join(",", args.Arguments);
+        if (Cache.TryGetValue(key, out var cached))
+        {
+            args.ReturnValue = cached;
+            args.FlowBehavior = FlowBehavior.Return;   // skip the method body
+        }
+        args.MethodExecutionTag = key;
     }
 
     public override void OnExit(MethodExecutionArgs args)
     {
-        WriteLine("On exit");
-        arg.MethodExecutionTag = true;
-    }
-
-    public override void OnException(MethodExecutionArgs args)
-    {
-        if ((bool)arg.MethodExecutionTag)
-          return;
-        WriteLine("On exception");
+        Cache[(string)args.MethodExecutionTag] = args.ReturnValue;
     }
 }
 ```
 
-One additional note about the asynchronous behavior: the `OnExit` handler runs when the `MethodAsync` returns to its caller, not when the asynchronous code finishes running, which may be some time later. If you need code to be run when the method's asynchronous code finishes instead of when the actual method exits, consider a solution like the following:
+## Async methods
+
+Aspects work on `async` methods returning `Task`, `Task<T>`, `ValueTask`, `ValueTask<T>` and `void`, but the timing differs from synchronous methods (see [When the aspect methods are called](#when-the-aspect-methods-are-called)). Applied to
 
 ```csharp
-using static System.Console;
-using MethodBoundaryAspect.Fody.Attributes;
+[Log]
+public async Task MethodAsync()
+{
+    Console.WriteLine("Entering original method");
+    await OtherClass.DoSomeOtherWorkAsync();
+    Console.WriteLine("Exiting original method");
+}
+```
 
+- `OnEntry` runs when `MethodAsync` is called, followed by "Entering original method" on the same thread.
+- `OnExit` runs when `MethodAsync` returns its `Task` to the caller, synchronously on the calling thread. This may be long before the awaited work has completed.
+- "Exiting original method" is written after the task of `DoSomeOtherWorkAsync` has completed, possibly on another thread.
+- `OnException` runs if the awaited work fails (a faulted task, an exception, or awaiting `null`), on the thread on which the exception occurred, possibly long after `OnExit`.
+
+So, unlike for synchronous methods, `OnExit` is called whether or not `OnException` is called. If `OnException` should only handle exceptions thrown before the method returned, track it with the `MethodExecutionTag`:
+
+```csharp
 public sealed class LogAttribute : OnMethodBoundaryAspect
 {
     public override void OnEntry(MethodExecutionArgs args)
     {
-        WriteLine("On entry");
+        Console.WriteLine("On entry");
+        args.MethodExecutionTag = false;
     }
 
     public override void OnExit(MethodExecutionArgs args)
     {
-        if (args.ReturnValue is Task t)
-            t.ContinueWith(task => WriteLine("On exit"));
+        Console.WriteLine("On exit");
+        args.MethodExecutionTag = true;
     }
 
     public override void OnException(MethodExecutionArgs args)
     {
-        WriteLine("On exception");
+        if ((bool)args.MethodExecutionTag)
+            return;
+
+        Console.WriteLine("On exception");
     }
 }
 ```
 
-### Ref structs (`Span<T>`, `ReadOnlySpan<T>`, ...)
+To run code when the asynchronous work has finished, continue the returned task in `OnExit`:
 
-Ref structs cannot be boxed, so their values cannot be passed to the aspect via `MethodExecutionArgs`. Methods using them are still weaved, but:
+```csharp
+public override void OnExit(MethodExecutionArgs args)
+{
+    if (args.ReturnValue is Task task)
+        task.ContinueWith(t => Console.WriteLine("Asynchronous work finished"));
+}
+```
+
+Replacing the returned task changes the result the caller awaits, e.g. to turn a failure into a fallback value:
+
+```csharp
+public sealed class HandleExceptionAttribute : OnMethodBoundaryAspect
+{
+    public override void OnExit(MethodExecutionArgs args)
+    {
+        if (args.ReturnValue is Task<string> task)
+        {
+            args.ReturnValue = task.ContinueWith(t =>
+                t.IsFaulted ? "An error happened: " + t.Exception.InnerException.Message : t.Result);
+        }
+    }
+}
+
+[HandleException]
+public static async Task<string> Process()
+{
+    await Task.Delay(10);
+    throw new Exception("Bad data");
+}
+
+// await Process() returns "An error happened: Bad data"
+```
+
+### FlowBehavior in async methods
+
+- `FlowBehavior.Return` in `OnEntry`: `args.ReturnValue` is what the method returns, so it has to be a task, e.g. `args.ReturnValue = Task.FromResult(42);`. Otherwise the method returns `null` instead of a task.
+- `FlowBehavior.Continue` in `OnException`: the returned task completes successfully with `args.ReturnValue` as its result (the value, not a task), e.g. `args.ReturnValue = 0;` for a `Task<int>`.
+
+## Ref structs (`Span<T>`, `ReadOnlySpan<T>`, ...)
+
+Ref structs cannot be boxed, so their values cannot be passed to the aspect via `MethodExecutionArgs`. Methods using them are still woven, but:
 
 - ref struct arguments (also `ref`, `in` and `out`) are `null` in `args.Arguments`
 - a ref struct return value is `null` in `args.ReturnValue`
@@ -396,19 +459,11 @@ public class Parser
 }
 ```
 
-A build warning is written for each weaved method using ref structs. To suppress these warnings, add the `SuppressRefStructWarnings` attribute to `FodyWeavers.xml`:
+A build warning is written for each woven method using ref structs. Suppress these warnings with `SuppressRefStructWarnings="true"` (see [Configuration reference](#configuration-reference)), or exclude the method from weaving with `[DisableWeaving]`.
 
-```xml
-<Weavers>
-  <MethodBoundaryAspect SuppressRefStructWarnings="true" />
-</Weavers>
-```
+## Performance
 
-To exclude a single method from weaving instead, annotate it with `[DisableWeaving]`.
-
-### Performance: only used `MethodExecutionArgs` properties are provided
-
-Providing all `MethodExecutionArgs` properties on every call costs time and memory. The arguments are boxed into a new `object[]`, the return value is boxed, and the `MethodBase` is looked up (by reflection for open generic methods). When weaving, the IL of the aspect's `OnEntry`, `OnExit` and `OnException` methods is analyzed. Values that no aspect of a method uses are not provided:
+Filling all `MethodExecutionArgs` properties on every call costs time and memory: the arguments are boxed into a new `object[]`, the return value is boxed, and the `MethodBase` is looked up (by reflection for open generic methods). Therefore the weaver analyzes the IL of the aspects' `OnEntry`, `OnExit` and `OnException` methods, and values that no aspect of a method uses are not provided:
 
 | Not used by any aspect of the method | Not done at runtime |
 |---|---|
@@ -421,7 +476,7 @@ Providing all `MethodExecutionArgs` properties on every call costs time and memo
 For example, only `args.Method` is provided for this aspect:
 
 ```csharp
-public sealed class TimingAspect : OnMethodBoundaryAspect
+public sealed class TimingAttribute : OnMethodBoundaryAspect
 {
     public override void OnEntry(MethodExecutionArgs args)
     {
@@ -444,46 +499,47 @@ Overhead of an aspect with `OnEntry` and `OnExit` compared to the same call with
 | uses `args.Method` | +12 ns | 120 B | - | - |
 | all properties provided (optimization disabled) | +35 ns | 200 B | +122 ns | 248 B |
 
-The analysis is conservative. If `args` is used in any other way than reading or writing its properties (for example, passed to a logger, stored in a field, or captured by a lambda), the aspect gets all properties. Calls to non-virtual methods of the aspect and its base classes are followed, e.g. `base.OnEntry(args)` or a private helper. When several aspects are applied to a method, a property is provided if any of them uses it.
+The analysis is conservative. If `args` is used in any other way than reading or writing its properties (for example, passed to a logger, stored in a field, or captured by a lambda), the aspect gets all properties. Calls to non-virtual methods of the aspect and its base classes are followed, e.g. `base.OnEntry(args)` or a private helper. When several aspects are applied to a method, a property is provided if any of them uses it. Aspects whose assembly can only be resolved as a reference assembly are never optimized.
 
-If the method body is skipped (`FlowBehavior.Return` in `OnEntry`, or `FlowBehavior.Continue`/`FlowBehavior.Return` in `OnException`) and no aspect sets `args.ReturnValue`, the method returns the default value of its return type. Before this optimization, a method returning a value type threw a `NullReferenceException` in this case (see [Breaking changes in version 3](#breaking-changes-in-version-3)).
+The analysis runs when the project using the aspect is woven. If that project is not rebuilt when the aspect's assembly is updated (e.g. an aspect loaded from a plugin), a new aspect version could access properties that were not provided and are `null`. Disable the optimization for such aspects, see [Configuration reference](#configuration-reference).
 
-#### Disabling the optimization
+## Configuration reference
 
-The analysis runs when the project using the aspect is weaved. If that project is not rebuilt when the aspect's assembly is updated (e.g. an aspect loaded from a plugin), a new aspect version could access properties that were not provided and are `null` (see [Breaking changes in version 3](#breaking-changes-in-version-3)). Aspects whose assembly can only be resolved as a reference assembly are never optimized.
-
-To disable the optimization for single aspects, add their full type names to `FodyWeavers.xml` (nested types as `Namespace.Outer+Inner`):
+All settings are optional and go into the `MethodBoundaryAspect` element of `FodyWeavers.xml`:
 
 ```xml
 <Weavers>
-  <MethodBoundaryAspect>
-    <DisableExecutionArgsOptimization Aspect="MyCompany.Logging.LogAspect" />
-    <DisableExecutionArgsOptimization Aspect="MyCompany.Plugins.PluginAspect" />
+  <MethodBoundaryAspect SuppressRefStructWarnings="true">
+    <DisableExecutionArgsOptimization Aspect="MyCompany.Logging.LogAttribute" />
+    <DisableExecutionArgsOptimization Aspect="MyCompany.Plugins.PluginAttribute" />
   </MethodBoundaryAspect>
 </Weavers>
 ```
 
-A build warning is written if a configured aspect is not applied to any weaved method. To disable the optimization for all aspects:
+| Setting | Effect |
+|---|---|
+| `SuppressRefStructWarnings="true"` | no build warnings for woven methods using [ref structs](#ref-structs-spant-readonlyspant-) |
+| `<DisableExecutionArgsOptimization Aspect="..." />` | always provide all `MethodExecutionArgs` properties for this aspect (full type name, nested types as `Namespace.Outer+Inner`), see [Performance](#performance). A build warning is written if the aspect is not applied to any woven method |
+| `DisableExecutionArgsOptimization="true"` | the same for all aspects |
 
-```xml
-<Weavers>
-  <MethodBoundaryAspect DisableExecutionArgsOptimization="true" />
-</Weavers>
+## Upgrading to version 3
+
+Version 3 only provides the `MethodExecutionArgs` properties that the aspects of a method use (see [Performance](#performance)). Which properties are used is determined when the project using the aspect is woven. This changes the runtime behavior in these cases:
+
+- **The aspect code changes without the woven project being woven again.** If the aspect's assembly is replaced by a newer version (e.g. a plugin, a separately deployed library, or a binding redirect) and the project using the aspect is not rebuilt, the new aspect version gets `null` for the properties the old version didn't use (`Arguments`, `Method`, `Instance`, `ReturnValue`), and a `ReturnValue` it sets is ignored. Rebuild all projects using the aspect after changing it, or [disable the optimization](#configuration-reference) for this aspect.
+- **The method body is skipped without a return value.** If an aspect skips the method body (`FlowBehavior.Return` in `OnEntry`, or `FlowBehavior.Continue`/`FlowBehavior.Return` in `OnException`) and no aspect sets `args.ReturnValue`, the method returns the default value of its return type. Version 2 threw a `NullReferenceException` for value types in this case.
+
+The configuration in `FodyWeavers.xml` is unchanged; the optimization is enabled by default.
+
+## Contributing
+
+Issues and pull requests are welcome, feel free to [fork](https://github.com/vescon/MethodBoundaryAspect.Fody/fork) the repository.
+
+```
+dotnet build --configuration Release src/MethodBoundaryAspect.Fody.sln
+dotnet test src/MethodBoundaryAspect.Fody.UnitTests.NetFramework --configuration Release --no-build
+dotnet test src/MethodBoundaryAspect.Fody.UnitTests.NetCore --configuration Release --no-build
+dotnet test src/MethodBoundaryAspect.Fody.RuntimeTests --configuration Release --no-build
 ```
 
-## Benchmarks
-
-* BenchmarkDotNet=v0.13.2, OS=Windows 10 (10.0.19043.1766/21H1/May2021Update)
-* Intel Core i7-10700K CPU 3.80GHz, 1 CPU, 16 logical and 8 physical cores
-* .NET SDK=7.0.100
-    * [Host] : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
-    * DefaultJob : .NET 7.0.0 (7.0.22.51805), X64 RyuJIT AVX2
-
-
-|                       Method |     Mean |   Error |  StdDev |
-|----------------------------- |---------:|--------:|--------:|
-|            CallWithoutAspect | 108.8 ns | 0.50 ns | 0.44 ns |
-|               CallWithAspect | 136.3 ns | 2.72 ns | 3.98 ns |
-| OpenGenericCallWithoutAspect | 105.5 ns | 1.03 ns | 0.91 ns |
-|    OpenGenericCallWithAspect | 201.0 ns | 3.37 ns | 2.82 ns |
-
+`RuntimeTests` builds a project with the weaver from this repository and runs the woven code on .NET Framework 4.6.2 and 4.8 and .NET 8, 9 and 10.
