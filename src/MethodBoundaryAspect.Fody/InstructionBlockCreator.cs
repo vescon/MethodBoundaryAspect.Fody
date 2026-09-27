@@ -423,6 +423,12 @@ namespace MethodBoundaryAspect.Fody
                     return new[] { _processor.Create(OpCodes.Ldc_I8, (long)ulongVal) };
                 case MetadataType.Boolean:
                     return new[] { _processor.Create(OpCodes.Ldc_I4, (bool)value ? 1 : 0) };
+                case MetadataType.Char:
+                    return new[] { _processor.Create(OpCodes.Ldc_I4, (int)(char)value) };
+                case MetadataType.Single:
+                    return new[] { _processor.Create(OpCodes.Ldc_R4, (float)value) };
+                case MetadataType.Double:
+                    return new[] { _processor.Create(OpCodes.Ldc_R8, (double)value) };
             }
 
             throw new NotSupportedException("Not a supported primitve parameter type: " + type);
