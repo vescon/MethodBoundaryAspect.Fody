@@ -267,7 +267,8 @@ namespace MethodBoundaryAspect.Fody
                 if (currentType.FullName == AttributeFullNames.OnMethodBoundaryAspect)
                     return true;
 
-                currentType = currentType.Resolve().BaseType;
+                // Resolve() returns null if the assembly of a base type cannot be found, see https://github.com/vescon/MethodBoundaryAspect.Fody/issues/119
+                currentType = currentType.Resolve()?.BaseType;
             } while (currentType != null);
 
             return false;
