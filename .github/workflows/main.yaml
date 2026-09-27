@@ -15,6 +15,14 @@ jobs:
       with:
         fetch-depth: 0 # needed for gitversion, checks out all branches and tags
 
+    - name: Setup .NET # runtime tests run on each of these runtimes
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: |
+          8.0.x
+          9.0.x
+          10.0.x
+
     - name: Install GitVersion
       uses: gittools/actions/gitversion/setup@v0.10.2
       with:
@@ -32,7 +40,7 @@ jobs:
     - name: Run tests - NetCore
       run: dotnet test src\MethodBoundaryAspect.Fody.UnitTests.NetCore --configuration Release --no-build
 
-    - name: Run tests - NetCore Runtime
+    - name: Run tests - Runtime (net462, net48, net8.0, net9.0, net10.0)
       run: dotnet test src\MethodBoundaryAspect.Fody.RuntimeTests.NetCore --configuration Release --no-build
 
     - name: Create the nuget package

@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net462;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <!-- Fody only loads (and FodyPackaging only packs) the netstandard2.0 weaver, so tests use exactly that binary -->
+    <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
       
   <ItemGroup>
