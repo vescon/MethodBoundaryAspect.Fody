@@ -56,7 +56,7 @@ namespace MethodBoundaryAspect.Fody
                     ? _creator.CreateVariable(_method.ReturnType)
                     : null;
 
-            WeaveOnEntry(returnValue);
+            WeaveOnEntry(arguments, returnValue);
             
             HandleBody(arguments, returnValue?.Variable, out var instructionCallStart, out var instructionCallEnd);
 
@@ -225,8 +225,10 @@ namespace MethodBoundaryAspect.Fody
             }
         }
 
-        private void WeaveOnEntry(IPersistable returnValue)
+        private void WeaveOnEntry(NamedInstructionBlockChain arguments, IPersistable returnValue)
         {
+            var allowChangingInputArguments = _aspects.Any(x => x.Info.AllowChangingInputArguments);
+
             var aspectsWithOnEntry = _aspects
                 .Select((asp, index)=> new { aspect = asp, index })
                 .Where(x => (x.aspect.AspectMethods & AspectMethods.OnEntry) != 0)
@@ -269,6 +271,14 @@ namespace MethodBoundaryAspect.Fody
                         if (HasMultipleAspects)
                             onExitChain.Add(_creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs, onExitAspect.TagPersistable));
                         onExitChain.Add(_creator.CallAspectOnExit(onExitAspect, ExecutionArgs));
+                    }
+
+                    if (allowChangingInputArguments)
+                    {
+                        // method body is skipped: write ref/out values set by the aspect back to the caller
+                        var copyBackBlock = CreateCopyBackByRefArgumentsFromArray(arguments);
+                        if (copyBackBlock != null)
+                            onExitChain.Add(copyBackBlock);
                     }
                 }
 
@@ -333,30 +343,80 @@ namespace MethodBoundaryAspect.Fody
             
             if (allowChangingInputArguments)
             {
-                // write byref variables back for origin source method
-                var copyBackInstructions = new List<Instruction>();
-                foreach (var parameter in _method.Parameters.Where(x => x.ParameterType.IsByReference && !x.ParameterType.IsByRefLike()))
+                // write byref variables back for origin source method:
+                // the called method has written ref/out values into the local variables passed by address
+                var copyBackBlock = CreateCopyBackByRefArguments(parameter =>
                 {
-                    var arg = args[parameter.Index];
-                    copyBackInstructions.Add(_ilProcessor.Create(OpCodes.Ldarg, parameter));
-
-                    var loadBlock = arg.Load(false, true);
-                    copyBackInstructions.AddRange(loadBlock.Instructions);
-
-                    var storeOpCode = parameter.ParameterType.MetadataType.GetStIndCode();
-                    copyBackInstructions.Add(_ilProcessor.Create(storeOpCode));
-                }
-
-                if (copyBackInstructions.Any())
-                {
-                    var copyBackBlock = new InstructionBlock("Copy back ref values", copyBackInstructions);
+                    var byRefVariable = ((ArrayElementLoadable)args[parameter.Index]).ByRefVariable;
+                    return new[] { _ilProcessor.Create(OpCodes.Ldloc, byRefVariable) };
+                });
+                if (copyBackBlock != null)
                     callSourceMethod.Add(copyBackBlock);
-                }
+
+                // update ExecutionArgs.Arguments with the ref/out values so OnExit sees them
+                var updateArgumentsBlock = CreateUpdateArgumentsArrayFromByRefVariables(arguments, args);
+                if (updateArgumentsBlock != null)
+                    callSourceMethod.Add(updateArgumentsBlock);
             }
 
             callSourceMethod.Append(_ilProcessor);
             instructionCallStart = callSourceMethod.First;
             instructionCallEnd = callSourceMethod.Last;
+        }
+
+        private InstructionBlock CreateUpdateArgumentsArrayFromByRefVariables(NamedInstructionBlockChain arguments, ILoadable[] args)
+        {
+            var instructions = new List<Instruction>();
+            foreach (var parameter in GetByRefParametersPassedViaArguments())
+            {
+                var byRefVariable = ((ArrayElementLoadable)args[parameter.Index]).ByRefVariable;
+                instructions.Add(_ilProcessor.Create(OpCodes.Ldloc, arguments.Variable));
+                instructions.Add(_ilProcessor.Create(OpCodes.Ldc_I4, parameter.Index));
+                instructions.Add(_ilProcessor.Create(OpCodes.Ldloc, byRefVariable));
+
+                var elementType = ((ByReferenceType)parameter.ParameterType).ElementType;
+                if (elementType.IsGenericParameter || elementType.IsValueType || elementType.Resolve().IsValueType)
+                    instructions.Add(_ilProcessor.Create(OpCodes.Box, elementType));
+
+                instructions.Add(_ilProcessor.Create(OpCodes.Stelem_Ref));
+            }
+
+            return instructions.Any()
+                ? new InstructionBlock("Update arguments with ref values", instructions)
+                : null;
+        }
+
+        private InstructionBlock CreateCopyBackByRefArgumentsFromArray(NamedInstructionBlockChain arguments)
+        {
+            return CreateCopyBackByRefArguments(parameter =>
+            {
+                var arg = new ArrayElementLoadable(arguments.Variable, parameter.Index, parameter, _ilProcessor, _creator);
+                return arg.Load(false, true).Instructions;
+            });
+        }
+
+        private InstructionBlock CreateCopyBackByRefArguments(Func<ParameterDefinition, IEnumerable<Instruction>> loadValue)
+        {
+            var copyBackInstructions = new List<Instruction>();
+            foreach (var parameter in GetByRefParametersPassedViaArguments())
+            {
+                copyBackInstructions.Add(_ilProcessor.Create(OpCodes.Ldarg, parameter));
+                copyBackInstructions.AddRange(loadValue(parameter));
+
+                var elementType = ((ByReferenceType)parameter.ParameterType).ElementType;
+                copyBackInstructions.Add(elementType.GetStIndInstruction());
+            }
+
+            return copyBackInstructions.Any()
+                ? new InstructionBlock("Copy back ref values", copyBackInstructions)
+                : null;
+        }
+
+        // ref/out parameters except ref structs, which cannot be boxed into ExecutionArgs.Arguments
+        // and are passed directly to the called method instead
+        private IEnumerable<ParameterDefinition> GetByRefParametersPassedViaArguments()
+        {
+            return _method.Parameters.Where(x => x.ParameterType.IsByReference && !x.ParameterType.IsByRefLike());
         }
 
         private Instruction WeaveOnExit(bool hasReturnValue, NamedInstructionBlockChain returnValue)

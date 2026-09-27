@@ -66,6 +66,12 @@ namespace MethodBoundaryAspect.Fody
             // If state machine is a value type, it will have default value
             // and be non-nullable, so we can just insert our instructions
             // at the beginning of the method without worrying about NullReferenceException.
+            // Visual Basic explicitly initializes the state machine first (ldloca, initobj),
+            // so we have to insert our instructions after it or they would be overwritten.
+            else if (instructions[1].OpCode == OpCodes.Initobj
+                     && instructions[1].Operand is TypeReference initType
+                     && initType.Resolve() == _moveNext.DeclaringType)
+                _setupPointer = instructions[1];
             else
                 _setupPointer = null;
         }
@@ -125,13 +131,53 @@ namespace MethodBoundaryAspect.Fody
             ExecutionArgs = field;
         }
 
-        private Instruction GetFirstInstructionToSetException(ExceptionHandler handler, out MethodReference setResultMethod,
-            out InstructionBlock loadBuilder)
+        private static IEnumerable<Instruction> GetHandlerInstructions(ExceptionHandler handler)
         {
-            var ret = handler.HandlerEnd;
-            var leave = ret.Previous;
-            var nop = leave.Previous;
-            var setException = (nop.OpCode == OpCodes.Nop ? nop.Previous : nop); // The nop is only in Debug mode.
+            for (var i = handler.HandlerStart; i != handler.HandlerEnd; i = i.Next)
+                yield return i;
+        }
+
+        private static VariableDefinition GetExceptionLocal(ExceptionHandler handler, Mono.Collections.Generic.Collection<VariableDefinition> locals)
+        {
+            // C# stores the exception right at the start of the handler (stloc),
+            // Visual Basic calls ProjectData.SetProjectError before (dup, call, stloc).
+            var storeException = GetHandlerInstructions(handler).FirstOrDefault(IsStloc);
+            if (storeException == null)
+                throw new InvalidOperationException("Unable to find variable reference for storage.");
+
+            return storeException.GetLocalStoredByInstruction(locals);
+        }
+
+        private static bool IsStloc(Instruction i)
+        {
+            switch (i.OpCode.Code)
+            {
+                case Code.Stloc:
+                case Code.Stloc_S:
+                case Code.Stloc_0:
+                case Code.Stloc_1:
+                case Code.Stloc_2:
+                case Code.Stloc_3:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private Instruction GetFirstInstructionToSetException(ExceptionHandler handler, out MethodReference setResultMethod,
+            out InstructionBlock loadBuilder, out Instruction afterSetException)
+        {
+            // C# emits "SetException; [nop;] leave" (the nop is only in Debug mode),
+            // Visual Basic emits "SetException; [nop;] call ProjectData.ClearProjectError; leave".
+            var setException = GetHandlerInstructions(handler).FirstOrDefault(i =>
+                i.OpCode == OpCodes.Call
+                && i.Operand is MethodReference m
+                && m.Name == "SetException"
+                && m.DeclaringType.FullName.StartsWith(typeof(AsyncTaskMethodBuilder).FullName));
+            if (setException == null)
+                throw new InvalidOperationException($"Async state machine for {_method.FullName} did not set the exception in the expected way.");
+
+            afterSetException = setException.Next;
             var setExceptionMethod = (MethodReference)setException.Operand;
             if (setExceptionMethod.DeclaringType is GenericInstanceType setExceptionType)
             {
@@ -155,8 +201,8 @@ namespace MethodBoundaryAspect.Fody
             var handler = _moveNext.Body.ExceptionHandlers.FirstOrDefault(IsStateMachineCatchBlock);
             if (handler == null)
                 throw new InvalidOperationException($"Async state machine for {_method.FullName} did not catch exceptions in the expected way.");
-            var exceptionLocal = handler.HandlerStart.GetLocalStoredByInstruction(_moveNext.Body.Variables);
-            Instruction firstInstructionToSetException = GetFirstInstructionToSetException(handler, out var setResultMethod, out var loadBuilder);
+            var exceptionLocal = GetExceptionLocal(handler, _moveNext.Body.Variables);
+            Instruction firstInstructionToSetException = GetFirstInstructionToSetException(handler, out var setResultMethod, out var loadBuilder, out var afterSetException);
             Instruction exceptionHandlerCurrent = firstInstructionToSetException.Previous; // Need to start inserting before SetException
             Instruction retInstruction = handler.HandlerEnd;
             var processor = _moveNext.Body.GetILProcessor();
@@ -198,7 +244,8 @@ namespace MethodBoundaryAspect.Fody
                 if (setResultMethod.Parameters.Count == 1)
                     thenBody.Add(returnValue.Load(false, false));
                 thenBody.Add(new InstructionBlock("Call SetResult", Instruction.Create(OpCodes.Call, setResultMethod)));
-                thenBody.Add(new InstructionBlock("Leave peacefully", Instruction.Create(OpCodes.Leave, handler.HandlerEnd)));
+                // Continue with the compiler generated code after SetException (e.g. ProjectData.ClearProjectError in Visual Basic) which leaves the handler.
+                thenBody.Add(new InstructionBlock("Leave peacefully", Instruction.Create(OpCodes.Br, afterSetException)));
 
                 var nop = Instruction.Create(OpCodes.Nop);
                 callAspectOnException.Add(_creator.IfFlowBehaviorIsAnyOf(

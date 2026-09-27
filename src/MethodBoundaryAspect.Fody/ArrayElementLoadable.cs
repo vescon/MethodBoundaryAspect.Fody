@@ -27,6 +27,11 @@ namespace MethodBoundaryAspect.Fody
 
         public TypeReference PersistedType => _parameter.ParameterType;
 
+        /// <summary>
+        /// Local variable whose address was passed for a ref/out parameter by the last <see cref="Load"/> call.
+        /// </summary>
+        public VariableDefinition ByRefVariable { get; private set; }
+
         public InstructionBlock Load(bool forDereferencing, bool onlyValue)
         {
             var instructions = new List<Instruction>
@@ -54,6 +59,7 @@ namespace MethodBoundaryAspect.Fody
                 var variable = _creator.CreateVariable(castToType).Variable;
                 instructions.Add(_processor.Create(OpCodes.Stloc, variable));
                 instructions.Add(_processor.Create(OpCodes.Ldloca, variable));
+                ByRefVariable = variable;
             }
 
             return new InstructionBlock($"Load {_index}", instructions);

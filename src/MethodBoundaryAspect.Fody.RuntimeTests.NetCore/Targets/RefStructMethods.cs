@@ -46,6 +46,12 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.NetCore.Targets
 
         public Span<int> SkipBody(int[] values) => values.AsSpan(1);
 
+        public void SkipBodyWithRefSpan(ref Span<int> values, ref int count)
+        {
+            values = values.Slice(1);
+            count = -1;
+        }
+
         public Span<int> SwallowException(int[] values) => throw new InvalidOperationException("boom");
     }
 }

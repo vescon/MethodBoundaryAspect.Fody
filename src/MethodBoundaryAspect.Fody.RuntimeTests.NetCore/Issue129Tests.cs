@@ -131,6 +131,20 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.NetCore
         }
 
         [Fact]
+        public void SkippedMethodWithRefSpanShouldKeepSpanAndCopyBackOtherRefArguments()
+        {
+            var target = new OverwritingRefStructMethods();
+            var values = new[] { 1, 2, 3 }.AsSpan();
+            var count = 3;
+
+            target.SkipBodyWithRefSpan(ref values, ref count);
+
+            // body is skipped: span is untouched, the ref int is copied back as changed by the aspect (3 * 10)
+            values.ToArray().Should().Equal(1, 2, 3);
+            count.Should().Be(30);
+        }
+
+        [Fact]
         public void SwallowedExceptionWithSpanReturnValueShouldReturnDefault()
         {
             var target = new OverwritingRefStructMethods();
