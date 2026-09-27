@@ -1,5 +1,7 @@
 ﻿<Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd"
     GenerateXsd="true"
     VerifyAssembly="true">
-  <ModuleWeaver />
+  <ModuleWeaver>
+    <DisableExecutionArgsOptimization Aspect="MethodBoundaryAspect.Fody.RuntimeTests.Aspects.OptOutSkipBodyAspect" />
+  </ModuleWeaver>
 </Weavers>

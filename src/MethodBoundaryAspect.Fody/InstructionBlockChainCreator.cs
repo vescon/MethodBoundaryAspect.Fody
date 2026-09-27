@@ -107,11 +107,9 @@ namespace MethodBoundaryAspect.Fody
             NamedInstructionBlockChain argumentsArrayChain,
             TypeReference anyAspectTypeDefinition,
             MethodDefinition method,
-            MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver)
+            MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver,
+            ExecutionArgsUsage usage)
         {
-            // instance value
-            var createThisVariableBlock = CreateThisVariable();
-
             // MethodExecutionArgs instance
             var onEntryMethodTypeRef = _referenceFinder.GetMethodReference(anyAspectTypeDefinition, AspectMethodCriteria.IsOnEntryMethod);
             var firstParameterType = onEntryMethodTypeRef.Parameters.Single().ParameterType;
@@ -124,8 +122,12 @@ namespace MethodBoundaryAspect.Fody
                 _moduleDefinition);
 
             InstructionBlock callSetInstanceBlock = null;
-            if (!_method.IsStatic && !_method.DeclaringType.IsByRefLike()) // ref structs cannot be boxed, Instance stays null
+            NamedInstructionBlockChain createThisVariableBlock = null;
+            if (!_method.IsStatic
+                && !_method.DeclaringType.IsByRefLike() // ref structs cannot be boxed, Instance stays null
+                && (usage & ExecutionArgsUsage.Instance) != 0)
             {
+                createThisVariableBlock = CreateThisVariable();
                 var methodExecutionArgsSetInstanceMethodRef =
                     _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Instance");
                 callSetInstanceBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetInstanceMethodRef,
@@ -133,42 +135,51 @@ namespace MethodBoundaryAspect.Fody
                     new VariablePersistable(createThisVariableBlock.Variable));
             }
 
-            var methodExecutionArgsSetArgumentsMethodRef =
-                _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Arguments");
-            var callSetArgumentsBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetArgumentsMethodRef,
-                new VariablePersistable(methodExecutionArgsVariable),
-                new VariablePersistable(argumentsArrayChain.Variable));
-
-            var methodBaseTypeRef = _referenceFinder.GetTypeReference(typeof (MethodBase));
-            var methodBaseVariable = _creator.CreateVariable(methodBaseTypeRef);
-            InstructionBlock callGetCurrentMethodBlock;
-            var variablePersistable = new VariablePersistable(methodBaseVariable);
-            if (methodInfoCompileTimeWeaver?.IsEnabled != true)
-            {
-                // fallback: slow GetCurrentMethod
-                var methodBaseGetCurrentMethod = _referenceFinder.GetMethodReference(methodBaseTypeRef,
-                    md => md.Name == "GetCurrentMethod");
-                callGetCurrentMethodBlock = _creator.CallStaticMethod(methodBaseGetCurrentMethod, variablePersistable);
-            }
-            else
-            {
-                // fast: precompiled method info token
-                methodInfoCompileTimeWeaver.AddMethod(method);
-                callGetCurrentMethodBlock = methodInfoCompileTimeWeaver.PushMethodInfoOnStack(method, variablePersistable);
-            }
-
-            var methodExecutionArgsSetMethodBaseMethodRef =
-                _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Method");
-            var callSetMethodBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetMethodBaseMethodRef,
-                new VariablePersistable(methodExecutionArgsVariable),
-                variablePersistable);
-
             var newMethodExecutionArgsBlockChain = new NamedInstructionBlockChain(methodExecutionArgsVariable,
                 methodExecutionArgsTypeRef);
             newMethodExecutionArgsBlockChain.Add(newObjectMethodExecutionArgsBlock);
-            newMethodExecutionArgsBlockChain.Add(callSetArgumentsBlock);
-            newMethodExecutionArgsBlockChain.Add(callGetCurrentMethodBlock);
-            newMethodExecutionArgsBlockChain.Add(callSetMethodBlock);
+
+            // the arguments array is not created if no aspect reads it
+            if (argumentsArrayChain != null)
+            {
+                var methodExecutionArgsSetArgumentsMethodRef =
+                    _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Arguments");
+                var callSetArgumentsBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetArgumentsMethodRef,
+                    new VariablePersistable(methodExecutionArgsVariable),
+                    new VariablePersistable(argumentsArrayChain.Variable));
+                newMethodExecutionArgsBlockChain.Add(callSetArgumentsBlock);
+            }
+
+            if ((usage & ExecutionArgsUsage.Method) != 0)
+            {
+                var methodBaseTypeRef = _referenceFinder.GetTypeReference(typeof (MethodBase));
+                var methodBaseVariable = _creator.CreateVariable(methodBaseTypeRef);
+                InstructionBlock callGetCurrentMethodBlock;
+                var variablePersistable = new VariablePersistable(methodBaseVariable);
+                if (methodInfoCompileTimeWeaver?.IsEnabled != true)
+                {
+                    // fallback: slow GetCurrentMethod
+                    var methodBaseGetCurrentMethod = _referenceFinder.GetMethodReference(methodBaseTypeRef,
+                        md => md.Name == "GetCurrentMethod");
+                    callGetCurrentMethodBlock = _creator.CallStaticMethod(methodBaseGetCurrentMethod, variablePersistable);
+                }
+                else
+                {
+                    // fast: precompiled method info token
+                    methodInfoCompileTimeWeaver.AddMethod(method);
+                    callGetCurrentMethodBlock = methodInfoCompileTimeWeaver.PushMethodInfoOnStack(method, variablePersistable);
+                }
+
+                var methodExecutionArgsSetMethodBaseMethodRef =
+                    _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Method");
+                var callSetMethodBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetMethodBaseMethodRef,
+                    new VariablePersistable(methodExecutionArgsVariable),
+                    variablePersistable);
+
+                newMethodExecutionArgsBlockChain.Add(callGetCurrentMethodBlock);
+                newMethodExecutionArgsBlockChain.Add(callSetMethodBlock);
+            }
+
             if (callSetInstanceBlock != null)
             {
                 newMethodExecutionArgsBlockChain.Add(createThisVariableBlock);

@@ -17,8 +17,20 @@ namespace MethodBoundaryAspect.Fody
         protected readonly ILProcessor _ilProcessor;
         protected readonly IList<AspectData> _aspects;
         private readonly MethodInfoCompileTimeWeaver _methodInfoCompileTimeWeaver;
+        protected readonly ExecutionArgsUsage _executionArgsUsage;
 
         protected bool HasMultipleAspects => _aspects.Count > 1;
+        protected bool AllowChangingInputArguments => _aspects.Any(x => x.Info.AllowChangingInputArguments);
+
+        // a return value not used by any aspect doesn't have to be boxed into MethodExecutionArgs.
+        // It is also needed if it's only written: it's read back after OnExit, also if the aspect didn't overwrite it
+        protected bool ProvidesReturnValue =>
+            (_executionArgsUsage & (ExecutionArgsUsage.ReadReturnValue | ExecutionArgsUsage.WriteReturnValue)) != 0;
+
+        // a return value not written by any aspect doesn't have to be read back from MethodExecutionArgs,
+        // a skipped method body (FlowBehavior.Return, Continue) returns the default value
+        protected bool ReadsBackReturnValue => (_executionArgsUsage & ExecutionArgsUsage.WriteReturnValue) != 0;
+
         protected IPersistable ExecutionArgs { get; set; }
 
         public int WeaveCounter { get; private set; }
@@ -27,7 +39,8 @@ namespace MethodBoundaryAspect.Fody
             ModuleDefinition module,
             MethodDefinition method,
             IList<AspectData> aspects,
-            MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver)
+            MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver,
+            ExecutionArgsUsage executionArgsUsage = ExecutionArgsUsage.All)
         {
             _module = module;
             _method = method;
@@ -35,6 +48,7 @@ namespace MethodBoundaryAspect.Fody
             _ilProcessor = _method.Body.GetILProcessor();
             _aspects = aspects;
             _methodInfoCompileTimeWeaver = methodInfoCompileTimeWeaver;
+            _executionArgsUsage = executionArgsUsage;
         }
 
         public void Weave()
@@ -44,8 +58,13 @@ namespace MethodBoundaryAspect.Fody
 
             Setup();
 
-            var arguments = _creator.CreateMethodArgumentsArray();
-            AddToSetup(arguments);
+            // the arguments array is only created if an aspect reads it or changed arguments are passed to the method
+            NamedInstructionBlockChain arguments = null;
+            if (AllowChangingInputArguments || (_executionArgsUsage & ExecutionArgsUsage.Arguments) != 0)
+            {
+                arguments = _creator.CreateMethodArgumentsArray();
+                AddToSetup(arguments);
+            }
 
             WeaveMethodExecutionArgs(arguments);
 
@@ -208,7 +227,8 @@ namespace MethodBoundaryAspect.Fody
                 arguments,
                 _aspects[0].Info.AspectAttribute.AttributeType,
                 _method,
-                _methodInfoCompileTimeWeaver);
+                _methodInfoCompileTimeWeaver,
+                _executionArgsUsage);
             AddToSetup(executionArgs);
             ExecutionArgs = executionArgs;
         }
@@ -227,7 +247,7 @@ namespace MethodBoundaryAspect.Fody
 
         private void WeaveOnEntry(NamedInstructionBlockChain arguments, IPersistable returnValue)
         {
-            var allowChangingInputArguments = _aspects.Any(x => x.Info.AllowChangingInputArguments);
+            var allowChangingInputArguments = AllowChangingInputArguments;
 
             var aspectsWithOnEntry = _aspects
                 .Select((asp, index)=> new { aspect = asp, index })
@@ -284,7 +304,8 @@ namespace MethodBoundaryAspect.Fody
 
                 if (returnValue != null)
                 {
-                    onExitChain.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue));
+                    if (ReadsBackReturnValue)
+                        onExitChain.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue));
                     onExitChain.Add(returnValue.Load(false, false));
                 }
 
@@ -314,7 +335,7 @@ namespace MethodBoundaryAspect.Fody
             InstructionBlockChain callSourceMethod;
 
             ILoadable[] args = null;
-            var allowChangingInputArguments = _aspects.Any(x => x.Info.AllowChangingInputArguments);
+            var allowChangingInputArguments = AllowChangingInputArguments;
             if (allowChangingInputArguments)
             {
                 // get arguments from ExecutionArgs because they could have been changed in aspect code
@@ -428,7 +449,7 @@ namespace MethodBoundaryAspect.Fody
 
             Instruction instructionAfterCall = null;
             // ref structs cannot be boxed, ReturnValue stays null
-            if (hasReturnValue && onExitAspects.Any() && !_method.ReturnType.IsByRefLike())
+            if (hasReturnValue && onExitAspects.Any() && ProvidesReturnValue && !_method.ReturnType.IsByRefLike())
             {
                 var loadReturnValue = _creator.LoadValueOnStack(returnValue);
 
@@ -448,7 +469,7 @@ namespace MethodBoundaryAspect.Fody
                 AddToEnd(_creator.CallAspectOnExit(aspect, ExecutionArgs));
             }
 
-            if (hasReturnValue && onExitAspects.Any())
+            if (hasReturnValue && onExitAspects.Any() && ReadsBackReturnValue)
                 _creator.ReadReturnValue(ExecutionArgs, returnValue).Append(_ilProcessor);
 
             return instructionAfterCall;
@@ -514,7 +535,7 @@ namespace MethodBoundaryAspect.Fody
                     callOnExitsAndReturn.Add(_creator.CallAspectOnExit(jthAspect, ExecutionArgs));
                 }
 
-                if (returnValue != null)
+                if (returnValue != null && ReadsBackReturnValue)
                     callOnExitsAndReturn.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue));
 
                 callOnExitsAndReturn.Add(new InstructionBlock("Leave", Instruction.Create(OpCodes.Leave_S, returnAfterHandling.First)));

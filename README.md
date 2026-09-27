@@ -34,8 +34,18 @@ You can easily write your own aspects for
         - no async support
         - requires aspect to be annotated with [AllowChangingInputArgumentsAttribute](https://github.com/vescon/MethodBoundaryAspect.Fody/blob/master/src/MethodBoundaryAspect/Attributes/AllowChangingInputArgumentsAttribute.cs)        
     - Overwrite return value to be returned from the method.
+- Low overhead: only the `MethodExecutionArgs` properties used by the aspects are provided at runtime (see [Performance](#performance-only-used-methodexecutionargs-properties-are-provided))
 
 Feel free to make a [Fork](https://github.com/vescon/MethodBoundaryAspect.Fody/fork) of this repository.
+
+### Breaking changes in version 3
+
+Version 3 only provides the `MethodExecutionArgs` properties that the aspects of a method use (see [Performance](#performance-only-used-methodexecutionargs-properties-are-provided)). Which properties are used is determined when the project using the aspect is weaved. This changes the runtime behavior in these cases:
+
+- **The aspect code changes without the weaved project being weaved again.** If the aspect's assembly is replaced by a newer version (e.g. a plugin, a separately deployed library, or a binding redirect) and the project using the aspect is not rebuilt, the new aspect version gets `null` for the properties the old version didn't use (`Arguments`, `Method`, `Instance`, `ReturnValue`), and a `ReturnValue` it sets is ignored. Rebuild all projects using the aspect after changing it, or [disable the optimization](#disabling-the-optimization) for this aspect.
+- **The method body is skipped without a return value.** If an aspect skips the method body (`FlowBehavior.Return` in `OnEntry`, or `FlowBehavior.Continue`/`FlowBehavior.Return` in `OnException`) and no aspect sets `args.ReturnValue`, the method returns the default value of its return type. Version 2 threw a `NullReferenceException` for value types in this case.
+
+The configuration in `FodyWeavers.xml` is unchanged; the optimization is enabled by default.
 
 ### Quickstart
 
@@ -395,6 +405,63 @@ A build warning is written for each weaved method using ref structs. To suppress
 ```
 
 To exclude a single method from weaving instead, annotate it with `[DisableWeaving]`.
+
+### Performance: only used `MethodExecutionArgs` properties are provided
+
+Providing all `MethodExecutionArgs` properties on every call costs time and memory. The arguments are boxed into a new `object[]`, the return value is boxed, and the `MethodBase` is looked up (by reflection for open generic methods). When weaving, the IL of the aspect's `OnEntry`, `OnExit` and `OnException` methods is analyzed. Values that no aspect of a method uses are not provided:
+
+| Not used by any aspect of the method | Not done at runtime |
+|---|---|
+| `args.Arguments` (read) | the arguments array is not created, the arguments are not boxed. Still done for `[AllowChangingInputArguments]` aspects |
+| `args.ReturnValue` (read or write) | the return value is not boxed into `args.ReturnValue` before `OnExit` |
+| `args.ReturnValue` (write) | the return value is not read back (unboxed) from `args.ReturnValue` after the aspect calls |
+| `args.Method` | the `MethodBase` is not looked up |
+| `args.Instance` | the instance is not set (and not boxed for structs) |
+
+For example, only `args.Method` is provided for this aspect:
+
+```csharp
+public sealed class TimingAspect : OnMethodBoundaryAspect
+{
+    public override void OnEntry(MethodExecutionArgs args)
+    {
+        args.MethodExecutionTag = Stopwatch.StartNew();
+    }
+
+    public override void OnExit(MethodExecutionArgs args)
+    {
+        var stopwatch = (Stopwatch)args.MethodExecutionTag;
+        Console.WriteLine($"{args.Method.Name} took {stopwatch.ElapsedMilliseconds} ms");
+    }
+}
+```
+
+The analysis is conservative. If `args` is used in any other way than reading or writing its properties (for example, passed to a logger, stored in a field, or captured by a lambda), the aspect gets all properties. Calls to non-virtual methods of the aspect and its base classes are followed, e.g. `base.OnEntry(args)` or a private helper. When several aspects are applied to a method, a property is provided if any of them uses it.
+
+If the method body is skipped (`FlowBehavior.Return` in `OnEntry`, or `FlowBehavior.Continue`/`FlowBehavior.Return` in `OnException`) and no aspect sets `args.ReturnValue`, the method returns the default value of its return type. Before this optimization, a method returning a value type threw a `NullReferenceException` in this case (see [Breaking changes in version 3](#breaking-changes-in-version-3)).
+
+#### Disabling the optimization
+
+The analysis runs when the project using the aspect is weaved. If that project is not rebuilt when the aspect's assembly is updated (e.g. an aspect loaded from a plugin), a new aspect version could access properties that were not provided and are `null` (see [Breaking changes in version 3](#breaking-changes-in-version-3)). Aspects whose assembly can only be resolved as a reference assembly are never optimized.
+
+To disable the optimization for single aspects, add their full type names to `FodyWeavers.xml` (nested types as `Namespace.Outer+Inner`):
+
+```xml
+<Weavers>
+  <MethodBoundaryAspect>
+    <DisableExecutionArgsOptimization Aspect="MyCompany.Logging.LogAspect" />
+    <DisableExecutionArgsOptimization Aspect="MyCompany.Plugins.PluginAspect" />
+  </MethodBoundaryAspect>
+</Weavers>
+```
+
+A build warning is written if a configured aspect is not applied to any weaved method. To disable the optimization for all aspects:
+
+```xml
+<Weavers>
+  <MethodBoundaryAspect DisableExecutionArgsOptimization="true" />
+</Weavers>
+```
 
 ## Benchmarks
 

@@ -11,18 +11,25 @@ namespace MethodBoundaryAspect.Fody
         public static MethodWeaver MakeWeaver(ModuleDefinition module,
             MethodDefinition method,
             IEnumerable<AspectInfo> aspects,
-            MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver)
+            MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver,
+            ExecutionArgsUsageAnalyzer executionArgsUsageAnalyzer)
         {
-            var filteredAspects = from a in aspects
+            var filteredAspects = (from a in aspects
                                   let methods = GetUsedAspectMethods(a.AspectAttribute.AttributeType)
                                   where methods != AspectMethods.None
-                                  select new { Aspect = a, Methods = methods };
+                                  select new { Aspect = a, Methods = methods })
+                .ToList();
+
+            // all aspects of a method share one MethodExecutionArgs instance
+            var executionArgsUsage = filteredAspects.Aggregate(
+                ExecutionArgsUsage.None,
+                (usage, a) => usage | executionArgsUsageAnalyzer.GetUsage(a.Aspect.AspectTypeDefinition));
 
             var asyncAttribute = method.CustomAttributes.FirstOrDefault(a => a.AttributeType.FullName.Equals(typeof(AsyncStateMachineAttribute).FullName));
             if (asyncAttribute == null)
             {
                 var aspectList = filteredAspects.Select(a => new AspectData(a.Aspect, a.Methods, method, module)).ToList();
-                return new MethodWeaver(module, method, aspectList, methodInfoCompileTimeWeaver);
+                return new MethodWeaver(module, method, aspectList, methodInfoCompileTimeWeaver, executionArgsUsage);
             }
 
             var moveNextMethod = ((TypeDefinition)asyncAttribute.ConstructorArguments[0].Value).Methods.First(m => m.Name == "MoveNext");
@@ -32,7 +39,8 @@ namespace MethodBoundaryAspect.Fody
                 method,
                 moveNextMethod,
                 aspectDatas,
-                methodInfoCompileTimeWeaver);
+                methodInfoCompileTimeWeaver,
+                executionArgsUsage);
         }
 
         static AspectMethods GetUsedAspectMethods(TypeReference aspectTypeDefinition)

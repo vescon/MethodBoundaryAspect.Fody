@@ -24,8 +24,9 @@ namespace MethodBoundaryAspect.Fody
             MethodDefinition method,
             MethodDefinition moveNext,
             IList<AspectData> aspects,
-            MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver) :
-            base(module, method, aspects, methodInfoCompileTimeWeaver)
+            MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver,
+            ExecutionArgsUsage executionArgsUsage = ExecutionArgsUsage.All) :
+            base(module, method, aspects, methodInfoCompileTimeWeaver, executionArgsUsage)
         {
             _moveNext = moveNext;
             _methodInfoCompileTimeWeaver = methodInfoCompileTimeWeaver;
@@ -117,7 +118,8 @@ namespace MethodBoundaryAspect.Fody
                 arguments,
                 _aspects[0].Info.AspectAttribute.AttributeType,
                 _method,
-                _methodInfoCompileTimeWeaver);
+                _methodInfoCompileTimeWeaver,
+                _executionArgsUsage);
 
             _executionArgsField = _module.ImportReference(_stateMachine.AddPublicInstanceField(executionArgs.Variable.VariableType));
             executionArgs.Add(new InstructionBlock("", Instruction.Create(OpCodes.Ldloc, executionArgs.Variable)));

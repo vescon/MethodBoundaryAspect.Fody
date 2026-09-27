@@ -29,12 +29,13 @@ namespace MethodBoundaryAspect.Fody
     /// Implement CompileTimeValidate
     /// Optimize weaving: Dont generate code of "OnXXX()" method is empty or not used -> ok
     /// Optimize weaving: remove runtime dependency on "MethodBoundaryAspect.Attributes" assembly
-    /// Optimize weaving: only put arguments in MethodExecutionArgs if they are accessed in "OnXXX()" method
+    /// Optimize weaving: only put arguments in MethodExecutionArgs if they are accessed in "OnXXX()" method -> ok
     /// Optimize weaving: store GetCurrentMethod() result in static Dictionary in MethodBoundaryAspect with generated id for lookup to prevent reflection penalty -> ok
     /// </summary>
     public class ModuleWeaver : BaseModuleWeaver
     {
         private MethodInfoCompileTimeWeaver _methodInfoCompileTimeWeaver;
+        private ExecutionArgsUsageAnalyzer _executionArgsUsageAnalyzer;
 
         public ModuleWeaver()
         {
@@ -47,6 +48,20 @@ namespace MethodBoundaryAspect.Fody
         /// Configurable in FodyWeavers.xml: &lt;MethodBoundaryAspect SuppressRefStructWarnings="true" /&gt;
         /// </summary>
         public bool SuppressRefStructWarnings { get; set; }
+
+        /// <summary>
+        /// Disables the MethodExecutionArgs optimization for all aspects: all properties are always provided,
+        /// even if the aspects don't use them.
+        /// Configurable in FodyWeavers.xml: &lt;MethodBoundaryAspect DisableExecutionArgsOptimization="true" /&gt;
+        /// </summary>
+        public bool DisableExecutionArgsOptimization { get; set; }
+
+        /// <summary>
+        /// Full names of the aspects for which the MethodExecutionArgs optimization is disabled.
+        /// Configurable in FodyWeavers.xml:
+        /// &lt;MethodBoundaryAspect&gt;&lt;DisableExecutionArgsOptimization Aspect="MyNamespace.MyAspect" /&gt;&lt;/MethodBoundaryAspect&gt;
+        /// </summary>
+        public List<string> DisableExecutionArgsOptimizationAspects { get; } = new List<string>();
 
         public int TotalWeavedTypes { get; private set; }
         public int TotalWeavedMethods { get; private set; }
@@ -143,10 +158,15 @@ namespace MethodBoundaryAspect.Fody
             if (bool.TryParse(Config?.Attribute(nameof(SuppressRefStructWarnings))?.Value, out var suppressRefStructWarnings))
                 SuppressRefStructWarnings = suppressRefStructWarnings;
 
+            ReadExecutionArgsOptimizationConfig();
+
             _methodInfoCompileTimeWeaver = new MethodInfoCompileTimeWeaver(module)
             {
                 IsEnabled = !DisableCompileTimeMethodInfos
             };
+            _executionArgsUsageAnalyzer = new ExecutionArgsUsageAnalyzer(
+                DisableExecutionArgsOptimization,
+                DisableExecutionArgsOptimizationAspects);
 
             var assemblyMethodBoundaryAspects = module.Assembly.CustomAttributes;
 
@@ -154,6 +174,34 @@ namespace MethodBoundaryAspect.Fody
                 WeaveTypeAndNestedTypes(module, type, assemblyMethodBoundaryAspects);
 
             _methodInfoCompileTimeWeaver.Finish();
+
+            foreach (var aspect in DisableExecutionArgsOptimizationAspects)
+            {
+                if (!_executionArgsUsageAnalyzer.MatchedDisabledAspects.Contains(ExecutionArgsUsageAnalyzer.NormalizeTypeName(aspect)))
+                    WriteWarning($"Aspect '{aspect}' configured in DisableExecutionArgsOptimization of FodyWeavers.xml was not found in any weaved method. Use the full type name, e.g. 'MyNamespace.MyAspect'.");
+            }
+        }
+
+        private void ReadExecutionArgsOptimizationConfig()
+        {
+            if (Config == null)
+                return;
+
+            var attribute = Config.Attribute(nameof(DisableExecutionArgsOptimization));
+            if (attribute != null)
+            {
+                if (!bool.TryParse(attribute.Value, out var disable))
+                    throw new WeavingException($"Invalid value '{attribute.Value}' for {nameof(DisableExecutionArgsOptimization)} in FodyWeavers.xml, expected 'true' or 'false'.");
+                DisableExecutionArgsOptimization = disable;
+            }
+
+            foreach (var element in Config.Elements(nameof(DisableExecutionArgsOptimization)))
+            {
+                var aspect = element.Attribute("Aspect")?.Value;
+                if (string.IsNullOrWhiteSpace(aspect))
+                    throw new WeavingException($"<{nameof(DisableExecutionArgsOptimization)}> in FodyWeavers.xml requires the full type name of the aspect, e.g. <{nameof(DisableExecutionArgsOptimization)} Aspect=\"MyNamespace.MyAspect\" />.");
+                DisableExecutionArgsOptimizationAspects.Add(aspect.Trim());
+            }
         }
 
         private void WeaveTypeAndNestedTypes(ModuleDefinition module, TypeDefinition type,
@@ -265,7 +313,7 @@ namespace MethodBoundaryAspect.Fody
                 .Where(x => !x.SkipProperties || (!method.IsGetter && !method.IsSetter))
                 .ToList();
 
-            var methodWeaver = MethodWeaverFactory.MakeWeaver(module, method, aspectInfosWithMethods, methodInfoCompileTimeWeaver);
+            var methodWeaver = MethodWeaverFactory.MakeWeaver(module, method, aspectInfosWithMethods, methodInfoCompileTimeWeaver, _executionArgsUsageAnalyzer);
             methodWeaver.Weave();
             if (methodWeaver.WeaveCounter == 0)
                 return false;
