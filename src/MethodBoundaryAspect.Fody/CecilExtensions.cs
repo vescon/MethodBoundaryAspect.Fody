@@ -275,8 +275,14 @@ namespace MethodBoundaryAspect.Fody
             var typeDef = typeRef.Resolve();
             if (typeDef.IsEnum(out TypeReference underlying))
                 return Instruction.Create(underlying.MetadataType.GetStIndCode());
-            if (typeRef.IsValueType)
-                return Instruction.Create(typeRef.MetadataType.GetStIndCode());
+            if (typeRef.IsValueType || typeDef.IsValueType)
+            {
+                // non-primitive value types (e.g. Guid, DateTime, custom structs) need stobj
+                var opCode = typeRef.MetadataType.GetStIndCode();
+                return opCode == OpCodes.Stind_Ref
+                    ? Instruction.Create(OpCodes.Stobj, typeRef)
+                    : Instruction.Create(opCode);
+            }
             return Instruction.Create(OpCodes.Stind_Ref);
         }
 
