@@ -8,10 +8,12 @@ namespace MethodBoundaryAspect.Fody
     public class ReferenceFinder
     {
         private readonly ModuleDefinition _moduleDefinition;
+        private readonly CoreLibraryReflectionImporter _reflectionImporter;
 
         public ReferenceFinder(ModuleDefinition moduleDefinition)
         {
             _moduleDefinition = moduleDefinition;
+            _reflectionImporter = new CoreLibraryReflectionImporter(moduleDefinition);
         }
 
         public MethodReference GetMethodReference(Type declaringType, Func<MethodDefinition, bool> predicate)
@@ -42,7 +44,7 @@ namespace MethodBoundaryAspect.Fody
 
         public TypeReference GetTypeReference(Type type, string netCoreAssemblyHint = null)
         {
-            var importedType = _moduleDefinition.ImportReference(type);
+            var importedType = _reflectionImporter.ImportReference(type, null);
             // On .NET Core, we need to rewrite mscorlib types to use the
             // dot net assemblies from the weaved assembly and not the ones
             // used by the weaver itself.

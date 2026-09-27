@@ -19,6 +19,23 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore.csproj" />
+    <ProjectReference Include="..\MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj" />
+    <!-- net462 assembly woven by NetFrameworkTargetWeavingTests; built only, copied to $(OutDir)NetFramework -->
+    <ProjectReference Include="$(NetFrameworkTestAssemblyProject)" ReferenceOutputAssembly="false" SkipGetTargetFrameworkProperties="true" SetTargetFramework="TargetFramework=net462" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <NetFrameworkTestAssemblyProject>..\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework\MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.csproj</NetFrameworkTestAssemblyProject>
+  </PropertyGroup>
+
+  <Target Name="CopyNetFrameworkTestAssembly" AfterTargets="Build">
+    <MSBuild Projects="$(NetFrameworkTestAssemblyProject)" Targets="GetTargetPath" Properties="TargetFramework=net462">
+      <Output TaskParameter="TargetOutputs" ItemName="_NetFrameworkTestAssembly" />
+    </MSBuild>
+    <ItemGroup>
+      <_NetFrameworkTestAssemblyFiles Include="%(_NetFrameworkTestAssembly.RootDir)%(_NetFrameworkTestAssembly.Directory)*.dll;%(_NetFrameworkTestAssembly.RootDir)%(_NetFrameworkTestAssembly.Directory)*.pdb" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_NetFrameworkTestAssemblyFiles)" DestinationFolder="$(OutDir)NetFramework" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>
