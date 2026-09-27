@@ -173,7 +173,7 @@ namespace MethodBoundaryAspect.Fody
                 i.OpCode == OpCodes.Call
                 && i.Operand is MethodReference m
                 && m.Name == "SetException"
-                && m.DeclaringType.FullName.StartsWith(typeof(AsyncTaskMethodBuilder).FullName));
+                && IsAsyncMethodBuilder(m.DeclaringType));
             if (setException == null)
                 throw new InvalidOperationException($"Async state machine for {_method.FullName} did not set the exception in the expected way.");
 
@@ -267,10 +267,25 @@ namespace MethodBoundaryAspect.Fody
                 if (i.OpCode != OpCodes.Ldfld && i.OpCode != OpCodes.Ldflda)
                     continue;
 
-                if (i.Operand is FieldReference field && field.FieldType.FullName.StartsWith(typeof(AsyncTaskMethodBuilder).FullName))
+                if (i.Operand is FieldReference field && IsAsyncMethodBuilder(field.FieldType))
                     return true;
             }
             return false;
+        }
+
+        // Matches the builders used by the compiler for "async Task", "async Task<T>", "async void"
+        // and "async ValueTask(<T>)" methods, e.g. AsyncTaskMethodBuilder`1 or AsyncVoidMethodBuilder.
+        static bool IsAsyncMethodBuilder(TypeReference type)
+        {
+            if (type.Namespace != typeof(AsyncTaskMethodBuilder).Namespace)
+                return false;
+
+            var name = type.Name;
+            var arityIndex = name.IndexOf('`');
+            if (arityIndex >= 0)
+                name = name.Substring(0, arityIndex);
+
+            return name.EndsWith("MethodBuilder") && name.Contains("Async");
         }
     }
 }
