@@ -12,6 +12,6 @@ namespace MethodBoundaryAspect.Fody.Attributes
         InternalAndProtected = 16,
         InternalOrProtected = 32,
         Public = 64,
-        AnyVisibility = 64,
+        AnyVisibility = Private | Protected | Internal | InternalAndProtected | InternalOrProtected | Public,
     }
 }

@@ -216,7 +216,7 @@ Aspects applied to a class or assembly can be narrowed down with regular express
 [assembly: Log(NamespaceFilter = @"^MyApp\.Services", TypeNameFilter = "Service$", MethodNameFilter = "^(?!get_|set_)")]
 ```
 
-`AttributeTargetMemberAttributes` restricts the visibility of the methods, e.g. only public and internal methods:
+`AttributeTargetMemberAttributes` restricts the visibility of the methods (by default methods of any visibility are woven, `MulticastAttributes.AnyVisibility`), e.g. only public and internal methods:
 
 ```csharp
 [assembly: Log(AttributeTargetMemberAttributes = MulticastAttributes.Public | MulticastAttributes.Internal)]
@@ -528,6 +528,10 @@ Version 3 only provides the `MethodExecutionArgs` properties that the aspects of
 
 - **The aspect code changes without the woven project being woven again.** If the aspect's assembly is replaced by a newer version (e.g. a plugin, a separately deployed library, or a binding redirect) and the project using the aspect is not rebuilt, the new aspect version gets `null` for the properties the old version didn't use (`Arguments`, `Method`, `Instance`, `ReturnValue`), and a `ReturnValue` it sets is ignored. Rebuild all projects using the aspect after changing it, or [disable the optimization](#configuration-reference) for this aspect.
 - **The method body is skipped without a return value.** If an aspect skips the method body (`FlowBehavior.Return` in `OnEntry`, or `FlowBehavior.Continue`/`FlowBehavior.Return` in `OnException`) and no aspect sets `args.ReturnValue`, the method returns the default value of its return type. Version 2 threw a `NullReferenceException` for value types in this case.
+
+Also changed:
+
+- **`MulticastAttributes.AnyVisibility` weaves methods of all visibilities** ([#132](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/132)). In version 2 it had the same value as `MulticastAttributes.Public`, so aspects with `AttributeTargetMemberAttributes = MulticastAttributes.AnyVisibility` only hit public methods. Now private, protected and internal methods are woven as well, like for aspects without `AttributeTargetMemberAttributes`. Use `MulticastAttributes.Public` to keep the previous behavior. An explicit `MulticastAttributes.Default` also weaves all visibilities now (version 2: no methods at all).
 
 The configuration in `FodyWeavers.xml` is unchanged; the optimization is enabled by default.
 

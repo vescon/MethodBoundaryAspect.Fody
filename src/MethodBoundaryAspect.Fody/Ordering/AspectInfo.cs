@@ -173,6 +173,11 @@ namespace MethodBoundaryAspect.Fody.Ordering
             var memberAttributes = new List<MethodAttributes>();
 
             var attributes = (MulticastAttributes) targetMembersAttribute.Argument.Value;
+
+            // no visibility restriction, like when the property is not set
+            if (attributes == MulticastAttributes.Default)
+                return;
+
             if (attributes.HasFlag(MulticastAttributes.Private))
             {
                 memberAttributes.Add(MethodAttributes.Private);
