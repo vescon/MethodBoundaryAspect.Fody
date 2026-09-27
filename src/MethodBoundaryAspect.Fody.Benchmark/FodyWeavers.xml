@@ -1,4 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Weavers VerifyAssembly="false" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd">
-  <MethodBoundaryAspect/>
+  <ModuleWeaver>
+    <!-- all MethodExecutionArgs properties are provided, like before the optimization -->
+    <DisableExecutionArgsOptimization Aspect="MethodBoundaryAspect.Fody.Benchmark.AllPropertiesAspect" />
+  </ModuleWeaver>
 </Weavers>

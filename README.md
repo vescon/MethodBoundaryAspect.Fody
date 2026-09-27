@@ -436,6 +436,14 @@ public sealed class TimingAspect : OnMethodBoundaryAspect
 }
 ```
 
+Overhead of an aspect with `OnEntry` and `OnExit` compared to the same call without an aspect ([benchmark](src/MethodBoundaryAspect.Fody.Benchmark/Program.cs), .NET 8, BenchmarkDotNet short run):
+
+| Aspect | Static method: time | Static method: allocated | Open generic method: time | Open generic method: allocated |
+|---|---:|---:|---:|---:|
+| uses no property | +14 ns | 120 B | +12 ns | 120 B |
+| uses `args.Method` | +12 ns | 120 B | - | - |
+| all properties provided (optimization disabled) | +35 ns | 200 B | +122 ns | 248 B |
+
 The analysis is conservative. If `args` is used in any other way than reading or writing its properties (for example, passed to a logger, stored in a field, or captured by a lambda), the aspect gets all properties. Calls to non-virtual methods of the aspect and its base classes are followed, e.g. `base.OnEntry(args)` or a private helper. When several aspects are applied to a method, a property is provided if any of them uses it.
 
 If the method body is skipped (`FlowBehavior.Return` in `OnEntry`, or `FlowBehavior.Continue`/`FlowBehavior.Return` in `OnException`) and no aspect sets `args.ReturnValue`, the method returns the default value of its return type. Before this optimization, a method returning a value type threw a `NullReferenceException` in this case (see [Breaking changes in version 3](#breaking-changes-in-version-3)).

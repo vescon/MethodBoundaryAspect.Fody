@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,7 +11,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="MethodBoundaryAspect.Fody" Version="2.0.149" />
+  </ItemGroup>
+
+  <!-- benchmark the weaver of this repository -->
+  <ItemGroup>
+    <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
+    <WeaverFiles Include="..\MethodBoundaryAspect.Fody\bin\$(Configuration)\netstandard2.0\MethodBoundaryAspect.Fody.dll" WeaverClassNames="ModuleWeaver" />
   </ItemGroup>
 
 </Project>
