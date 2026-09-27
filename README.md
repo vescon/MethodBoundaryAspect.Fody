@@ -365,6 +365,37 @@ public sealed class LogAttribute : OnMethodBoundaryAspect
 }
 ```
 
+### Ref structs (`Span<T>`, `ReadOnlySpan<T>`, ...)
+
+Ref structs cannot be boxed, so their values cannot be passed to the aspect via `MethodExecutionArgs`. Methods using them are still weaved, but:
+
+- ref struct arguments (also `ref`, `in` and `out`) are `null` in `args.Arguments`
+- a ref struct return value is `null` in `args.ReturnValue`
+- the instance of a method declared in a `ref struct` is `null` in `args.Instance`
+- changes to these values by the aspect are ignored (changed arguments, overwritten return value). If the aspect skips the method body (`FlowBehavior.Return`) or swallows an exception (`FlowBehavior.Continue`), the method returns the default value (e.g. an empty `Span<T>`)
+
+```csharp
+[Log]
+public class Parser
+{
+    // args.Arguments is [null, 42] in OnEntry
+    public bool TryParse(ReadOnlySpan<char> text, int maxLength) => text.Length <= maxLength;
+
+    // args.ReturnValue is null in OnExit
+    public Span<byte> Slice(byte[] buffer) => buffer.AsSpan(1);
+}
+```
+
+A build warning is written for each weaved method using ref structs. To suppress these warnings, add the `SuppressRefStructWarnings` attribute to `FodyWeavers.xml`:
+
+```xml
+<Weavers>
+  <MethodBoundaryAspect SuppressRefStructWarnings="true" />
+</Weavers>
+```
+
+To exclude a single method from weaving instead, annotate it with `[DisableWeaving]`.
+
 ## Benchmarks
 
 * BenchmarkDotNet=v0.13.2, OS=Windows 10 (10.0.19043.1766/21H1/May2021Update)

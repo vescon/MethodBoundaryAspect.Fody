@@ -318,9 +318,12 @@ namespace MethodBoundaryAspect.Fody
             if (allowChangingInputArguments)
             {
                 // get arguments from ExecutionArgs because they could have been changed in aspect code
+                // (except ref structs which cannot be passed via ExecutionArgs)
+                var instanceOffset = _method.IsStatic ? 0 : 1;
                 args = _method.Parameters
-                    .Select((x, i) => new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator))
-                    .Cast<ILoadable>()
+                    .Select((x, i) => x.ParameterType.IsByRefLike()
+                        ? (ILoadable)new ArgumentLoadable(i + instanceOffset, x, _method.Body.GetILProcessor())
+                        : new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator))
                     .ToArray();
 
                 callSourceMethod = _creator.CallMethodWithReturn(
@@ -364,7 +367,7 @@ namespace MethodBoundaryAspect.Fody
         private InstructionBlock CreateUpdateArgumentsArrayFromByRefVariables(NamedInstructionBlockChain arguments, ILoadable[] args)
         {
             var instructions = new List<Instruction>();
-            foreach (var parameter in _method.Parameters.Where(x => x.ParameterType.IsByReference))
+            foreach (var parameter in GetByRefParametersPassedViaArguments())
             {
                 var byRefVariable = ((ArrayElementLoadable)args[parameter.Index]).ByRefVariable;
                 instructions.Add(_ilProcessor.Create(OpCodes.Ldloc, arguments.Variable));
@@ -395,7 +398,7 @@ namespace MethodBoundaryAspect.Fody
         private InstructionBlock CreateCopyBackByRefArguments(Func<ParameterDefinition, IEnumerable<Instruction>> loadValue)
         {
             var copyBackInstructions = new List<Instruction>();
-            foreach (var parameter in _method.Parameters.Where(x => x.ParameterType.IsByReference))
+            foreach (var parameter in GetByRefParametersPassedViaArguments())
             {
                 copyBackInstructions.Add(_ilProcessor.Create(OpCodes.Ldarg, parameter));
                 copyBackInstructions.AddRange(loadValue(parameter));
@@ -409,6 +412,13 @@ namespace MethodBoundaryAspect.Fody
                 : null;
         }
 
+        // ref/out parameters except ref structs, which cannot be boxed into ExecutionArgs.Arguments
+        // and are passed directly to the called method instead
+        private IEnumerable<ParameterDefinition> GetByRefParametersPassedViaArguments()
+        {
+            return _method.Parameters.Where(x => x.ParameterType.IsByReference && !x.ParameterType.IsByRefLike());
+        }
+
         private Instruction WeaveOnExit(bool hasReturnValue, NamedInstructionBlockChain returnValue)
         {
             var onExitAspects = _aspects
@@ -417,7 +427,8 @@ namespace MethodBoundaryAspect.Fody
                             .ToList();
 
             Instruction instructionAfterCall = null;
-            if (hasReturnValue && onExitAspects.Any())
+            // ref structs cannot be boxed, ReturnValue stays null
+            if (hasReturnValue && onExitAspects.Any() && !_method.ReturnType.IsByRefLike())
             {
                 var loadReturnValue = _creator.LoadValueOnStack(returnValue);
 

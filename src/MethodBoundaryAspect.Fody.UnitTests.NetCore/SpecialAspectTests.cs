@@ -6,6 +6,7 @@ using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 {
+    [Collection(RefStructWarningTests.TestAssemblyNetCoreWeaving)]
     public class SpecialAspectTests : MethodBoundaryAspectTestBase
     {
         [Fact]

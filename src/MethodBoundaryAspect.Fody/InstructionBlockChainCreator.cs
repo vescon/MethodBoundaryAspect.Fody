@@ -124,7 +124,7 @@ namespace MethodBoundaryAspect.Fody
                 _moduleDefinition);
 
             InstructionBlock callSetInstanceBlock = null;
-            if (!_method.IsStatic)
+            if (!_method.IsStatic && !_method.DeclaringType.IsByRefLike()) // ref structs cannot be boxed, Instance stays null
             {
                 var methodExecutionArgsSetInstanceMethodRef =
                     _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Instance");
@@ -250,6 +250,10 @@ namespace MethodBoundaryAspect.Fody
         public InstructionBlockChain ReadReturnValue(IPersistable executionArgs, IPersistable returnValue)
         {
             if (InstructionBlockCreator.IsVoid(_method.ReturnType))
+                return new InstructionBlockChain();
+
+            // ref structs cannot be unboxed, a ReturnValue set by the aspect is ignored
+            if (_method.ReturnType.IsByRefLike())
                 return new InstructionBlockChain();
 
             var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "get_ReturnValue");

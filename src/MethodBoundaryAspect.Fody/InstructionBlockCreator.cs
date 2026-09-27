@@ -448,6 +448,10 @@ namespace MethodBoundaryAspect.Fody
                 yield break;
             }
 
+            // ref structs cannot be boxed, they stay null in the arguments array
+            if (parameterDefinition.ParameterType.IsByRefLike())
+                yield break;
+
             yield return Instruction.Create(OpCodes.Ldloc, paramsArray);
             yield return Instruction.Create(OpCodes.Ldc_I4, parameterDefinition.Index);
             yield return Instruction.Create(OpCodes.Ldarg, parameterDefinition);
