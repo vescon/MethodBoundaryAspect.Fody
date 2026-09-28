@@ -207,6 +207,13 @@ namespace MethodBoundaryAspect.Fody
         private void WeaveTypeAndNestedTypes(ModuleDefinition module, TypeDefinition type,
             Collection<CustomAttribute> assemblyMethodBoundaryAspects)
         {
+            // Compiler generated types (async and iterator state machines, closures, anonymous types)
+            // are no user code. The state machines of async methods are woven with the async method,
+            // weaving their MoveNext method again called the aspects for each step of the state machine,
+            // see https://github.com/vescon/MethodBoundaryAspect.Fody/issues/66
+            if (type.CustomAttributes.Any(a => a.AttributeType.FullName == typeof(CompilerGeneratedAttribute).FullName))
+                return;
+
             WeaveType(module, type, assemblyMethodBoundaryAspects);
             if (type.HasNestedTypes)
             {
@@ -214,11 +221,7 @@ namespace MethodBoundaryAspect.Fody
                 foreach (var assemblyAspect in assemblyMethodBoundaryAspects)
                     classMethodBoundaryAspects.Add(assemblyAspect);
                 foreach (var classAspect in type.CustomAttributes)
-                {
-                    if (classAspect.AttributeType.FullName == typeof(CompilerGeneratedAttribute).FullName)
-                        return;
                     classMethodBoundaryAspects.Add(classAspect);
-                }
                 foreach (var nestedType in type.NestedTypes)
                     WeaveTypeAndNestedTypes(module, nestedType, classMethodBoundaryAspects);
             }
