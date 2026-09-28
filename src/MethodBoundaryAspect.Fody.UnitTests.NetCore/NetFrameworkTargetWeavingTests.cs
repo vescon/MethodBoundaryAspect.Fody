@@ -53,7 +53,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
                 .Where(m => m.Name == "GetMethodFromHandle")
                 .ToList();
 
-            // both overloads are emitted: 1 arg in the MethodInfos cache, 2 args for open generic types
+            // both overloads are emitted in the MethodInfos cache: 2 args for methods of open generic types
             getMethodFromHandleCalls.Select(m => m.Parameters.Count).Distinct().Should().BeEquivalentTo(new[] { 1, 2 });
             getMethodFromHandleCalls.Should().OnlyContain(m =>
                 m.DeclaringType.Scope.Name == TargetCoreLibrary

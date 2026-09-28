@@ -466,7 +466,7 @@ A build warning is written for each woven method using ref structs. Suppress the
 
 ## Performance
 
-Filling all `MethodExecutionArgs` properties on every call costs time and memory: the arguments are boxed into a new `object[]`, the return value is boxed, and the `MethodBase` is looked up (by reflection for open generic methods). Therefore the weaver analyzes the IL of the aspects' `OnEntry`, `OnExit` and `OnException` methods, and values that no aspect of a method uses are not provided:
+Filling all `MethodExecutionArgs` properties on every call costs time and memory: the arguments are boxed into a new `object[]`, the return value is boxed, and the `MethodBase` is loaded from a static cache. Therefore the weaver analyzes the IL of the aspects' `OnEntry`, `OnExit` and `OnException` methods, and values that no aspect of a method uses are not provided:
 
 | Not used by any aspect of the method | Not done at runtime |
 |---|---|
@@ -500,7 +500,7 @@ Overhead of an aspect with `OnEntry` and `OnExit` compared to the same call with
 |---|---:|---:|---:|---:|
 | uses no property | +14 ns | 120 B | +12 ns | 120 B |
 | uses `args.Method` | +12 ns | 120 B | - | - |
-| all properties provided (optimization disabled) | +35 ns | 200 B | +122 ns | 248 B |
+| all properties provided (optimization disabled) | +35 ns | 200 B | +20 ns | 152 B |
 
 The analysis is conservative. If `args` is used in any other way than reading or writing its properties (for example, passed to a logger, stored in a field, or captured by a lambda), the aspect gets all properties. Calls to non-virtual methods of the aspect and its base classes are followed, e.g. `base.OnEntry(args)` or a private helper. When several aspects are applied to a method, a property is provided if any of them uses it. Aspects whose assembly can only be resolved as a reference assembly are never optimized.
 

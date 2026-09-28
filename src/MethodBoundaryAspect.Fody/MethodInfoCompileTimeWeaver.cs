@@ -65,18 +65,7 @@ namespace MethodBoundaryAspect.Fody
         public InstructionBlock PushMethodInfoOnStack(MethodDefinition method, VariablePersistable variablePersistable)
         {
             var fieldDefinition = _fieldsCache[method];
-            var getMethodFromHandle2 = ImportGetMethodFromHandleArg2();
-
-            var instructions = new List<Instruction>();
-            if (ContainsOpenTypeRecursive(method))
-            {
-                instructions.Add(Instruction.Create(OpCodes.Ldtoken, method));
-                instructions.Add(Instruction.Create(OpCodes.Ldtoken, method.DeclaringType));
-                instructions.Add(Instruction.Create(OpCodes.Call, getMethodFromHandle2));
-            }
-            else
-                instructions.Add(Instruction.Create(OpCodes.Ldsfld, fieldDefinition));
-            
+            var instructions = new List<Instruction> { Instruction.Create(OpCodes.Ldsfld, fieldDefinition) };
             var store = variablePersistable.Store(
                 new InstructionBlock("", instructions),
                 variablePersistable.PersistedType);
@@ -131,14 +120,20 @@ namespace MethodBoundaryAspect.Fody
 
             // taken from https://gist.github.com/jbevain/390902
             var getMethodFromHandle = ImportGetMethodFromHandleArg1();
+            var getMethodFromHandleWithType = ImportGetMethodFromHandleArg2();
             var cctorInstructions = new List<Instruction>();
             foreach (var entry in _fieldsCache)
             {
-                if (ContainsOpenTypeRecursive(entry.Key))
-                    continue; // method info has to be resolved during runtime so we don't need a cache entry
-
                 cctorInstructions.Add(Instruction.Create(OpCodes.Ldtoken, entry.Key));
-                cctorInstructions.Add(Instruction.Create(OpCodes.Call, getMethodFromHandle));
+                if (ContainsOpenTypeRecursive(entry.Key))
+                {
+                    // a method of a generic type needs its declaring type, the method info is the open
+                    // definition for every instantiation, so it is cached as well
+                    cctorInstructions.Add(Instruction.Create(OpCodes.Ldtoken, entry.Key.DeclaringType));
+                    cctorInstructions.Add(Instruction.Create(OpCodes.Call, getMethodFromHandleWithType));
+                }
+                else
+                    cctorInstructions.Add(Instruction.Create(OpCodes.Call, getMethodFromHandle));
                 cctorInstructions.Add(Instruction.Create(OpCodes.Stsfld, entry.Value));
             }
 
