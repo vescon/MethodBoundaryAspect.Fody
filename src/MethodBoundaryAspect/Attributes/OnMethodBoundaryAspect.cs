@@ -6,7 +6,7 @@ namespace MethodBoundaryAspect.Fody.Attributes
     public abstract class OnMethodBoundaryAspect : Attribute
     {
         public MulticastAttributes AttributeTargetMemberAttributes { get; set; } =
-            MulticastAttributes.AnyVisibility;
+            MulticastAttributes.Public;
 
         public virtual string NamespaceFilter { get; set; }
         public virtual string TypeNameFilter { get; set; }
