@@ -439,6 +439,7 @@ public static async Task<string> Process()
 
 - `FlowBehavior.Return` in `OnEntry`: `args.ReturnValue` is what the method returns, so it has to be a task, e.g. `args.ReturnValue = Task.FromResult(42);`. Otherwise the method returns `null` instead of a task.
 - `FlowBehavior.Continue` in `OnException`: the returned task completes successfully with `args.ReturnValue` as its result (the value, not a task), e.g. `args.ReturnValue = 0;` for a `Task<int>`.
+- An exception thrown in `OnException` (e.g. to wrap the original exception) faults the returned task with that exception, like it is thrown to the caller of a synchronous method. The `OnException` of the remaining aspects is not called.
 
 ## Ref structs (`Span<T>`, `ReadOnlySpan<T>`, ...)
 
@@ -534,6 +535,7 @@ Version 3 only provides the `MethodExecutionArgs` properties that the aspects of
 Also changed:
 
 - **`MulticastAttributes.AnyVisibility` weaves methods of all visibilities** ([#132](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/132)). In version 2 it had the same value as `MulticastAttributes.Public`, so aspects with `AttributeTargetMemberAttributes = MulticastAttributes.AnyVisibility` only hit public methods. Now private, protected and internal methods are woven as well, like for aspects without `AttributeTargetMemberAttributes`. Use `MulticastAttributes.Public` to keep the previous behavior. An explicit `MulticastAttributes.Default` also weaves all visibilities now (version 2: no methods at all).
+- **An exception thrown in `OnException` of an async method faults the returned task** ([#5](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/5)). In version 2 it escaped the compiler-generated state machine: it was thrown synchronously to the caller if the method had not awaited anything yet (and the task never completed), otherwise it was unhandled on the thread pool and terminated the process.
 - **Class and assembly aspects no longer hit the state machines of async and iterator methods** ([#66](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/66)). In version 2 they were also woven into the compiler-generated `MoveNext` and `SetStateMachine` methods (and the other members of iterator state machines), so the aspect was additionally called with `args.Method.Name == "MoveNext"` each time an async method started or resumed after an `await`, and each time an iterator was advanced. The async or iterator method itself is still woven.
 
 The configuration in `FodyWeavers.xml` is unchanged; the optimization is enabled by default.

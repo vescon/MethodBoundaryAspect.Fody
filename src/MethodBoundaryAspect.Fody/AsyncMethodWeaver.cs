@@ -208,7 +208,10 @@ namespace MethodBoundaryAspect.Fody
             Instruction exceptionHandlerCurrent = firstInstructionToSetException.Previous; // Need to start inserting before SetException
             Instruction retInstruction = handler.HandlerEnd;
             var processor = _moveNext.Body.GetILProcessor();
-            Instruction gotoSetException = Instruction.Create(OpCodes.Br, firstInstructionToSetException);
+            // The calls of the aspects are wrapped in a try/catch, so an exception thrown by OnException
+            // completes the task as faulted with that exception instead of escaping MoveNext (#5).
+            var beforeTry = exceptionHandlerCurrent;
+            Instruction gotoSetException = Instruction.Create(OpCodes.Leave, firstInstructionToSetException);
             new InstructionBlock("else", gotoSetException).InsertAfter(exceptionHandlerCurrent, processor);
 
             // Need to replace leave.s with leave since we are adding instructions
@@ -247,7 +250,7 @@ namespace MethodBoundaryAspect.Fody
                     thenBody.Add(returnValue.Load(false, false));
                 thenBody.Add(new InstructionBlock("Call SetResult", Instruction.Create(OpCodes.Call, setResultMethod)));
                 // Continue with the compiler generated code after SetException (e.g. ProjectData.ClearProjectError in Visual Basic) which leaves the handler.
-                thenBody.Add(new InstructionBlock("Leave peacefully", Instruction.Create(OpCodes.Br, afterSetException)));
+                thenBody.Add(new InstructionBlock("Leave peacefully", Instruction.Create(OpCodes.Leave, afterSetException)));
 
                 var nop = Instruction.Create(OpCodes.Nop);
                 callAspectOnException.Add(_creator.IfFlowBehaviorIsAnyOf(
@@ -260,6 +263,23 @@ namespace MethodBoundaryAspect.Fody
                 callAspectOnException.InsertAfter(exceptionHandlerCurrent, processor);
                 exceptionHandlerCurrent = callAspectOnException.Last;
             }
+
+            // catch (Exception e) { exception = e; } -> SetException(e), the remaining aspects are skipped like in synchronous methods.
+            var catchOnException = new InstructionBlockChain();
+            catchOnException.Add(new InstructionBlock("Replace exception",
+                Instruction.Create(OpCodes.Stloc, exceptionLocal),
+                Instruction.Create(OpCodes.Leave, firstInstructionToSetException)));
+            catchOnException.InsertAfter(gotoSetException, processor);
+
+            // Nested handlers have to be listed before the handlers enclosing them.
+            _moveNext.Body.ExceptionHandlers.Insert(_moveNext.Body.ExceptionHandlers.IndexOf(handler), new ExceptionHandler(ExceptionHandlerType.Catch)
+            {
+                CatchType = _creator.GetExceptionTypeReference(),
+                TryStart = beforeTry.Next,
+                TryEnd = catchOnException.First,
+                HandlerStart = catchOnException.First,
+                HandlerEnd = firstInstructionToSetException
+            });
         }
 
         static bool IsStateMachineCatchBlock(ExceptionHandler handler)

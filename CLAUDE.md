@@ -19,6 +19,7 @@ dotnet test src/MethodBoundaryAspect.Fody.RuntimeTests --configuration Release -
 
 - Single test: `dotnet test <project> -c Release --no-build --filter "FullyQualifiedName~ClassName.MethodName"`; RuntimeTests on one runtime: add `-f net8.0`.
 - Build with `-m:1 -nodeReuse:false`: a parallel build can fail with a locked `TestAssembly.NetFramework.dll` (it is built by two projects), and a reused MSBuild node may still hold a weaver DLL from another checkout ("Assembly with same name is already loaded").
+- RuntimeTests uses the weaver DLL from `src/MethodBoundaryAspect.Fody/bin/<Configuration>` (no project reference), so building only RuntimeTests does not rebuild the weaver, and an incremental build does not re-weave. After changing the weaver, build `src/MethodBoundaryAspect.Fody` (or the solution) first, then RuntimeTests with `--no-incremental`.
 - **Path length:** the NetFramework tests fail (PEVerify: "file name too long") and can hang when run from a deep path such as `.claude/worktrees/<name>`. Run them from a short path, e.g. `subst Q: <repo>` and `dotnet test` from `Q:\`, then `subst Q: /d`.
 - Benchmark (weaves with the local weaver): `dotnet run -c Release --project src/MethodBoundaryAspect.Fody.Benchmark -- --filter '*' --job short`
 - `Directory.Build.props`: C# 8, `TreatWarningsAsErrors`, strong-name signing.
