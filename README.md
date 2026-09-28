@@ -202,7 +202,7 @@ public class OrderService
 
 Class and assembly aspects also hit property getters and setters. To exclude them, annotate the aspect class with `[AspectSkipProperties(true)]`.
 
-Not woven: constructors, abstract and interface methods, `extern` methods, compiler-generated methods and types (lambdas, local functions, the state machines of async and iterator methods) and the methods of the aspect class itself.
+Not woven: constructors, abstract and interface methods, `extern` methods, compiler-generated methods and types (lambdas, local functions, the state machines of async and iterator methods) and aspect classes: classes derived from `OnMethodBoundaryAspect` (also base aspect classes) and their nested classes, so an assembly aspect doesn't call itself ([#70](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/70)).
 
 ### Excluding methods: `[DisableWeaving]`
 
@@ -544,6 +544,7 @@ Also changed:
 
 - **`MulticastAttributes.AnyVisibility` weaves methods of all visibilities** ([#132](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/132)). In version 2 it had the same value as `MulticastAttributes.Public`, so aspects with `AttributeTargetMemberAttributes = MulticastAttributes.AnyVisibility` only hit public methods. Now private, protected and internal methods are woven as well, like for aspects without `AttributeTargetMemberAttributes`. Use `MulticastAttributes.Public` to keep the previous behavior. An explicit `MulticastAttributes.Default` also weaves all visibilities now (version 2: no methods at all).
 - **An exception thrown in `OnException` of an async method faults the returned task** ([#5](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/5)). In version 2 it escaped the compiler-generated state machine: it was thrown synchronously to the caller if the method had not awaited anything yet (and the task never completed), otherwise it was unhandled on the thread pool and terminated the process.
+- **Aspect classes are never woven** ([#70](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/70)). Version 2 only skipped weaving an aspect into its own class. An assembly or class aspect was still woven into the other aspects of the assembly, into base aspect classes and into classes nested in an aspect. That caused a `StackOverflowException` when two aspects were woven into each other, or when the aspect's `OnEntry` was inherited from a base aspect in the same assembly. Now no aspect is woven into a class derived from `OnMethodBoundaryAspect` or its nested classes, also if it is applied directly to one of their methods.
 - **Class and assembly aspects no longer hit the state machines of async and iterator methods** ([#66](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/66)). In version 2 they were also woven into the compiler-generated `MoveNext` and `SetStateMachine` methods (and the other members of iterator state machines), so the aspect was additionally called with `args.Method.Name == "MoveNext"` each time an async method started or resumed after an `await`, and each time an iterator was advanced. The async or iterator method itself is still woven.
 
 The configuration in `FodyWeavers.xml` is unchanged; the optimization is enabled by default.

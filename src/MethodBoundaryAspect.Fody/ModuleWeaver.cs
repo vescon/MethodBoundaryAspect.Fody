@@ -214,6 +214,12 @@ namespace MethodBoundaryAspect.Fody
             if (type.CustomAttributes.Any(a => a.AttributeType.FullName == typeof(CompilerGeneratedAttribute).FullName))
                 return;
 
+            // Aspects (and their base aspects and nested helper types) are not woven. An assembly or class
+            // aspect woven into the aspects of the same assembly called itself, directly or via another aspect,
+            // until a StackOverflowException, see https://github.com/vescon/MethodBoundaryAspect.Fody/issues/70
+            if (IsMethodBoundaryAspect(type))
+                return;
+
             WeaveType(module, type, assemblyMethodBoundaryAspects);
             if (type.HasNestedTypes)
             {
@@ -268,7 +274,6 @@ namespace MethodBoundaryAspect.Fody
                     .Where(info => string.IsNullOrEmpty(info.NamespaceFilter) || Regex.IsMatch(type.Namespace, info.NamespaceFilter))
                     .Where(info => string.IsNullOrEmpty(info.TypeNameFilter) || Regex.IsMatch(type.Name, info.TypeNameFilter))
                     .Where(info => string.IsNullOrEmpty(info.MethodNameFilter) || Regex.IsMatch(method.Name, info.MethodNameFilter))
-                    .Where(x => !IsSelfWeaving(type, x))
                     .ToList();
                 if (aspectInfos.Count == 0)
                     continue;
@@ -298,11 +303,6 @@ namespace MethodBoundaryAspect.Fody
 
             if (weavedAtLeastOneMethod)
                 TotalWeavedTypes++;
-        }
-
-        private static bool IsSelfWeaving(TypeDefinition targetType, AspectInfo aspectInfo)
-        {
-            return targetType.FullName == aspectInfo.AspectTypeDefinition.FullName;
         }
 
         private bool WeaveMethod(
