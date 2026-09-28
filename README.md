@@ -216,11 +216,19 @@ Aspects applied to a class or assembly can be narrowed down with regular express
 [assembly: Log(NamespaceFilter = @"^MyApp\.Services", TypeNameFilter = "Service$", MethodNameFilter = "^(?!get_|set_)")]
 ```
 
-`AttributeTargetMemberAttributes` restricts the visibility of the methods (by default methods of any visibility are woven, `MulticastAttributes.AnyVisibility`), e.g. only public and internal methods:
+`AttributeTargetMemberAttributes` restricts the visibility of the methods (by default methods of any visibility are woven, `MulticastAttributes.AnyVisibility`). Methods of other visibilities are not rewritten at all. E.g. only public methods (and public property accessors):
+
+```csharp
+[assembly: Log(AttributeTargetMemberAttributes = MulticastAttributes.Public)]
+```
+
+or only public and internal methods:
 
 ```csharp
 [assembly: Log(AttributeTargetMemberAttributes = MulticastAttributes.Public | MulticastAttributes.Internal)]
 ```
+
+The filter is applied to the visibility of the method itself, so a public method of an internal class is public as well.
 
 ### Several aspects on one method
 

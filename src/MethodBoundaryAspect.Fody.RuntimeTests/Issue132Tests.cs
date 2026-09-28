@@ -11,6 +11,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
     /// MulticastAttributes.AnyVisibility had the same value as MulticastAttributes.Public,
     /// so an aspect with AttributeTargetMemberAttributes = AnyVisibility only weaved public methods.
     /// </summary>
+    [Collection(nameof(VisibilityRecordingAspect))]
     public class Issue132Tests
     {
         private static readonly string[] AllMethods =
