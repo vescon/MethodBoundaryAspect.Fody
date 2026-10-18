@@ -214,15 +214,14 @@ namespace MethodBoundaryAspect.Fody
             Instruction gotoSetException = Instruction.Create(OpCodes.Leave, firstInstructionToSetException);
             new InstructionBlock("else", gotoSetException).InsertAfter(exceptionHandlerCurrent, processor);
 
-            // Need to replace leave.s with leave since we are adding instructions
-            // between here and the destination which may invalidate short form labels.
-            for (int i = 0; _moveNext.Body.Instructions[i] != handler.HandlerStart; ++i)
+            // Need to replace the short form branches since we are adding instructions
+            // between here and the destination which may invalidate short form labels (#135).
+            // Widening a branch makes the code larger, so every short branch has to be widened.
+            foreach (var inst in _moveNext.Body.Instructions)
             {
-                var inst = _moveNext.Body.Instructions[i];
-                if (inst.OpCode == OpCodes.Leave_S)
-                {
-                    inst.OpCode = OpCodes.Leave;
-                }
+                var longForm = GetLongFormBranch(inst.OpCode);
+                if (longForm.HasValue)
+                    inst.OpCode = longForm.Value;
             }
 
             foreach (var onExceptionAspect in allAspects
@@ -280,6 +279,28 @@ namespace MethodBoundaryAspect.Fody
                 HandlerStart = catchOnException.First,
                 HandlerEnd = firstInstructionToSetException
             });
+        }
+
+        private static OpCode? GetLongFormBranch(OpCode opCode)
+        {
+            switch (opCode.Code)
+            {
+                case Code.Br_S: return OpCodes.Br;
+                case Code.Brfalse_S: return OpCodes.Brfalse;
+                case Code.Brtrue_S: return OpCodes.Brtrue;
+                case Code.Beq_S: return OpCodes.Beq;
+                case Code.Bge_S: return OpCodes.Bge;
+                case Code.Bgt_S: return OpCodes.Bgt;
+                case Code.Ble_S: return OpCodes.Ble;
+                case Code.Blt_S: return OpCodes.Blt;
+                case Code.Bne_Un_S: return OpCodes.Bne_Un;
+                case Code.Bge_Un_S: return OpCodes.Bge_Un;
+                case Code.Bgt_Un_S: return OpCodes.Bgt_Un;
+                case Code.Ble_Un_S: return OpCodes.Ble_Un;
+                case Code.Blt_Un_S: return OpCodes.Blt_Un;
+                case Code.Leave_S: return OpCodes.Leave;
+                default: return null;
+            }
         }
 
         static bool IsStateMachineCatchBlock(ExceptionHandler handler)
