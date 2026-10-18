@@ -11,7 +11,7 @@ jobs:
     runs-on: windows-latest
     steps:    
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0 # needed for gitversion, checks out all branches and tags
 
@@ -39,7 +39,7 @@ jobs:
       run: dotnet pack --configuration Release --no-build src\MethodBoundaryAspect\MethodBoundaryAspect.csproj -o Artifacts/Packages
     
     - name: Upload Artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: nupkg
         path: 'Artifacts/Packages/**/*.nupkg'
