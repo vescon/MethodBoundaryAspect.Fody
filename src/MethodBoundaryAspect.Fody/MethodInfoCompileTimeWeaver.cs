@@ -36,8 +36,9 @@ namespace MethodBoundaryAspect.Fody
             if (_methodInfosClass != null)
                 return;
             
+            // internal: only the weaved code of the same assembly uses it, it is no API of the assembly
             var classAttributes = TypeAttributes.Class
-                                  | TypeAttributes.Public
+                                  | TypeAttributes.NotPublic
                                   | TypeAttributes.Abstract // abstract + sealed => static
                                   | TypeAttributes.Sealed;
             _methodInfosClass = new TypeDefinition(_cacheNamespace, _cacheClass, classAttributes)

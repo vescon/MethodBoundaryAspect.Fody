@@ -56,6 +56,16 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             getMethodFromHandleCalls.Select(m => m.Parameters.Count).Should().BeEquivalentTo(new[] { 1, 2, 2, 2 });
         }
 
+        [Fact]
+        public void IfMethodsAreWeaved_ThenTheCacheIsNotPartOfThePublicApi()
+        {
+            var weavedModule = Weave();
+
+            var methodInfos = weavedModule.GetType("OnMethodBoundaryAspectCompile", "MethodInfos");
+
+            methodInfos.IsNotPublic.Should().BeTrue();
+        }
+
         private ModuleDefinition Weave()
         {
             var weaver = new ModuleWeaver();
