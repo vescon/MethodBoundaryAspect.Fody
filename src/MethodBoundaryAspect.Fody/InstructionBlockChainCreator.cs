@@ -379,7 +379,7 @@ namespace MethodBoundaryAspect.Fody
             {
                 flowBehaviorHandler.Add(flowBehaviorLocal.Load(false, false));
                 flowBehaviorHandler.Add(new InstructionBlock("FlowBehavior", Instruction.Create(OpCodes.Ldc_I4, behaviors[i])));
-                flowBehaviorHandler.Add(new InstructionBlock("If == then goto the 'then' block", Instruction.Create(OpCodes.Beq_S, thenBody.First)));
+                flowBehaviorHandler.Add(new InstructionBlock("If == then goto the 'then' block", Instruction.Create(OpCodes.Beq, thenBody.First)));
             }
             
             flowBehaviorHandler.Add(flowBehaviorLocal.Load(false, false));

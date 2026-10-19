@@ -445,7 +445,9 @@ namespace MethodBoundaryAspect.Fody
                 if (returnValue != null)
                     callOnExitsAndReturn.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue));
 
-                callOnExitsAndReturn.Add(new InstructionBlock("Leave", Instruction.Create(OpCodes.Leave_S, returnAfterHandling.First)));
+                // long form: the handlers of the remaining aspects lie between here and the target,
+                // Optimize() shortens the branch if it fits
+                callOnExitsAndReturn.Add(new InstructionBlock("Leave", Instruction.Create(OpCodes.Leave, returnAfterHandling.First)));
 
                 callAspectOnException.Add(_creator.IfFlowBehaviorIsAnyOf(ExecutionArgs, nop.First, callOnExitsAndReturn, 1, 3));
 
@@ -456,7 +458,7 @@ namespace MethodBoundaryAspect.Fody
             
             var flowBehaviorHandler = new InstructionBlockChain();
             flowBehaviorHandler.Add(new InstructionBlock("throw", Instruction.Create(OpCodes.Rethrow)));
-            flowBehaviorHandler.Add(new InstructionBlock("Leave", Instruction.Create(OpCodes.Leave_S, realInstructionAfterCall)));
+            flowBehaviorHandler.Add(new InstructionBlock("Leave", Instruction.Create(OpCodes.Leave, realInstructionAfterCall)));
             flowBehaviorHandler.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
 
             returnAfterHandling.InsertAfter(flowBehaviorHandler.Last, _ilProcessor);
