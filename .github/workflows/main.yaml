@@ -11,25 +11,43 @@ jobs:
     runs-on: windows-latest
     steps:    
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         fetch-depth: 0 # needed for gitversion, checks out all branches and tags
 
     - name: Setup .NET # runtime tests run on each of these runtimes
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6
       with:
         dotnet-version: |
           8.0.x
           9.0.x
           10.0.x
 
+    # GitVersion is run directly, the GitTools actions need GitVersion 6 to run on Node 24, which calculates other
+    # versions (e.g. it ignores tags like v3.2). On GitHub Actions the tool writes the GitVersion_* variables used by
+    # src/Directory.Build.props into the environment of the following steps.
     - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v3.2.1
-      with:
-          versionSpec: '5.x'
+      run: dotnet tool install --global GitVersion.Tool --version 5.12.0
+
     - name: Use GitVersion
-      id: gitversion # step id used as reference for output values
-      uses: gittools/actions/gitversion/execute@v3.2.1
+      run: dotnet-gitversion /output buildserver
+
+    # Without a version the package would be built as 0.0.1, and a release must not be published with a version that differs from its tag.
+    - name: Check the version
+      env:
+        REF: ${{ github.ref }}
+        REF_NAME: ${{ github.ref_name }}
+      run: |
+        if (-not $env:GitVersion_SemVer) { throw 'GitVersion did not provide a version.' }
+        Write-Host "Version: $env:GitVersion_SemVer"
+        if ($env:REF.StartsWith('refs/tags/v')) {
+          # tags like v3.2 are version 3.2.0
+          $parts = @((($env:REF_NAME -replace '^v', '') -split '-')[0].Split('.'))
+          while ($parts.Count -lt 3) { $parts += '0' }
+          if (($parts -join '.') -ne $env:GitVersion_MajorMinorPatch) {
+            throw "The tag $env:REF_NAME does not match the version $env:GitVersion_MajorMinorPatch calculated by GitVersion."
+          }
+        }
 
     - name: Build solution
       run: dotnet build --configuration Release src/MethodBoundaryAspect.Fody.sln
@@ -47,7 +65,7 @@ jobs:
       run: dotnet pack --configuration Release --no-build src\MethodBoundaryAspect\MethodBoundaryAspect.csproj -o Artifacts/Packages
     
     - name: Upload Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: nupkg
         path: 'Artifacts/Packages/**/*.nupkg'
