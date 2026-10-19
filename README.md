@@ -230,6 +230,8 @@ or only public and internal methods:
 
 The filter is applied to the visibility of the method itself, so a public method of an internal class is public as well.
 
+`NamespaceFilter`, `TypeNameFilter`, `MethodNameFilter` and `AttributeTargetMemberAttributes` are read **where the aspect is applied** (as named arguments of the attribute). The weaver does not run the code of your aspects, so a value set in the constructor of the aspect, or by overriding the property, is ignored. A build warning is written for each aspect which does that.
+
 ### Several aspects on one method
 
 Without further configuration the aspects are called in the order assembly → class → method, and in declaration order on the same level. `OnExit` and `OnException` are called in reverse order.

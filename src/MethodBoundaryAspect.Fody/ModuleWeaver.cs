@@ -67,6 +67,9 @@ namespace MethodBoundaryAspect.Fody
         // aspects for which the warning about the obsolete roles was written
         private readonly HashSet<string> _warnedAboutAspectRoles = new HashSet<string>();
 
+        // aspects which were checked for filters set in their code
+        private readonly HashSet<string> _checkedAspectFilters = new HashSet<string>();
+
         public int TotalWeavedTypes { get; private set; }
         public int TotalWeavedMethods { get; private set; }
         public int TotalWeavedProperties { get; private set; }
@@ -205,6 +208,12 @@ namespace MethodBoundaryAspect.Fody
             }
         }
 
+        private static string ShortName(string fullName)
+        {
+            var name = fullName.Substring(fullName.LastIndexOfAny(new[] { '.', '/' }) + 1);
+            return name.EndsWith("Attribute") ? name.Substring(0, name.Length - "Attribute".Length) : name;
+        }
+
         private static bool ParseBool(XAttribute attribute)
         {
             if (!bool.TryParse(attribute.Value, out var value))
@@ -292,6 +301,18 @@ namespace MethodBoundaryAspect.Fody
                     WriteWarning(
                         $"Aspect '{aspectInfo.Name}' uses [ProvideAspectRole] or [AspectRoleDependency] to define the order of aspects. " +
                         "They are obsolete and will be removed in version 4, use [AspectOrderIndex] instead.");
+                }
+
+                foreach (var aspectInfo in aspectInfos.Where(x => _checkedAspectFilters.Add(x.Name)))
+                {
+                    var ignoredValues = IgnoredAspectValuesAnalyzer.GetValuesSetInAspectCode(aspectInfo.AspectTypeDefinition);
+                    if (ignoredValues.Count > 0)
+                    {
+                        WriteWarning(
+                            $"Aspect '{aspectInfo.Name}' sets {string.Join(", ", ignoredValues)} in its code (in a constructor or by overriding the property). " +
+                            "The weaver does not run the code of aspects, the value is ignored. " +
+                            $"Set it where the aspect is applied instead, e.g. [{ShortName(aspectInfo.Name)}({ignoredValues[0]} = ...)].");
+                    }
                 }
 
                 var byRefLikeValues = method.GetByRefLikeValueNames().ToList();

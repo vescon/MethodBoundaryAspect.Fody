@@ -80,4 +80,34 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
         {
         }
     }
+
+    public class IgnoredValueMethods
+    {
+        [ConstructorFilterAspect]
+        public void Constructor()
+        {
+        }
+
+        // the same aspect again: one warning per aspect
+        [ConstructorFilterAspect]
+        public void ConstructorAgain()
+        {
+        }
+
+        [DerivedConstructorFilterAspect]
+        public void InheritedConstructor()
+        {
+        }
+
+        [OverridingFilterAspect]
+        public void Overriding()
+        {
+        }
+
+        // set where the aspect is applied: the way it is meant to be
+        [OnlyOnEntryAspect(NamespaceFilter = "^MethodBoundaryAspect", MethodNameFilter = "^UsageSite")]
+        public void UsageSite()
+        {
+        }
+    }
 }

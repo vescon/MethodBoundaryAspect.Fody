@@ -15,8 +15,24 @@ namespace MethodBoundaryAspect.Fody.Attributes
         public MulticastAttributes AttributeTargetMemberAttributes { get; set; } =
             MulticastAttributes.AnyVisibility;
 
+        /// <summary>
+        /// A regular expression for the namespace of the types the aspect is woven into.
+        /// Like AttributeTargetMemberAttributes it is only read where the aspect is applied,
+        /// e.g. [Log(NamespaceFilter = "...")]. A value set in the constructor of the aspect or by
+        /// overriding the property is ignored (the weaver warns about it).
+        /// </summary>
         public virtual string NamespaceFilter { get; set; }
+
+        /// <summary>
+        /// A regular expression for the names of the types the aspect is woven into.
+        /// Only read where the aspect is applied, see <see cref="NamespaceFilter"/>.
+        /// </summary>
         public virtual string TypeNameFilter { get; set; }
+
+        /// <summary>
+        /// A regular expression for the names of the methods the aspect is woven into.
+        /// Only read where the aspect is applied, see <see cref="NamespaceFilter"/>.
+        /// </summary>
         public virtual string MethodNameFilter { get; set; }
 
         public virtual void OnEntry(MethodExecutionArgs arg)
