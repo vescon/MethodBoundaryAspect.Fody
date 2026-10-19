@@ -6,6 +6,7 @@ using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.Shared;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 using Xunit;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
@@ -55,6 +56,24 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             weaver.TotalWeavedProperties.Should().Be(1);
             var type = weaver.ModuleDefinition.GetType(typeof(PropertyFilterMethods).FullName);
             type.Methods.Select(m => m.Name).Should().Contain("$_executor_get_Value").And.NotContain("$_executor_set_Value");
+        }
+
+        [Fact]
+        public void IfARefArrayOfEnumsIsWrittenBack_ThenTheReferenceIsStored()
+        {
+            var weaver = CreateWeaver(typeof(RefArrayMethods));
+
+            weaver.Execute();
+
+            // Resolve() of an enum array returns the enum, stind.i4 only wrote 4 bytes of the reference
+            var method = weaver.ModuleDefinition.GetType(typeof(RefArrayMethods).FullName).Methods
+                .Single(m => m.Name == nameof(RefArrayMethods.SetColors));
+            var stores = method.Body.Instructions
+                .Where(i => i.OpCode.Name.StartsWith("stind") || i.OpCode == OpCodes.Stobj)
+                .Select(i => i.OpCode)
+                .ToList();
+            stores.Should().NotBeEmpty().And.OnlyContain(opCode => opCode == OpCodes.Stind_Ref);
+            method.Body.Instructions.Should().NotContain(i => i.OpCode == OpCodes.Box);
         }
 
         [Theory]

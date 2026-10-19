@@ -235,6 +235,9 @@ namespace MethodBoundaryAspect.Fody
         {
             if (typeRef.IsGenericParameter)
                 return Instruction.Create(OpCodes.Stobj, typeRef);
+            // Resolve() returns the element type of an array, e.g. the enum of an enum array
+            if (typeRef.IsArray)
+                return Instruction.Create(OpCodes.Stind_Ref);
             var typeDef = typeRef.Resolve();
             if (typeDef.IsEnum(out TypeReference underlying))
                 return Instruction.Create(underlying.MetadataType.GetStIndCode());

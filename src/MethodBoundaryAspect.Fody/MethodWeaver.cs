@@ -379,7 +379,8 @@ namespace MethodBoundaryAspect.Fody
                 instructions.Add(_ilProcessor.Create(OpCodes.Ldloc, byRefVariable));
 
                 var elementType = ((ByReferenceType)parameter.ParameterType.WithoutModifiers()).ElementType;
-                if (elementType.IsGenericParameter || elementType.IsValueType || elementType.Resolve().IsValueType)
+                // Resolve() returns the element type of an array
+                if (elementType.IsGenericParameter || (!elementType.IsArray && (elementType.IsValueType || elementType.Resolve().IsValueType)))
                     instructions.Add(_ilProcessor.Create(OpCodes.Box, elementType));
 
                 instructions.Add(_ilProcessor.Create(OpCodes.Stelem_Ref));

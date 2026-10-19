@@ -21,6 +21,18 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
         public T Generic<T>(T value) => value;
     }
 
+    public enum Color
+    {
+        Red,
+        Green
+    }
+
+    public class RefArrayMethods
+    {
+        [ChangingInputArgumentsAspect]
+        public void SetColors(ref Color[] colors) => colors = new[] { Color.Green };
+    }
+
     public class PropertyFilterMethods
     {
         [OnlyOnEntryAspect]
