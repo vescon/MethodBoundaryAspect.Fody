@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 using MethodBoundaryAspect.Fody.Attributes;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.Aspects;
@@ -174,9 +173,14 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework
 
         public void AttemptThrowWithoutEntry()
         {
-            var t = Throw();
-            while (!t.IsCompleted) ;
-            Thread.Sleep(1000);
+            // OnException is called before the task completes with the exception
+            try
+            {
+                Throw().Wait();
+            }
+            catch (AggregateException)
+            {
+            }
         }
 
         [AsyncExceptionOnlyAspect]
