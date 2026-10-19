@@ -210,7 +210,7 @@ Not woven: constructors, abstract and interface methods, `extern` methods, compi
 
 ### Filtering by name and visibility
 
-Aspects applied to a class or assembly can be narrowed down with regular expressions, which are matched against the namespace, the type name and the method name (property accessors are named `get_Name`/`set_Name`):
+Aspects applied to a class or assembly can be narrowed down with regular expressions, which are matched against the namespace, the type name and the method name (property accessors are named `get_Name`/`set_Name`). Nested classes have the namespace of their outermost class, their type name is the name of the nested class itself (e.g. `Inner` for `Outer.Inner`):
 
 ```csharp
 [assembly: Log(NamespaceFilter = @"^MyApp\.Services", TypeNameFilter = "Service$", MethodNameFilter = "^(?!get_|set_)")]

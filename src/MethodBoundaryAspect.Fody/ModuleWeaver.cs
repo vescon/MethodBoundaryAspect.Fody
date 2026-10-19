@@ -248,6 +248,7 @@ namespace MethodBoundaryAspect.Fody
                 .Where(x => x.SetMethod != null)
                 .ToDictionary(x => x.SetMethod);
 
+            var typeNamespace = GetNamespace(type);
             var weavedAtLeastOneMethod = false;
             foreach (var method in type.Methods.ToList())
             {
@@ -271,7 +272,7 @@ namespace MethodBoundaryAspect.Fody
                     .Where(IsMethodBoundaryAspect)
                     .Select(x => new AspectInfo(x))
                     .Where(info => info.HasTargetMemberAttribute(methodVisibility))
-                    .Where(info => string.IsNullOrEmpty(info.NamespaceFilter) || Regex.IsMatch(type.Namespace, info.NamespaceFilter))
+                    .Where(info => string.IsNullOrEmpty(info.NamespaceFilter) || Regex.IsMatch(typeNamespace, info.NamespaceFilter))
                     .Where(info => string.IsNullOrEmpty(info.TypeNameFilter) || Regex.IsMatch(type.Name, info.TypeNameFilter))
                     .Where(info => string.IsNullOrEmpty(info.MethodNameFilter) || Regex.IsMatch(method.Name, info.MethodNameFilter))
                     .ToList();
@@ -434,6 +435,15 @@ namespace MethodBoundaryAspect.Fody
         private static bool ContainsDisableWeavingAttribute(IEnumerable<CustomAttribute> customAttributes)
         {
             return customAttributes.Any(x => x.AttributeType.FullName == AttributeFullNames.DisableWeavingAttribute);
+        }
+
+        // nested types have no namespace of their own, it is the one of the outermost declaring type
+        private static string GetNamespace(TypeDefinition type)
+        {
+            while (type.DeclaringType != null)
+                type = type.DeclaringType;
+
+            return type.Namespace;
         }
 
         private static MethodAttributes GetMethodVisibility(MethodDefinition method) =>

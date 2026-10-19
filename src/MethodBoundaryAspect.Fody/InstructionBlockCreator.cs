@@ -110,7 +110,11 @@ namespace MethodBoundaryAspect.Fody
                 foreach (var property in aspect.Properties)
                 {
                     var propertyCopy = property;
-                    var propertyType = module.ImportReference(propertyCopy.Argument.Type.Resolve());
+                    // Resolve() returns the element type of an array type
+                    var argumentType = propertyCopy.Argument.Type;
+                    var propertyType = module.ImportReference(argumentType.IsArray
+                        ? argumentType.CleanEnumsInTypeRef()
+                        : argumentType.Resolve());
 
                     var loadOnStackInstruction = LoadValueOnStack(propertyType, propertyCopy.Argument.Value);
                     var valueVariable = CreateVariable(propertyType);
@@ -133,7 +137,7 @@ namespace MethodBoundaryAspect.Fody
                     var loadInstanceOnStackInstruction = _processor.Create(OpCodes.Ldloc, newInstance);
                     var loadOnStackInstruction = LoadValueOnStack(fieldCopy.Argument.Type, fieldCopy.Argument.Value);
 
-                    var fieldRef = instanceTypeReference.Resolve().Fields.First(f => f.Name == fieldCopy.Name);
+                    var fieldRef = GetFieldReference(instanceTypeReference, fieldCopy.Name, module);
                     var loadFieldInstructionBlock = _processor.Create(OpCodes.Stfld, fieldRef);
 
                     loadSetConstValuesToAspect.Add(loadInstanceOnStackInstruction);
@@ -151,6 +155,23 @@ namespace MethodBoundaryAspect.Fody
             return new InstructionBlock(
                 "NewObject: " + instanceTypeReference.Name,
                 allInstructions);
+        }
+
+        // the field can be declared in a base class of the aspect and in another assembly
+        private static FieldReference GetFieldReference(TypeReference type, string name, ModuleDefinition module)
+        {
+            var currentType = type;
+            while (currentType != null)
+            {
+                var typeDefinition = currentType.Resolve();
+                var field = typeDefinition.Fields.FirstOrDefault(f => f.Name == name);
+                if (field != null)
+                    return module.ImportReference(field);
+
+                currentType = typeDefinition.BaseType;
+            }
+
+            throw new InvalidOperationException($"Didn't find field '{name}' on type '{type.FullName}' or its base types");
         }
 
         public InstructionBlock SaveReturnValueFromStack(VariableDefinition returnValue)
@@ -313,6 +334,10 @@ namespace MethodBoundaryAspect.Fody
 
         private IList<Instruction> LoadValueOnStack(TypeReference parameterType, object value)
         {
+            // e.g. [Aspect(null)] for an array or Type parameter
+            if (value == null && (parameterType.IsArray || parameterType.FullName == typeof(Type).FullName))
+                return new List<Instruction> { _processor.Create(OpCodes.Ldnull) };
+
             if (parameterType.IsArray(out var elementType) && value is CustomAttributeArgument[] args)
             {
                 elementType = elementType.CleanEnumsInTypeRef();
