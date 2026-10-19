@@ -24,6 +24,23 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
         }
     }
 
+    // the type name of a generic type has the number of type parameters
+    [NamespaceFilterRecordingAspect(TypeNameFilter = "^TypeNameFilterGeneric`1$")]
+    public class TypeNameFilterGeneric<T>
+    {
+        public void Matching()
+        {
+        }
+    }
+
+    [NamespaceFilterRecordingAspect(TypeNameFilter = "^TypeNameFilterGenericWithoutArity$")]
+    public class TypeNameFilterGenericWithoutArity<T>
+    {
+        public void NotMatching()
+        {
+        }
+    }
+
     [NamespaceFilterRecordingAspect(NamespaceFilter = "^Other$")]
     public class NamespaceFilterNotMatching
     {

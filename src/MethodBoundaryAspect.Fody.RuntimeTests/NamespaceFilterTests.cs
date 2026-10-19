@@ -34,5 +34,14 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 
             NamespaceFilterRecordingAspect.Calls.Should().BeEmpty();
         }
+
+        [Fact]
+        public void TypeNameFilterShouldMatchTheNameOfAGenericTypeWithTheNumberOfTypeParameters()
+        {
+            new TypeNameFilterGeneric<int>().Matching();
+            new TypeNameFilterGenericWithoutArity<int>().NotMatching();
+
+            NamespaceFilterRecordingAspect.Calls.Should().Equal("Matching");
+        }
     }
 }
