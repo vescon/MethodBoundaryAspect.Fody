@@ -4,8 +4,8 @@ using MethodBoundaryAspect.Fody.Attributes;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects
 {
-    [ProvideAspectRole(TestRoles.Second)]
 #pragma warning disable 0618
+    [ProvideAspectRole(TestRoles.Second)]
     [AspectRoleDependency(AspectDependencyAction.Order, AspectDependencyPosition.After, TestRoles.First)]
 #pragma warning restore 0618
     public class SecondAspect : OnMethodBoundaryAspect

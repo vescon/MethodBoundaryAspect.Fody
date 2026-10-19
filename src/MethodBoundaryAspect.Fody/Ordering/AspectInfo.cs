@@ -39,6 +39,11 @@ namespace MethodBoundaryAspect.Fody.Ordering
 
         public string Role { get; private set; }
 
+        /// <summary>
+        /// The aspect uses [ProvideAspectRole] or [AspectRoleDependency], which are obsolete.
+        /// </summary>
+        public bool UsesAspectRoles { get; private set; }
+
         public bool SkipProperties { get; private set; }
 
         public CustomAttribute AspectAttribute { get; private set; }
@@ -81,6 +86,8 @@ namespace MethodBoundaryAspect.Fody.Ordering
             if (roleAttribute == null)
                 return;
 
+            UsesAspectRoles = true;
+
             var role = (string) roleAttribute.ConstructorArguments[0].Value;
             if (string.IsNullOrEmpty(role))
             {
@@ -101,6 +108,8 @@ namespace MethodBoundaryAspect.Fody.Ordering
 
             if (AspectRoleDependencyAttributes.Count == 0)
                 return;
+
+            UsesAspectRoles = true;
 
 #pragma warning disable 0618
             var aspectOrder = new AspectOrder(this);

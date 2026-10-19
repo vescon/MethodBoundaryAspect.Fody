@@ -57,4 +57,27 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
                 throw new System.ArgumentException("negative");
         }
     }
+
+    public class ObsoleteRoleMethods
+    {
+        [RoleOnlyAspect]
+        public void First()
+        {
+        }
+
+        [RoleOnlyAspect]
+        public void Second()
+        {
+        }
+
+        [RoleDependencyOnlyAspect]
+        public void Dependency()
+        {
+        }
+
+        [OnlyOnEntryAspect]
+        public void WithoutRoles()
+        {
+        }
+    }
 }

@@ -246,7 +246,7 @@ public class OrderService
 }
 ```
 
-`[ProvideAspectRole]` and `[AspectRoleDependency]` are obsolete, use `[AspectOrderIndex]` instead.
+`[ProvideAspectRole]` and `[AspectRoleDependency]` are obsolete and will be removed in version 4, use `[AspectOrderIndex]` instead. A build warning is written for each aspect using them. They have known problems which are not fixed: a role is ignored if its aspect has no `[AspectRoleDependency]` itself, and a chain of dependencies (A after B, B after C) is rejected with an `InvalidAspectConfigurationException`.
 
 ## Changing the method behavior
 

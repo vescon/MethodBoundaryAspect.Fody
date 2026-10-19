@@ -64,6 +64,9 @@ namespace MethodBoundaryAspect.Fody
         /// </summary>
         public List<string> DisableExecutionArgsOptimizationAspects { get; } = new List<string>();
 
+        // aspects for which the warning about the obsolete roles was written
+        private readonly HashSet<string> _warnedAboutAspectRoles = new HashSet<string>();
+
         public int TotalWeavedTypes { get; private set; }
         public int TotalWeavedMethods { get; private set; }
         public int TotalWeavedProperties { get; private set; }
@@ -283,6 +286,13 @@ namespace MethodBoundaryAspect.Fody
                     .ToList();
                 if (aspectInfos.Count == 0)
                     continue;
+
+                foreach (var aspectInfo in aspectInfos.Where(x => x.UsesAspectRoles && _warnedAboutAspectRoles.Add(x.Name)))
+                {
+                    WriteWarning(
+                        $"Aspect '{aspectInfo.Name}' uses [ProvideAspectRole] or [AspectRoleDependency] to define the order of aspects. " +
+                        "They are obsolete and will be removed in version 4, use [AspectOrderIndex] instead.");
+                }
 
                 var byRefLikeValues = method.GetByRefLikeValueNames().ToList();
                 if (byRefLikeValues.Any() && !SuppressRefStructWarnings)

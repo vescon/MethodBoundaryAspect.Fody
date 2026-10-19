@@ -2,7 +2,9 @@
 
 namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects
 {
+#pragma warning disable 0618
     [ProvideAspectRole(TestRoles.First)]
+#pragma warning restore 0618
     public class Aspect1 : OnMethodBoundaryAspect
     {
         public override void OnEntry(MethodExecutionArgs arg)
