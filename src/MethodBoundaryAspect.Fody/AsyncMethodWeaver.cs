@@ -77,6 +77,41 @@ namespace MethodBoundaryAspect.Fody
                 _setupPointer = null;
         }
 
+        /// <summary>
+        /// Checks, before the method is touched, if the structure the weaver relies on is there. The kickoff method
+        /// of an async method with another async method builder than the ones of the compiler (e.g. UniTask) may
+        /// differ, and the weaver would fail halfway after changing the method.
+        /// </summary>
+        /// <returns>The reason why the method can't be woven, null if it can.</returns>
+        public static string GetUnsupportedReason(MethodDefinition method, MethodDefinition moveNext, bool weavesOnException)
+        {
+            var instructions = method.Body.Instructions;
+            if (instructions.Count < 2)
+                return "the state machine is not created in the expected way";
+
+            var stateMachineLocal = method.Body.Variables.SingleOrDefault(v => v.VariableType.Resolve() == moveNext.DeclaringType);
+            if (stateMachineLocal == null)
+                return "the state machine is not stored in a local variable";
+
+            if (!stateMachineLocal.VariableType.IsValueType && (instructions[0].OpCode != OpCodes.Newobj || !IsStloc(instructions[1])))
+                return "the state machine is not created and stored in the expected way";
+
+            if (!weavesOnException)
+                return null;
+
+            // OnException is woven into the catch block of MoveNext which completes the async method builder with the exception
+            var handler = moveNext.Body.ExceptionHandlers.FirstOrDefault(IsStateMachineCatchBlock);
+            if (handler == null)
+                return "OnException is used, but the async method builder of the method is not one of the builders of the compiler (e.g. a task-like type with its own builder like UniTask), no catch block of MoveNext completes it with the exception";
+
+            var handlerInstructions = GetHandlerInstructions(handler).ToList();
+            var setException = handlerInstructions.FirstOrDefault(IsBuilderSetException);
+            if (setException == null || !handlerInstructions.Any(IsStloc) || setException.Previous?.Previous?.Previous == null)
+                return "OnException is used, but the catch block of MoveNext doesn't set the exception in the expected way";
+
+            return null;
+        }
+
         protected override void Setup() { }
 
         protected override void HandleBody(
@@ -171,11 +206,7 @@ namespace MethodBoundaryAspect.Fody
         {
             // C# emits "SetException; [nop;] leave" (the nop is only in Debug mode),
             // Visual Basic emits "SetException; [nop;] call ProjectData.ClearProjectError; leave".
-            var setException = GetHandlerInstructions(handler).FirstOrDefault(i =>
-                i.OpCode == OpCodes.Call
-                && i.Operand is MethodReference m
-                && m.Name == "SetException"
-                && IsAsyncMethodBuilder(m.DeclaringType));
+            var setException = GetHandlerInstructions(handler).FirstOrDefault(IsBuilderSetException);
             if (setException == null)
                 throw new InvalidOperationException($"Async state machine for {_method.FullName} did not set the exception in the expected way.");
 
@@ -301,6 +332,14 @@ namespace MethodBoundaryAspect.Fody
                 case Code.Leave_S: return OpCodes.Leave;
                 default: return null;
             }
+        }
+
+        private static bool IsBuilderSetException(Instruction i)
+        {
+            return i.OpCode == OpCodes.Call
+                   && i.Operand is MethodReference m
+                   && m.Name == "SetException"
+                   && IsAsyncMethodBuilder(m.DeclaringType);
         }
 
         static bool IsStateMachineCatchBlock(ExceptionHandler handler)

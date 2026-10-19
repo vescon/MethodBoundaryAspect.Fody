@@ -12,8 +12,11 @@ namespace MethodBoundaryAspect.Fody
             MethodDefinition method,
             IEnumerable<AspectInfo> aspects,
             MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver,
-            ExecutionArgsUsageAnalyzer executionArgsUsageAnalyzer)
+            ExecutionArgsUsageAnalyzer executionArgsUsageAnalyzer,
+            out string unsupportedReason)
         {
+            unsupportedReason = null;
+
             var filteredAspects = (from a in aspects
                                   let methods = GetUsedAspectMethods(a.AspectAttribute.AttributeType)
                                   where methods != AspectMethods.None
@@ -32,7 +35,22 @@ namespace MethodBoundaryAspect.Fody
                 return new MethodWeaver(module, method, aspectList, methodInfoCompileTimeWeaver, executionArgsUsage);
             }
 
-            var moveNextMethod = ((TypeDefinition)asyncAttribute.ConstructorArguments[0].Value).Methods.First(m => m.Name == "MoveNext");
+            var moveNextMethod = ((TypeDefinition)asyncAttribute.ConstructorArguments[0].Value).Methods.FirstOrDefault(m => m.Name == "MoveNext");
+            if (moveNextMethod == null)
+            {
+                unsupportedReason = "the state machine has no MoveNext method";
+                return null;
+            }
+
+            var weavesOnException = filteredAspects.Any(a => (a.Methods & AspectMethods.OnException) != 0);
+            // methods without any aspect method to weave are not touched, nothing to check
+            if (filteredAspects.Count > 0)
+            {
+                unsupportedReason = AsyncMethodWeaver.GetUnsupportedReason(method, moveNextMethod, weavesOnException);
+                if (unsupportedReason != null)
+                    return null;
+            }
+
             var aspectDatas = filteredAspects.Select(a => new AspectDataOnAsyncMethod(moveNextMethod, a.Aspect, a.Methods, method, module)).ToList<AspectData>();
             return new AsyncMethodWeaver(
                 module,

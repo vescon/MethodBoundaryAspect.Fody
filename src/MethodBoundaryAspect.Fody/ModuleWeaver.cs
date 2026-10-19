@@ -322,7 +322,18 @@ namespace MethodBoundaryAspect.Fody
                 .Where(x => !x.SkipProperties || (!method.IsGetter && !method.IsSetter))
                 .ToList();
 
-            var methodWeaver = MethodWeaverFactory.MakeWeaver(module, method, aspectInfosWithMethods, methodInfoCompileTimeWeaver, _executionArgsUsageAnalyzer);
+            var methodWeaver = MethodWeaverFactory.MakeWeaver(
+                module, method, aspectInfosWithMethods, methodInfoCompileTimeWeaver, _executionArgsUsageAnalyzer, out var unsupportedReason);
+            if (methodWeaver == null)
+            {
+                // not touched at all, failing the build would block the whole project for a single method
+                WriteWarning(
+                    $"Method '{method.FullName}' is not weaved: {unsupportedReason}. " +
+                    "Exclude the method from weaving with [DisableWeaving] to remove this warning.",
+                    method);
+                return false;
+            }
+
             methodWeaver.Weave();
             if (methodWeaver.WeaveCounter == 0)
                 return false;

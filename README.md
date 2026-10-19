@@ -443,6 +443,10 @@ public static async Task<string> Process()
 // await Process() returns "An error happened: Bad data"
 ```
 
+### Task-like types with their own async method builder
+
+`OnException` is woven into the catch block of the compiler-generated state machine, which completes the async method builder of the compiler (`AsyncTaskMethodBuilder`, `AsyncValueTaskMethodBuilder`, `AsyncVoidMethodBuilder`, ...). Methods returning a task-like type with its own builder (e.g. `UniTask`) can only be woven if their aspects use `OnEntry` and `OnExit` only. A method which also has an aspect with `OnException` is not changed at all, and a build warning is written ("... is not weaved"). Exclude the method from weaving with `[DisableWeaving]` to remove the warning.
+
 ### FlowBehavior in async methods
 
 - `FlowBehavior.Return` in `OnEntry`: `args.ReturnValue` is what the method returns, so it has to be a task, e.g. `args.ReturnValue = Task.FromResult(42);`. Otherwise the method returns `null` instead of a task.
