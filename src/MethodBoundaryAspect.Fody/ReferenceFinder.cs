@@ -32,13 +32,17 @@ namespace MethodBoundaryAspect.Fody
                 typeDefinition = typeDefinition.BaseType?.Resolve();
             } while (methodDefinition == null && typeDefinition != null);
 
+            if (methodDefinition == null)
+                throw new InvalidOperationException($"Didn't find the method on type '{typeReference.FullName}' or its base types.");
+
             return _moduleDefinition.ImportReference(methodDefinition);
         }
 
         public MethodReference GetConstructorReference(TypeReference typeReference, Func<MethodDefinition, bool> predicate)
         {
             var typeDefinition = typeReference.Resolve();
-            var methodDefinition = typeDefinition.GetConstructors().FirstOrDefault(predicate);
+            var methodDefinition = typeDefinition.GetConstructors().FirstOrDefault(predicate)
+                ?? throw new InvalidOperationException($"Didn't find the constructor on type '{typeReference.FullName}'.");
             return _moduleDefinition.ImportReference(methodDefinition);
         }
 
