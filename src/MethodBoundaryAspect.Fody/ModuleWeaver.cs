@@ -295,7 +295,7 @@ namespace MethodBoundaryAspect.Fody
                 foreach (var aspectInfo in aspectInfos)
                     aspectInfo.InitOrderIndex(assemblyMethodBoundaryAspects, classMethodBoundaryAspects, methodMethodBoundaryAspects);
 
-                weavedAtLeastOneMethod = WeaveMethod(
+                weavedAtLeastOneMethod |= WeaveMethod(
                     module,
                     method,
                     aspectInfos,
