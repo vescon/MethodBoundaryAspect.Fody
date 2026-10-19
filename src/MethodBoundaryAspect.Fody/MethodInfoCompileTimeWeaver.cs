@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Security.Cryptography;
-using System.Text;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.Cecil.Rocks;
@@ -55,7 +53,8 @@ namespace MethodBoundaryAspect.Fody
             var typeReferenceMethodBase = GetTypeReference(typeof(MethodBase));
             _mainModule.ImportReference(typeReferenceMethodBase);
 
-            var identifier = CreateIdentifier(method);
+            // no hash of the method name: SHA256Managed throws on .NET Framework (Visual Studio) if FIPS mode is enabled
+            var identifier = $"{_fieldsCache.Count}_{method.Name}";
             var fieldAttributes = FieldAttributes.Public | FieldAttributes.Static | FieldAttributes.InitOnly;
             var fd = new FieldDefinition($"_methodInfo_{identifier}", fieldAttributes, typeReferenceMethodBase);
             _methodInfosClass.Fields.Add(fd);
@@ -98,14 +97,6 @@ namespace MethodBoundaryAspect.Fody
         private static bool ContainsOpenType(IGenericParameterProvider method)
         {
             return method.GenericParameters.Any(x => x.ContainsGenericParameter);
-        }
-
-        private string CreateIdentifier(MemberReference method)
-        {
-            var bytes = Encoding.UTF8.GetBytes(method.FullName);
-            var sha256 = new SHA256Managed();
-            var hash = sha256.ComputeHash(bytes);
-            return BitConverter.ToString(hash).Replace("-", string.Empty);
         }
 
         private void CreateStaticCtor()
