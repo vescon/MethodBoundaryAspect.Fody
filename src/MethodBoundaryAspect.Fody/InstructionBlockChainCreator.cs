@@ -113,8 +113,8 @@ namespace MethodBoundaryAspect.Fody
             var createThisVariableBlock = CreateThisVariable();
 
             // MethodExecutionArgs instance
-            var onEntryMethodTypeRef =
-                anyAspectTypeDefinition.Resolve().BaseType.Resolve().Methods.Single(AspectMethodCriteria.IsOnEntryMethod);
+            // OnEntry is declared in the aspect or in one of its base classes, an aspect can derive from another aspect
+            var onEntryMethodTypeRef = _referenceFinder.GetMethodReference(anyAspectTypeDefinition, AspectMethodCriteria.IsOnEntryMethod);
             var firstParameterType = onEntryMethodTypeRef.Parameters.Single().ParameterType;
             var methodExecutionArgsTypeRef = _moduleDefinition.ImportReference(firstParameterType);
             
