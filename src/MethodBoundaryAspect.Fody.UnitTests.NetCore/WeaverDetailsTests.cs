@@ -92,6 +92,21 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfAnArgumentAfterThe255thIsLoaded_ThenItIsLoadedByItsParameter()
+        {
+            var module = ModuleDefinition.CreateModule("Arguments", ModuleKind.Dll);
+            var method = new MethodDefinition("Many", MethodAttributes.Public, module.TypeSystem.Void);
+            for (var i = 0; i < 300; i++)
+                method.Parameters.Add(new ParameterDefinition("p" + i, ParameterAttributes.None, module.TypeSystem.Int32));
+            var parameter = method.Parameters[299];
+
+            // instance method: argument 300, ldarg.s with (byte)300 loaded argument 44
+            var load = new ArgumentLoadable(300, parameter, method.Body.GetILProcessor()).Load(false, false);
+
+            load.Instructions.Should().ContainSingle().Which.Operand.Should().BeSameAs(parameter);
+        }
+
+        [Fact]
         public void IfAMethodHasMultipleAspects_ThenEachLocalVariableIsDeclaredOnce()
         {
             var weaver = CreateWeaver(typeof(MultipleAspectsMethods));

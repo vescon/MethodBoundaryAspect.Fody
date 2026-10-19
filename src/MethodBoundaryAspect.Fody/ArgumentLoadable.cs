@@ -20,7 +20,8 @@ namespace MethodBoundaryAspect.Fody
 
         public InstructionBlock Load(bool forDereferencing, bool onlyValue)
         {
-            return new InstructionBlock($"Load {_index}", _processor.Create(OpCodes.Ldarg_S, (byte)_index));
+            // ldarg.s with the index as byte would load another argument from the 256th argument on
+            return new InstructionBlock($"Load {_index}", _processor.Create(OpCodes.Ldarg, _parameter));
         }
     }
 }
