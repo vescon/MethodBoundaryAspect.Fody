@@ -141,6 +141,8 @@ Derive from `OnMethodBoundaryAspect` and override any of `OnEntry`, `OnExit` and
 | `OnExit` | after the method body completed successfully (**not** after an exception) | when the method returns its `Task` to the caller, usually before the asynchronous work is done, also if it fails later |
 | `OnException` | when the method body throws | when the asynchronous work fails, possibly long after `OnExit` |
 
+Iterator methods (`yield return`, also `async IAsyncEnumerable<T>` methods) are woven like synchronous methods: the compiler moves their code into a state machine which runs while the caller enumerates the result. So `OnEntry` and `OnExit` are called when the method returns the enumerable, before any element is produced, `args.ReturnValue` is the enumerable, and `OnException` is not called for exceptions thrown during the enumeration.
+
 ### Passing data between the aspect methods: `MethodExecutionTag`
 
 A transaction aspect creates the scope in `OnEntry` and completes or disposes it at the end:
