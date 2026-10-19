@@ -211,6 +211,21 @@ namespace MethodBoundaryAspect.Fody
             return name.EndsWith("Attribute") ? name.Substring(0, name.Length - "Attribute".Length) : name;
         }
 
+        private static bool MatchesFilter(string value, string filter, AspectInfo aspectInfo, string filterName)
+        {
+            if (string.IsNullOrEmpty(filter))
+                return true;
+
+            try
+            {
+                return Regex.IsMatch(value, filter);
+            }
+            catch (ArgumentException e)
+            {
+                throw new WeavingException($"Aspect '{aspectInfo.Name}' has an invalid regular expression in {filterName}: {e.Message}");
+            }
+        }
+
         private static bool ParseBool(XAttribute attribute)
         {
             if (!bool.TryParse(attribute.Value, out var value))
@@ -286,9 +301,9 @@ namespace MethodBoundaryAspect.Fody
                     .Where(IsMethodBoundaryAspect)
                     .Select(x => new AspectInfo(x))
                     .Where(info => info.HasTargetMemberAttribute(methodVisibility))
-                    .Where(info => string.IsNullOrEmpty(info.NamespaceFilter) || Regex.IsMatch(typeNamespace, info.NamespaceFilter))
-                    .Where(info => string.IsNullOrEmpty(info.TypeNameFilter) || Regex.IsMatch(type.Name, info.TypeNameFilter))
-                    .Where(info => string.IsNullOrEmpty(info.MethodNameFilter) || Regex.IsMatch(method.Name, info.MethodNameFilter))
+                    .Where(info => MatchesFilter(typeNamespace, info.NamespaceFilter, info, nameof(AspectInfo.NamespaceFilter)))
+                    .Where(info => MatchesFilter(type.Name, info.TypeNameFilter, info, nameof(AspectInfo.TypeNameFilter)))
+                    .Where(info => MatchesFilter(method.Name, info.MethodNameFilter, info, nameof(AspectInfo.MethodNameFilter)))
                     .ToList();
                 if (aspectInfos.Count == 0)
                     continue;

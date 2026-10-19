@@ -33,6 +33,15 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
         public void SetColors(ref Color[] colors) => colors = new[] { Color.Green };
     }
 
+    public class InvalidFilterMethods
+    {
+        // the test replaces the filter with an invalid regular expression
+        [OnlyOnEntryAspect(MethodNameFilter = "^Filtered")]
+        public void Filtered()
+        {
+        }
+    }
+
     public class MultipleAspectsMethods
     {
         [OnlyOnEntryAspect, OnlyOnExitAspect]

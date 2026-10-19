@@ -77,6 +77,21 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfAFilterIsNoValidRegularExpression_ThenWeavingFailsWithTheAspectAndFilter()
+        {
+            var weaver = CreateWeaver(typeof(InvalidFilterMethods));
+            var aspect = weaver.ModuleDefinition.GetType(typeof(InvalidFilterMethods).FullName).Methods
+                .Single(m => m.Name == nameof(InvalidFilterMethods.Filtered)).CustomAttributes.Single();
+            var filter = aspect.Properties.Single();
+            aspect.Properties[0] = new CustomAttributeNamedArgument(filter.Name, new CustomAttributeArgument(filter.Argument.Type, "(unclosed"));
+
+            Action weave = () => weaver.Execute();
+
+            weave.Should().Throw<WeavingException>()
+                .WithMessage("Aspect 'MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore.Aspects.OnlyOnEntryAspect' has an invalid regular expression in MethodNameFilter: *");
+        }
+
+        [Fact]
         public void IfAMethodHasMultipleAspects_ThenEachLocalVariableIsDeclaredOnce()
         {
             var weaver = CreateWeaver(typeof(MultipleAspectsMethods));
