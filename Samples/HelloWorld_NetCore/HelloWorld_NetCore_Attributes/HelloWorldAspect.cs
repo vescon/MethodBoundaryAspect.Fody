@@ -1,7 +1,7 @@
 ﻿using System;
 using MethodBoundaryAspect.Fody.Attributes;
 
-namespace HelloWorld_NetFramework_Attributes
+namespace HelloWorld_NetCore_Attributes
 {
     public sealed class HelloWorldAspect : OnMethodBoundaryAspect
     {

@@ -1,5 +1,5 @@
 ﻿using System;
-using HelloWorld_NetFramework_Attributes;
+using HelloWorld_NetCore_Attributes;
 
 namespace HelloWorld_NetCore
 {
