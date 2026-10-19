@@ -76,6 +76,19 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             method.Body.Instructions.Should().NotContain(i => i.OpCode == OpCodes.Box);
         }
 
+        [Fact]
+        public void IfAMethodHasMultipleAspects_ThenEachLocalVariableIsDeclaredOnce()
+        {
+            var weaver = CreateWeaver(typeof(MultipleAspectsMethods));
+
+            weaver.Execute();
+
+            // the variable for the MethodExecutionTag of each aspect was added twice
+            var method = weaver.ModuleDefinition.GetType(typeof(MultipleAspectsMethods).FullName).Methods
+                .Single(m => m.Name == nameof(MultipleAspectsMethods.Add));
+            method.Body.Variables.Should().OnlyHaveUniqueItems();
+        }
+
         [Theory]
         [InlineData("SuppressRefStructWarnings")]
         [InlineData("DisableExecutionArgsOptimization")]

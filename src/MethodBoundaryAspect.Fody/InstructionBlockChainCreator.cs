@@ -46,7 +46,6 @@ namespace MethodBoundaryAspect.Fody
         {
             var typeReference = _referenceFinder.GetTypeReference(typeof (object));
             var variable = _creator.CreateVariable(typeReference);
-            _method.Body.Variables.Add(variable);
             return new NamedInstructionBlockChain(variable, typeReference);
         }
 

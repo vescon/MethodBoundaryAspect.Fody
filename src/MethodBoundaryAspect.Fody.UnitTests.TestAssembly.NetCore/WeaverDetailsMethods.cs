@@ -33,6 +33,12 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
         public void SetColors(ref Color[] colors) => colors = new[] { Color.Green };
     }
 
+    public class MultipleAspectsMethods
+    {
+        [OnlyOnEntryAspect, OnlyOnExitAspect]
+        public int Add(int a, int b) => a + b;
+    }
+
     public class PropertyFilterMethods
     {
         [OnlyOnEntryAspect]
