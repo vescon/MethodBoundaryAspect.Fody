@@ -15,31 +15,13 @@ using Mono.Collections.Generic;
 namespace MethodBoundaryAspect.Fody
 {
     /// <summary>
-    /// Used tools: 
-    /// - .NET Reflector + Addins "Reflexil" / IL Spy / LinqPad
-    /// - PEVerify
-    /// - ILDasm
-    /// - Mono.Cecil
-    /// - Fody
-    /// 
-    /// TODO:
-    /// Fix pdb files -> fixed
-    /// Intetgrate with Fody -> ok
-    /// Support for class aspects -> ok
-    /// Support for assembly aspects -> ok
-    /// Optimize weaving: Dont generate code of "OnXXX()" method is empty or not used -> ok
-    /// Optimize weaving: remove runtime dependency on "MethodBoundaryAspect.Attributes" assembly
-    /// Optimize weaving: only put arguments in MethodExecutionArgs if they are accessed in "OnXXX()" method -> ok
-    /// Optimize weaving: store GetCurrentMethod() result in static Dictionary in MethodBoundaryAspect with generated id for lookup to prevent reflection penalty -> ok
+    /// The Fody weaver: collects the aspects of all methods of the module (from the assembly, the classes and
+    /// the methods) and rewrites the methods to call them, see <see cref="MethodWeaverFactory"/>.
     /// </summary>
     public class ModuleWeaver : BaseModuleWeaver
     {
         private MethodInfoCompileTimeWeaver _methodInfoCompileTimeWeaver;
         private ExecutionArgsUsageAnalyzer _executionArgsUsageAnalyzer;
-
-        public ModuleWeaver()
-        {
-        }
 
         public bool DisableCompileTimeMethodInfos { get; set; }
 

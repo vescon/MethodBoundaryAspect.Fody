@@ -82,11 +82,7 @@ namespace MethodBoundaryAspect.Fody
 
         public NamedInstructionBlockChain CreateThisVariable()
         {
-            var type = _method.DeclaringType;
-            TypeReference typeRef = type;
-            if (typeRef.IsValueType)
-                typeRef = new ByReferenceType(type); // Unused? why?
-            return CreateThisVariable(type);
+            return CreateThisVariable(_method.DeclaringType);
         }
 
         public NamedInstructionBlockChain CreateThisVariable(TypeReference typeReference)

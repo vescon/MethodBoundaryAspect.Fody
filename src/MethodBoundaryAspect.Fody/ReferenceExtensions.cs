@@ -18,7 +18,8 @@ namespace MethodBoundaryAspect.Fody
             return instance;
         }
 
-        public static MethodReference MakeGeneric (this MethodReference self, params TypeReference [] arguments)
+        // instantiated with its own generic parameters, e.g. to call the executor of a generic method
+        public static MethodReference MakeGeneric (this MethodReference self)
         {
             var baseReference = self.DeclaringType.Module.ImportReference(self);
             var reference = new GenericInstanceMethod(baseReference);
