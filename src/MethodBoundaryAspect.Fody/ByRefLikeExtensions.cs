@@ -34,6 +34,21 @@ namespace MethodBoundaryAspect.Fody
                    && typeDefinition.CustomAttributes.Any(a => a.AttributeType.FullName == IsByRefLikeAttributeFullName);
         }
 
+        /// <summary>
+        /// Ref structs and pointers (incl. function pointers) cannot be boxed into MethodExecutionArgs,
+        /// they are passed as null and directly to the called method.
+        /// </summary>
+        public static bool CannotBeBoxed(this TypeReference type)
+        {
+            if (type.IsByRefLike())
+                return true;
+
+            while (type is ByReferenceType byReferenceType)
+                type = byReferenceType.ElementType;
+
+            return type.IsPointer || type.IsFunctionPointer;
+        }
+
         public static IEnumerable<string> GetByRefLikeValueNames(this MethodDefinition method)
         {
             if (method.HasThis && method.DeclaringType.IsByRefLike())

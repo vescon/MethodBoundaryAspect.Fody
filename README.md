@@ -472,6 +472,8 @@ public class Parser
 
 A build warning is written for each woven method using ref structs. Suppress these warnings with `SuppressRefStructWarnings="true"` (see [Configuration reference](#configuration-reference)), or exclude the method from weaving with `[DisableWeaving]`.
 
+Unmanaged pointers (`int*`, `void*`, function pointers) cannot be boxed either and are handled the same way, without a warning: they are `null` in `args.Arguments` and `args.ReturnValue` and passed unchanged to the method. `IntPtr` and `UIntPtr` are ordinary values and are provided.
+
 ## Performance
 
 Filling all `MethodExecutionArgs` properties on every call costs time and memory: the arguments are boxed into a new `object[]`, the return value is boxed, and the `MethodBase` is loaded from a static cache. Therefore the weaver analyzes the IL of the aspects' `OnEntry`, `OnExit` and `OnException` methods, and values that no aspect of a method uses are not provided:

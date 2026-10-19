@@ -339,10 +339,10 @@ namespace MethodBoundaryAspect.Fody
             if (allowChangingInputArguments)
             {
                 // get arguments from ExecutionArgs because they could have been changed in aspect code
-                // (except ref structs which cannot be passed via ExecutionArgs)
+                // (except ref structs and pointers which cannot be passed via ExecutionArgs)
                 var instanceOffset = _method.IsStatic ? 0 : 1;
                 args = _method.Parameters
-                    .Select((x, i) => x.ParameterType.IsByRefLike()
+                    .Select((x, i) => x.ParameterType.CannotBeBoxed()
                         ? (ILoadable)new ArgumentLoadable(i + instanceOffset, x, _method.Body.GetILProcessor())
                         : new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator))
                     .ToArray();
@@ -433,11 +433,11 @@ namespace MethodBoundaryAspect.Fody
                 : null;
         }
 
-        // ref/out parameters except ref structs, which cannot be boxed into ExecutionArgs.Arguments
+        // ref/out parameters except ref structs and pointers, which cannot be boxed into ExecutionArgs.Arguments
         // and are passed directly to the called method instead
         private IEnumerable<ParameterDefinition> GetByRefParametersPassedViaArguments()
         {
-            return _method.Parameters.Where(x => x.ParameterType.IsByReference && !x.ParameterType.IsByRefLike());
+            return _method.Parameters.Where(x => x.ParameterType.IsByReference && !x.ParameterType.CannotBeBoxed());
         }
 
         private Instruction WeaveOnExit(bool hasReturnValue, NamedInstructionBlockChain returnValue)
@@ -448,8 +448,8 @@ namespace MethodBoundaryAspect.Fody
                             .ToList();
 
             Instruction instructionAfterCall = null;
-            // ref structs cannot be boxed, ReturnValue stays null
-            if (hasReturnValue && onExitAspects.Any() && ProvidesReturnValue && !_method.ReturnType.IsByRefLike())
+            // ref structs and pointers cannot be boxed, ReturnValue stays null
+            if (hasReturnValue && onExitAspects.Any() && ProvidesReturnValue && !_method.ReturnType.CannotBeBoxed())
             {
                 var loadReturnValue = _creator.LoadValueOnStack(returnValue);
 
@@ -538,7 +538,9 @@ namespace MethodBoundaryAspect.Fody
                 if (returnValue != null && ReadsBackReturnValue)
                     callOnExitsAndReturn.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue));
 
-                callOnExitsAndReturn.Add(new InstructionBlock("Leave", Instruction.Create(OpCodes.Leave_S, returnAfterHandling.First)));
+                // long form: the handlers of the remaining aspects lie between here and the target,
+                // Optimize() shortens the branch if it fits
+                callOnExitsAndReturn.Add(new InstructionBlock("Leave", Instruction.Create(OpCodes.Leave, returnAfterHandling.First)));
 
                 callAspectOnException.Add(_creator.IfFlowBehaviorIsAnyOf(ExecutionArgs, nop.First, callOnExitsAndReturn, 1, 3));
 
@@ -549,7 +551,7 @@ namespace MethodBoundaryAspect.Fody
             
             var flowBehaviorHandler = new InstructionBlockChain();
             flowBehaviorHandler.Add(new InstructionBlock("throw", Instruction.Create(OpCodes.Rethrow)));
-            flowBehaviorHandler.Add(new InstructionBlock("Leave", Instruction.Create(OpCodes.Leave_S, realInstructionAfterCall)));
+            flowBehaviorHandler.Add(new InstructionBlock("Leave", Instruction.Create(OpCodes.Leave, realInstructionAfterCall)));
             flowBehaviorHandler.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
 
             returnAfterHandling.InsertAfter(flowBehaviorHandler.Last, _ilProcessor);

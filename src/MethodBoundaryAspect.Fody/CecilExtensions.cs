@@ -245,10 +245,10 @@ namespace MethodBoundaryAspect.Fody
         {
             switch (type)
             {
-                case MetadataType.Boolean:
                 case MetadataType.Int32:
                 case MetadataType.UInt32:
                     return OpCodes.Stelem_I4;
+                case MetadataType.Boolean: // 1 byte, stelem.i4 would write 4 bytes
                 case MetadataType.Byte:
                 case MetadataType.SByte:
                     return OpCodes.Stelem_I1;
@@ -290,10 +290,10 @@ namespace MethodBoundaryAspect.Fody
         {
             switch (type)
             {
-                case MetadataType.Boolean:
                 case MetadataType.Int32:
                 case MetadataType.UInt32:
                     return OpCodes.Stind_I4;
+                case MetadataType.Boolean: // 1 byte, stind.i4 would overwrite the 3 bytes after it
                 case MetadataType.Byte:
                 case MetadataType.SByte:
                     return OpCodes.Stind_I1;

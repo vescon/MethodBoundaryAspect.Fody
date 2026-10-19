@@ -263,8 +263,8 @@ namespace MethodBoundaryAspect.Fody
             if (InstructionBlockCreator.IsVoid(_method.ReturnType))
                 return new InstructionBlockChain();
 
-            // ref structs cannot be unboxed, a ReturnValue set by the aspect is ignored
-            if (_method.ReturnType.IsByRefLike())
+            // ref structs and pointers cannot be unboxed, a ReturnValue set by the aspect is ignored
+            if (_method.ReturnType.CannotBeBoxed())
                 return new InstructionBlockChain();
 
             var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "get_ReturnValue");
@@ -393,7 +393,7 @@ namespace MethodBoundaryAspect.Fody
             {
                 flowBehaviorHandler.Add(flowBehaviorLocal.Load(false, false));
                 flowBehaviorHandler.Add(new InstructionBlock("FlowBehavior", Instruction.Create(OpCodes.Ldc_I4, behaviors[i])));
-                flowBehaviorHandler.Add(new InstructionBlock("If == then goto the 'then' block", Instruction.Create(OpCodes.Beq_S, thenBody.First)));
+                flowBehaviorHandler.Add(new InstructionBlock("If == then goto the 'then' block", Instruction.Create(OpCodes.Beq, thenBody.First)));
             }
             
             flowBehaviorHandler.Add(flowBehaviorLocal.Load(false, false));
