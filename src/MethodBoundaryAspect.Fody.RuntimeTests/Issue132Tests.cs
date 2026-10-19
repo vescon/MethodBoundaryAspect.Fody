@@ -41,6 +41,13 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
                 | MulticastAttributes.Public);
         }
 
+        // without a value at the attribute usage all visibilities are woven, the default value has to match
+        [Fact]
+        public void DefaultValueShouldBeAnyVisibility()
+        {
+            new VisibilityRecordingAspect().AttributeTargetMemberAttributes.Should().Be(MulticastAttributes.AnyVisibility);
+        }
+
         [Fact]
         public void AnyVisibilityShouldWeaveMethodsOfAllVisibilities()
         {
