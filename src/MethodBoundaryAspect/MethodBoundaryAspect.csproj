@@ -8,14 +8,14 @@
     <PackageId>MethodBoundaryAspect.Fody</PackageId>
     <Authors>Ralf Kornelius, Marcell Spies, Martin Ayasse, Contributors</Authors>
     <Company>VESCON GmbH</Company>
-    <Copyright>Copyright © $([System.DateTime]::Now.ToString(yyyy)) VESCON GmbH</Copyright>
+    <Copyright>Copyright © 2026 VESCON GmbH</Copyright>
     <PackageDescription>A Fody weaver which allows to decorate methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.</PackageDescription>
     <PackageTags>il weaving fody aspect aop method-invocation method boundary</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     
     <RepositoryUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</RepositoryUrl>
     <PackageProjectUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</PackageProjectUrl>
-    <PackageIconUrl>https://github.com/vescon/MethodBoundaryAspect.Fody/raw/master/docs/images/NuGetIcon.png</PackageIconUrl>
+    <PackageIcon>NuGetIcon.png</PackageIcon>
     <GitHubOrganization>VESCON</GitHubOrganization>    
 
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
@@ -38,6 +38,10 @@
     <AssetTargetFallback>netstandard2.0</AssetTargetFallback>
   </PropertyGroup>
   <!--Fixes problems with buildorder when using dotnet build-->
+
+  <ItemGroup>
+    <None Include="..\..\docs\images\NuGetIcon.png" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Fody" Version="6.7.0" PrivateAssets="None" />
