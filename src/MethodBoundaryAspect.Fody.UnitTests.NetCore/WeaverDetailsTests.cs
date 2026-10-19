@@ -27,6 +27,20 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             weaver.TotalWeavedTypes.Should().Be(1);
         }
 
+        [Theory]
+        [InlineData("SuppressRefStructWarnings")]
+        [InlineData("DisableExecutionArgsOptimization")]
+        public void IfABooleanConfigValueIsInvalid_ThenWeavingFails(string attributeName)
+        {
+            var weaver = CreateWeaver(typeof(LastMethodNotWovenMethods));
+            weaver.Config = new XElement("MethodBoundaryAspect", new XAttribute(attributeName, "yes"));
+
+            Action weave = () => weaver.Execute();
+
+            weave.Should().Throw<WeavingException>()
+                .WithMessage($"Invalid value 'yes' for {attributeName} in FodyWeavers.xml, expected 'true' or 'false'.");
+        }
+
         private static ModuleWeaver CreateWeaver(Type type)
         {
             var weaver = new ModuleWeaver

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 using Fody;
 using MethodBoundaryAspect.Fody.Ordering;
 using Mono.Cecil;
@@ -155,8 +156,9 @@ namespace MethodBoundaryAspect.Fody
 
         private void Execute(ModuleDefinition module)
         {
-            if (bool.TryParse(Config?.Attribute(nameof(SuppressRefStructWarnings))?.Value, out var suppressRefStructWarnings))
-                SuppressRefStructWarnings = suppressRefStructWarnings;
+            var suppressRefStructWarnings = Config?.Attribute(nameof(SuppressRefStructWarnings));
+            if (suppressRefStructWarnings != null)
+                SuppressRefStructWarnings = ParseBool(suppressRefStructWarnings);
 
             ReadExecutionArgsOptimizationConfig();
 
@@ -189,11 +191,7 @@ namespace MethodBoundaryAspect.Fody
 
             var attribute = Config.Attribute(nameof(DisableExecutionArgsOptimization));
             if (attribute != null)
-            {
-                if (!bool.TryParse(attribute.Value, out var disable))
-                    throw new WeavingException($"Invalid value '{attribute.Value}' for {nameof(DisableExecutionArgsOptimization)} in FodyWeavers.xml, expected 'true' or 'false'.");
-                DisableExecutionArgsOptimization = disable;
-            }
+                DisableExecutionArgsOptimization = ParseBool(attribute);
 
             foreach (var element in Config.Elements(nameof(DisableExecutionArgsOptimization)))
             {
@@ -202,6 +200,13 @@ namespace MethodBoundaryAspect.Fody
                     throw new WeavingException($"<{nameof(DisableExecutionArgsOptimization)}> in FodyWeavers.xml requires the full type name of the aspect, e.g. <{nameof(DisableExecutionArgsOptimization)} Aspect=\"MyNamespace.MyAspect\" />.");
                 DisableExecutionArgsOptimizationAspects.Add(aspect.Trim());
             }
+        }
+
+        private static bool ParseBool(XAttribute attribute)
+        {
+            if (!bool.TryParse(attribute.Value, out var value))
+                throw new WeavingException($"Invalid value '{attribute.Value}' for {attribute.Name} in FodyWeavers.xml, expected 'true' or 'false'.");
+            return value;
         }
 
         private void WeaveTypeAndNestedTypes(ModuleDefinition module, TypeDefinition type,
