@@ -531,7 +531,6 @@ namespace MethodBoundaryAspect.Fody
             
             var flowBehaviorHandler = new InstructionBlockChain();
             flowBehaviorHandler.Add(new InstructionBlock("throw", Instruction.Create(OpCodes.Rethrow)));
-            flowBehaviorHandler.Add(new InstructionBlock("Leave", Instruction.Create(OpCodes.Leave, realInstructionAfterCall)));
             flowBehaviorHandler.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
 
             returnAfterHandling.InsertAfter(flowBehaviorHandler.Last, _ilProcessor);
