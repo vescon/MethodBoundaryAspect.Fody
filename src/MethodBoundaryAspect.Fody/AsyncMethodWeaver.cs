@@ -234,7 +234,7 @@ namespace MethodBoundaryAspect.Fody
             return ldarg_0;
         }
 
-        protected override void WeaveOnException(IList<AspectData> allAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall, IPersistable returnValue)
+        protected override void WeaveOnException(IList<AspectData> allAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall, NamedInstructionBlockChain returnValue)
         {
             var handler = _moveNext.Body.ExceptionHandlers.FirstOrDefault(IsStateMachineCatchBlock);
             if (handler == null)
@@ -260,10 +260,26 @@ namespace MethodBoundaryAspect.Fody
                     inst.OpCode = longForm.Value;
             }
 
-            foreach (var onExceptionAspect in allAspects
+            var onExceptionAspects = allAspects
                 .Where(a => (a.AspectMethods & AspectMethods.OnException) != 0)
                 .Reverse()
-                .OfType<AspectDataOnAsyncMethod>())
+                .OfType<AspectDataOnAsyncMethod>()
+                .ToList();
+
+            // the result of the task if an aspect swallows the exception (FlowBehavior.Continue)
+            VariableDefinition result = null;
+            if (setResultMethod.Parameters.Count == 1)
+            {
+                result = new InstructionBlockCreator(_moveNext, new ReferenceFinder(_module)).CreateVariable(
+                    ((GenericInstanceType)setResultMethod.DeclaringType).GenericArguments[0]);
+
+                // ReturnValue holds the task returned to the caller (set before OnExit), it is no result of the task:
+                // without a ReturnValue set by an aspect the task completes with the default value
+                var clearReturnValue = _creator.ClearMethodExecutionArgsReturnValue(onExceptionAspects[0].GetMoveNextExecutionArgs(ExecutionArgs));
+                exceptionHandlerCurrent = clearReturnValue.InsertAfter(exceptionHandlerCurrent, processor);
+            }
+
+            foreach (var onExceptionAspect in onExceptionAspects)
             {
                 if (HasMultipleAspects)
                 {
@@ -273,16 +289,12 @@ namespace MethodBoundaryAspect.Fody
 
                 var callAspectOnException = onExceptionAspect.CallOnExceptionInMoveNext(ExecutionArgs, exceptionLocal);
 
-                if (setResultMethod.Parameters.Count == 1)
-                    returnValue = new VariablePersistable(new InstructionBlockCreator(_moveNext, new ReferenceFinder(_module)).CreateVariable(
-                        ((GenericInstanceType)setResultMethod.DeclaringType).GenericArguments[0]));
-
                 var thenBody = new InstructionBlockChain();
-                if (setResultMethod.Parameters.Count == 1)
-                    thenBody.Add(_creator.ReadReturnValue(onExceptionAspect.GetMoveNextExecutionArgs(ExecutionArgs), returnValue));
+                if (result != null)
+                    thenBody.Add(_creator.ReadReturnValue(onExceptionAspect.GetMoveNextExecutionArgs(ExecutionArgs), result));
                 thenBody.Add(loadBuilder.Clone());
-                if (setResultMethod.Parameters.Count == 1)
-                    thenBody.Add(returnValue.Load(false, false));
+                if (result != null)
+                    thenBody.Add(new InstructionBlock("Load result", Instruction.Create(OpCodes.Ldloc, result)));
                 thenBody.Add(new InstructionBlock("Call SetResult", Instruction.Create(OpCodes.Call, setResultMethod)));
                 // Continue with the compiler generated code after SetException (e.g. ProjectData.ClearProjectError in Visual Basic) which leaves the handler.
                 thenBody.Add(new InstructionBlock("Leave peacefully", Instruction.Create(OpCodes.Leave, afterSetException)));

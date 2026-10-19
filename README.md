@@ -452,7 +452,7 @@ public static async Task<string> Process()
 ### FlowBehavior in async methods
 
 - `FlowBehavior.Return` in `OnEntry`: `args.ReturnValue` is what the method returns, so it has to be a task, e.g. `args.ReturnValue = Task.FromResult(42);`. Otherwise the method returns `null` instead of a task.
-- `FlowBehavior.Continue` in `OnException`: the returned task completes successfully with `args.ReturnValue` as its result (the value, not a task), e.g. `args.ReturnValue = 0;` for a `Task<int>`.
+- `FlowBehavior.Continue` in `OnException`: the returned task completes successfully with `args.ReturnValue` as its result (the value, not a task), e.g. `args.ReturnValue = 0;` for a `Task<int>`. If no aspect sets it, the result is the default value. `args.ReturnValue` is `null` when `OnException` is called, the task returned to the caller (provided to `OnExit`) is no longer in it.
 - An exception thrown in `OnException` (e.g. to wrap the original exception) faults the returned task with that exception, like it is thrown to the caller of a synchronous method. The `OnException` of the remaining aspects is not called.
 
 ## Ref structs (`Span<T>`, `ReadOnlySpan<T>`, ...)

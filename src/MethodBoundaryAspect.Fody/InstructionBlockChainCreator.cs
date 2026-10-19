@@ -258,7 +258,7 @@ namespace MethodBoundaryAspect.Fody
             return block;
         }
 
-        public InstructionBlockChain ReadReturnValue(IPersistable executionArgs, IPersistable returnValue)
+        public InstructionBlockChain ReadReturnValue(IPersistable executionArgs, VariableDefinition returnValue)
         {
             if (InstructionBlockCreator.IsVoid(_method.ReturnType))
                 return new InstructionBlockChain();
@@ -268,12 +268,47 @@ namespace MethodBoundaryAspect.Fody
                 return new InstructionBlockChain();
 
             var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "get_ReturnValue");
-            var readValueBlock = _creator.CallInstanceMethod(getReturnValue, executionArgs, returnValue);
+            var readValueBlock = _creator.CallInstanceMethod(getReturnValue, executionArgs, new VariablePersistable(returnValue));
 
             var readValueBlockChain = new InstructionBlockChain();
+            var type = returnValue.VariableType;
+            if (type.IsByReference || (!type.IsValueType && !type.IsGenericParameter))
+            {
+                readValueBlockChain.Add(readValueBlock);
+                return readValueBlockChain;
+            }
+
+            // a value type cannot be unboxed from null: if no aspect set the ReturnValue (e.g. the method body was
+            // skipped or an exception swallowed), the method returns the default value
+            var setDefault = new InstructionBlock("Default return value",
+                Instruction.Create(OpCodes.Ldloca, returnValue),
+                Instruction.Create(OpCodes.Initobj, type));
+            var end = Instruction.Create(OpCodes.Nop);
+
+            var checkNull = executionArgs.Load(true, false).Instructions.ToList();
+            checkNull.Add(Instruction.Create(OpCodes.Call, getReturnValue));
+            checkNull.Add(Instruction.Create(OpCodes.Brfalse, setDefault.First));
+
+            readValueBlockChain.Add(new InstructionBlock("If ReturnValue is null", checkNull));
             readValueBlockChain.Add(readValueBlock);
+            readValueBlockChain.Add(new InstructionBlock("Skip default", Instruction.Create(OpCodes.Br, end)));
+            readValueBlockChain.Add(setDefault);
+            readValueBlockChain.Add(new InstructionBlock("End", end));
             return readValueBlockChain;
-        } 
+        }
+
+        public InstructionBlockChain ClearMethodExecutionArgsReturnValue(ILoadable executionArgs)
+        {
+            var setReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "set_ReturnValue");
+
+            var instructions = executionArgs.Load(true, false).Instructions.ToList();
+            instructions.Add(Instruction.Create(OpCodes.Ldnull));
+            instructions.Add(Instruction.Create(OpCodes.Call, setReturnValue));
+
+            var chain = new InstructionBlockChain();
+            chain.Add(new InstructionBlock("Clear ReturnValue", instructions));
+            return chain;
+        }
         
         public NamedInstructionBlockChain SaveThrownException()
         {

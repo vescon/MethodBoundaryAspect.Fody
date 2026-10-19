@@ -228,7 +228,7 @@ namespace MethodBoundaryAspect.Fody
             }
         }
 
-        private void WeaveOnEntry(NamedInstructionBlockChain arguments, IPersistable returnValue)
+        private void WeaveOnEntry(NamedInstructionBlockChain arguments, NamedInstructionBlockChain returnValue)
         {
             var allowChangingInputArguments = AllowChangingInputArguments;
 
@@ -288,8 +288,8 @@ namespace MethodBoundaryAspect.Fody
                 if (returnValue != null)
                 {
                     if (ReadsBackReturnValue)
-                        onExitChain.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue));
-                    onExitChain.Add(returnValue.Load(false, false));
+                        onExitChain.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue.Variable));
+                    onExitChain.Add(_creator.LoadValueOnStack(returnValue));
                 }
 
                 onExitChain.Add(new InstructionBlock("Return", Instruction.Create(OpCodes.Ret)));
@@ -453,7 +453,7 @@ namespace MethodBoundaryAspect.Fody
             }
 
             if (hasReturnValue && onExitAspects.Any() && ReadsBackReturnValue)
-                _creator.ReadReturnValue(ExecutionArgs, returnValue).Append(_ilProcessor);
+                _creator.ReadReturnValue(ExecutionArgs, returnValue.Variable).Append(_ilProcessor);
 
             return instructionAfterCall;
         }
@@ -466,7 +466,7 @@ namespace MethodBoundaryAspect.Fody
             AddToEnd(_creator.CreateReturn());
         }
 
-        protected virtual void WeaveOnException(IList<AspectData> allAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall, IPersistable returnValue)
+        protected virtual void WeaveOnException(IList<AspectData> allAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall, NamedInstructionBlockChain returnValue)
         {
             var realInstructionAfterCall = instructionAfterCall ?? instructionCallEnd.Next;
             var tryLeaveInstruction = Instruction.Create(OpCodes.Leave, realInstructionAfterCall);
@@ -484,7 +484,7 @@ namespace MethodBoundaryAspect.Fody
             
             var returnAfterHandling = new InstructionBlockChain();
             if (returnValue != null)
-                returnAfterHandling.Add(returnValue.Load(false, false));
+                returnAfterHandling.Add(_creator.LoadValueOnStack(returnValue));
             returnAfterHandling.Add(new InstructionBlock("Return", Instruction.Create(OpCodes.Ret)));
 
             var indices = allAspects
@@ -519,7 +519,7 @@ namespace MethodBoundaryAspect.Fody
                 }
 
                 if (returnValue != null && ReadsBackReturnValue)
-                    callOnExitsAndReturn.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue));
+                    callOnExitsAndReturn.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue.Variable));
 
                 // long form: the handlers of the remaining aspects lie between here and the target,
                 // Optimize() shortens the branch if it fits

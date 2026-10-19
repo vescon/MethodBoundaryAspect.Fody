@@ -135,10 +135,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         public void OptedOutAspectShouldReadBackTheReturnValue()
         {
             // the optimization is disabled in FodyWeavers.xml: the (not set) return value is read back
-            // from MethodExecutionArgs.ReturnValue, null can't be unboxed to int
-            Action call = () => _target.OptOutSkippedInt();
-
-            call.Should().Throw<NullReferenceException>();
+            // from MethodExecutionArgs.ReturnValue, null is the default value of int
+            _target.OptOutSkippedInt().Should().Be(0);
         }
     }
 }
