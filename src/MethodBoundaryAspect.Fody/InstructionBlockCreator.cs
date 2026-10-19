@@ -252,18 +252,18 @@ namespace MethodBoundaryAspect.Fody
             var parameterCount = 0;
             foreach (var argument in arguments)
             {
-                var paramIsByRef = methodReference.Parameters[parameterCount].ParameterType.IsByReference;
+                var parameterType = methodReference.Parameters[parameterCount].ParameterType.WithoutModifiers();
+                var paramIsByRef = parameterType.IsByReference;
 
                 loadArgumentsInstructions.AddRange(argument.Load(false, false).Instructions);
-                var varType = argument.PersistedType;
+                var varType = argument.PersistedType.WithoutModifiers();
                 if (varType.IsByReference && !paramIsByRef)
                 {
                     varType = ((ByReferenceType)varType).ElementType;
                     loadArgumentsInstructions.Add(Instruction.Create(OpCodes.Ldobj, varType));
                 }
 
-                var parameter = methodReference.Parameters[parameterCount];
-                if (parameter.ParameterType.FullName != varType.FullName)
+                if (parameterType.FullName != varType.FullName)
                 {
                     if (varType.IsValueType || varType.IsGenericParameter)
                         loadArgumentsInstructions.Add(Instruction.Create(OpCodes.Box, varType));
@@ -294,8 +294,8 @@ namespace MethodBoundaryAspect.Fody
                     return methodWork;
                 // Therefore, !methodReturnsVoid && returnValueShouldBeStored
                 
-                var castToType = returnValue.PersistedType;
-                var castFromType = methodDefinition.ReturnType;
+                var castToType = returnValue.PersistedType.WithoutModifiers();
+                var castFromType = methodDefinition.ReturnType.WithoutModifiers();
                 if (castToType.FullName != castFromType.FullName)
                 {
                     if (castToType.IsByReference)
@@ -469,7 +469,7 @@ namespace MethodBoundaryAspect.Fody
 
             // If a parameter is passed by reference then you need to use Ldind
             // ------------------------------------------------------------
-            var paramType = parameterDefinition.ParameterType;
+            var paramType = parameterDefinition.ParameterType.WithoutModifiers();
 
             if (paramType.IsByReference)
             {
@@ -593,7 +593,8 @@ namespace MethodBoundaryAspect.Fody
 
         public static bool IsVoid(TypeReference type)
         {
-            return type.Name == VoidType;
+            // the return type of an init accessor is "void modreq(IsExternalInit)"
+            return type.WithoutModifiers().Name == VoidType;
         }
 
         public Instruction CreateReturn()

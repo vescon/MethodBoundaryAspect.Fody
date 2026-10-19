@@ -53,7 +53,7 @@ namespace MethodBoundaryAspect.Fody
 
             var hasReturnValue = !InstructionBlockCreator.IsVoid(_method.ReturnType);
             var returnValue = hasReturnValue
-                    ? _creator.CreateVariable(_method.ReturnType)
+                    ? _creator.CreateVariable(_method.ReturnType.WithoutModifiers())
                     : null;
 
             WeaveOnEntry(returnValue);
@@ -238,7 +238,7 @@ namespace MethodBoundaryAspect.Fody
                 var flowChain = new InstructionBlockChain();
                 var onExitChain = new InstructionBlockChain();
 
-                if (_method.ReturnType.IsByReference)
+                if (_method.ReturnType.WithoutModifiers().IsByReference)
                 {
                     var notSupportedExceptionCtorString =
                         _module.ImportReference(
@@ -328,13 +328,13 @@ namespace MethodBoundaryAspect.Fody
                 // write byref variables back for origin source method:
                 // the called method has written ref/out values into the local variables passed by address
                 var copyBackInstructions = new List<Instruction>();
-                foreach (var parameter in _method.Parameters.Where(x => x.ParameterType.IsByReference && !x.ParameterType.CannotBeBoxed()))
+                foreach (var parameter in _method.Parameters.Where(x => x.ParameterType.WithoutModifiers().IsByReference && !x.ParameterType.CannotBeBoxed()))
                 {
                     var byRefVariable = ((ArrayElementLoadable)args[parameter.Index]).ByRefVariable;
                     copyBackInstructions.Add(_ilProcessor.Create(OpCodes.Ldarg, parameter));
                     copyBackInstructions.Add(_ilProcessor.Create(OpCodes.Ldloc, byRefVariable));
 
-                    var elementType = ((ByReferenceType)parameter.ParameterType).ElementType;
+                    var elementType = ((ByReferenceType)parameter.ParameterType.WithoutModifiers()).ElementType;
                     copyBackInstructions.Add(elementType.GetStIndInstruction());
                 }
 
