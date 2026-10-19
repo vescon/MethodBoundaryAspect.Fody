@@ -14,4 +14,10 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
         {
         }
     }
+
+    public class PropertyFilterMethods
+    {
+        [OnlyOnEntryAspect]
+        public int Value { get; set; }
+    }
 }

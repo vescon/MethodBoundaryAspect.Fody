@@ -27,6 +27,19 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             weaver.TotalWeavedTypes.Should().Be(1);
         }
 
+        [Fact]
+        public void IfAPropertyFilterIsSet_ThenOnlyTheseAccessorsAreWoven()
+        {
+            var weaver = CreateWeaver(typeof(PropertyFilterMethods));
+            weaver.AddPropertyFilter(typeof(PropertyFilterMethods).FullName + ".get_Value");
+
+            weaver.Execute();
+
+            weaver.TotalWeavedProperties.Should().Be(1);
+            var type = weaver.ModuleDefinition.GetType(typeof(PropertyFilterMethods).FullName);
+            type.Methods.Select(m => m.Name).Should().Contain("$_executor_get_Value").And.NotContain("$_executor_set_Value");
+        }
+
         [Theory]
         [InlineData("SuppressRefStructWarnings")]
         [InlineData("DisableExecutionArgsOptimization")]

@@ -403,11 +403,9 @@ namespace MethodBoundaryAspect.Fody
 
             if (PropertyFilter.Any())
             {
-                var propertySetterFullName = $"{fullName}.{name}";
-                var propertyGetterFullName = $"{fullName}.{name}";
-                var matched = PropertyFilter.Contains(propertySetterFullName) ||
-                              MethodFilters.Contains(propertyGetterFullName);
-                if (!matched)
+                // accessor names, e.g. "Namespace.Type.get_Name"
+                var accessorFullName = $"{fullName}.{name}";
+                if (!PropertyFilter.Contains(accessorFullName))
                     return true;
             }
 
