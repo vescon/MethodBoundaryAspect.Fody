@@ -253,6 +253,10 @@ namespace MethodBoundaryAspect.Fody
             if (InstructionBlockCreator.IsVoid(_method.ReturnType))
                 return new InstructionBlockChain();
 
+            // pointers cannot be unboxed, a ReturnValue set by the aspect is ignored
+            if (_method.ReturnType.CannotBeBoxed())
+                return new InstructionBlockChain();
+
             var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "get_ReturnValue");
             var readValueBlock = _creator.CallInstanceMethod(getReturnValue, executionArgs, returnValue);
 

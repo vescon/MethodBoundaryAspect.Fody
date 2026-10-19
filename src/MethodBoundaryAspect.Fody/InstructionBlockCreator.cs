@@ -458,14 +458,9 @@ namespace MethodBoundaryAspect.Fody
             VariableDefinition paramsArray)
         {
 
-            var paramMetaData = parameterDefinition.ParameterType.MetadataType;
-            if (paramMetaData == MetadataType.UIntPtr ||
-                paramMetaData == MetadataType.FunctionPointer ||
-                paramMetaData == MetadataType.IntPtr ||
-                paramMetaData == MetadataType.Pointer)
-            {
+            // pointers cannot be boxed, they stay null in the arguments array
+            if (parameterDefinition.ParameterType.CannotBeBoxed())
                 yield break;
-            }
 
             yield return Instruction.Create(OpCodes.Ldloc, paramsArray);
             yield return Instruction.Create(OpCodes.Ldc_I4, parameterDefinition.Index);

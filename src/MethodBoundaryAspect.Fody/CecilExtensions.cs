@@ -245,10 +245,10 @@ namespace MethodBoundaryAspect.Fody
         {
             switch (type)
             {
-                case MetadataType.Boolean:
                 case MetadataType.Int32:
                 case MetadataType.UInt32:
                     return OpCodes.Stelem_I4;
+                case MetadataType.Boolean: // 1 byte, stelem.i4 would write 4 bytes
                 case MetadataType.Byte:
                 case MetadataType.SByte:
                     return OpCodes.Stelem_I1;
@@ -275,19 +275,37 @@ namespace MethodBoundaryAspect.Fody
             var typeDef = typeRef.Resolve();
             if (typeDef.IsEnum(out TypeReference underlying))
                 return Instruction.Create(underlying.MetadataType.GetStIndCode());
-            if (typeRef.IsValueType)
-                return Instruction.Create(typeRef.MetadataType.GetStIndCode());
+            if (typeRef.IsValueType || typeDef.IsValueType)
+            {
+                // non-primitive value types (e.g. Guid, DateTime, custom structs) need stobj
+                var opCode = typeRef.MetadataType.GetStIndCode();
+                return opCode == OpCodes.Stind_Ref
+                    ? Instruction.Create(OpCodes.Stobj, typeRef)
+                    : Instruction.Create(opCode);
+            }
             return Instruction.Create(OpCodes.Stind_Ref);
+        }
+
+        /// <summary>
+        /// Unmanaged pointers (incl. function pointers) cannot be boxed into MethodExecutionArgs,
+        /// they are passed as null and directly to the called method.
+        /// </summary>
+        public static bool CannotBeBoxed(this TypeReference type)
+        {
+            while (type is ByReferenceType byReferenceType)
+                type = byReferenceType.ElementType;
+
+            return type.IsPointer || type.IsFunctionPointer;
         }
 
         public static OpCode GetStIndCode(this MetadataType type)
         {
             switch (type)
             {
-                case MetadataType.Boolean:
                 case MetadataType.Int32:
                 case MetadataType.UInt32:
                     return OpCodes.Stind_I4;
+                case MetadataType.Boolean: // 1 byte, stind.i4 would overwrite the 3 bytes after it
                 case MetadataType.Byte:
                 case MetadataType.SByte:
                     return OpCodes.Stind_I1;
