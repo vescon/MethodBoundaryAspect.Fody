@@ -321,7 +321,8 @@ namespace MethodBoundaryAspect.Fody
                     pushes = 2;
                     break;
                 case StackBehaviour.Varpush:
-                    pushes = opCode.Code == Code.Newobj || method.ReturnType.MetadataType != MetadataType.Void ? 1 : 0;
+                    // e.g. "void modreq(IsExternalInit)" of an init accessor pushes nothing
+                    pushes = opCode.Code == Code.Newobj || method.ReturnType.WithoutModifiers().MetadataType != MetadataType.Void ? 1 : 0;
                     break;
                 default:
                     return false;

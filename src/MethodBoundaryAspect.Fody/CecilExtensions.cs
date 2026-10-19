@@ -133,6 +133,19 @@ namespace MethodBoundaryAspect.Fody
 
     public static class CecilExtensions
     {
+        /// <summary>
+        /// The type without its required and optional modifiers, which hide the type behind it from Cecil
+        /// (IsByReference, Name): e.g. "int&amp;" for "int&amp; modreq(InAttribute)" of an in parameter or a ref readonly
+        /// return value of a virtual method, or "void" for "void modreq(IsExternalInit)" of an init accessor.
+        /// </summary>
+        public static TypeReference WithoutModifiers(this TypeReference type)
+        {
+            while (type is IModifierType modifierType)
+                type = modifierType.ElementType;
+
+            return type;
+        }
+
         public static TypeReference CleanEnumsInTypeRef(this TypeReference type)
         {
             if (type.IsArray(out TypeReference elementType))

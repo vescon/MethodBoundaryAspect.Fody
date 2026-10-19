@@ -47,7 +47,7 @@ IL generation layers: `InstructionBlockChainCreator` (high-level blocks: "call O
 
 `ExecutionArgsUsageAnalyzer` analyzes the IL of the aspect methods and only provides the `MethodExecutionArgs` properties (`Arguments`, `ReturnValue` read/write, `Method`, `Instance`) that any aspect of the method uses. It is conservative: if `arg` escapes (passed to another method, stored, captured), all properties are provided; calls to non-virtual methods of the aspect hierarchy are followed; reference assemblies are never optimized. It can be disabled per aspect in `FodyWeavers.xml` (`<DisableExecutionArgsOptimization Aspect="Ns.Aspect" />`) or globally.
 
-Special cases already handled (keep them working): ref structs (`Span<T>`) are passed as `null` and never boxed, with a build warning; `[AllowChangingInputArguments]` passes the (possibly changed) array elements to the executor and copies ref/out values back; byref returns; generic classes/methods incl. foreign-assembly generics; Visual Basic async methods; unresolvable attribute base types.
+Special cases already handled (keep them working): ref structs (`Span<T>`) are passed as `null` and never boxed, with a build warning; `[AllowChangingInputArguments]` passes the (possibly changed) array elements to the executor and copies ref/out values back; byref returns; types with modifiers (`void modreq(IsExternalInit)` of init accessors/records, `int& modreq(InAttribute)` of `in` parameters and `ref readonly` returns of virtual methods; use `WithoutModifiers()` before checking `IsByReference` or void); generic classes/methods incl. foreign-assembly generics; Visual Basic async methods; unresolvable attribute base types.
 
 ## Conventions
 

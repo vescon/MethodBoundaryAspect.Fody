@@ -20,8 +20,9 @@ namespace MethodBoundaryAspect.Fody
         public static bool IsByRefLike(this TypeReference type)
         {
             // ref / out / in parameters and ref returns
+            type = type.WithoutModifiers();
             while (type is ByReferenceType byReferenceType)
-                type = byReferenceType.ElementType;
+                type = byReferenceType.ElementType.WithoutModifiers();
 
             if (type is GenericParameter genericParameter)
                 return (genericParameter.Attributes & AllowByRefLike) != 0;
@@ -43,8 +44,9 @@ namespace MethodBoundaryAspect.Fody
             if (type.IsByRefLike())
                 return true;
 
+            type = type.WithoutModifiers();
             while (type is ByReferenceType byReferenceType)
-                type = byReferenceType.ElementType;
+                type = byReferenceType.ElementType.WithoutModifiers();
 
             return type.IsPointer || type.IsFunctionPointer;
         }

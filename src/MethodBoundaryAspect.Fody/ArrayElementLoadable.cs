@@ -44,7 +44,7 @@ namespace MethodBoundaryAspect.Fody
             var arrayTypeReference = (ArrayType)_arrayVariableDefinition.VariableType;
             var castFromType = arrayTypeReference.ElementType;
 
-            var parameterType = _parameter.ParameterType;
+            var parameterType = _parameter.ParameterType.WithoutModifiers();
             var castToType = parameterType;
             if (parameterType.IsByReference) // support for ref-Arguments
                 castToType = ((ByReferenceType) castToType).ElementType;

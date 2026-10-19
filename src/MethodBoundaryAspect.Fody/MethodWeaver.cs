@@ -72,7 +72,7 @@ namespace MethodBoundaryAspect.Fody
 
             var hasReturnValue = !InstructionBlockCreator.IsVoid(_method.ReturnType);
             var returnValue = hasReturnValue
-                    ? _creator.CreateVariable(_method.ReturnType)
+                    ? _creator.CreateVariable(_method.ReturnType.WithoutModifiers())
                     : null;
 
             WeaveOnEntry(arguments, returnValue);
@@ -251,7 +251,7 @@ namespace MethodBoundaryAspect.Fody
                 var flowChain = new InstructionBlockChain();
                 var onExitChain = new InstructionBlockChain();
 
-                if (_method.ReturnType.IsByReference)
+                if (_method.ReturnType.WithoutModifiers().IsByReference)
                 {
                     var notSupportedExceptionCtorString =
                         _module.ImportReference(
@@ -378,7 +378,7 @@ namespace MethodBoundaryAspect.Fody
                 instructions.Add(_ilProcessor.Create(OpCodes.Ldc_I4, parameter.Index));
                 instructions.Add(_ilProcessor.Create(OpCodes.Ldloc, byRefVariable));
 
-                var elementType = ((ByReferenceType)parameter.ParameterType).ElementType;
+                var elementType = ((ByReferenceType)parameter.ParameterType.WithoutModifiers()).ElementType;
                 if (elementType.IsGenericParameter || elementType.IsValueType || elementType.Resolve().IsValueType)
                     instructions.Add(_ilProcessor.Create(OpCodes.Box, elementType));
 
@@ -407,7 +407,7 @@ namespace MethodBoundaryAspect.Fody
                 copyBackInstructions.Add(_ilProcessor.Create(OpCodes.Ldarg, parameter));
                 copyBackInstructions.AddRange(loadValue(parameter));
 
-                var elementType = ((ByReferenceType)parameter.ParameterType).ElementType;
+                var elementType = ((ByReferenceType)parameter.ParameterType.WithoutModifiers()).ElementType;
                 copyBackInstructions.Add(elementType.GetStIndInstruction());
             }
 
@@ -420,7 +420,7 @@ namespace MethodBoundaryAspect.Fody
         // and are passed directly to the called method instead
         private IEnumerable<ParameterDefinition> GetByRefParametersPassedViaArguments()
         {
-            return _method.Parameters.Where(x => x.ParameterType.IsByReference && !x.ParameterType.CannotBeBoxed());
+            return _method.Parameters.Where(x => x.ParameterType.WithoutModifiers().IsByReference && !x.ParameterType.CannotBeBoxed());
         }
 
         private Instruction WeaveOnExit(bool hasReturnValue, NamedInstructionBlockChain returnValue)
