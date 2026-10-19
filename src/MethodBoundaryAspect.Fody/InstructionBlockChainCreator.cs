@@ -297,7 +297,10 @@ namespace MethodBoundaryAspect.Fody
             return readValueBlockChain;
         }
 
-        public InstructionBlockChain ClearMethodExecutionArgsReturnValue(ILoadable executionArgs)
+        /// <summary>
+        /// Sets the ReturnValue to null, if <paramref name="onlyIfInstanceOf"/> is given only if it is of this type.
+        /// </summary>
+        public InstructionBlockChain ClearMethodExecutionArgsReturnValue(ILoadable executionArgs, TypeReference onlyIfInstanceOf = null)
         {
             var setReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "set_ReturnValue");
 
@@ -306,7 +309,22 @@ namespace MethodBoundaryAspect.Fody
             instructions.Add(Instruction.Create(OpCodes.Call, setReturnValue));
 
             var chain = new InstructionBlockChain();
+            if (onlyIfInstanceOf == null)
+            {
+                chain.Add(new InstructionBlock("Clear ReturnValue", instructions));
+                return chain;
+            }
+
+            var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "get_ReturnValue");
+            var end = Instruction.Create(OpCodes.Nop);
+            var check = executionArgs.Load(true, false).Instructions.ToList();
+            check.Add(Instruction.Create(OpCodes.Call, getReturnValue));
+            check.Add(Instruction.Create(OpCodes.Isinst, onlyIfInstanceOf));
+            check.Add(Instruction.Create(OpCodes.Brfalse, end));
+
+            chain.Add(new InstructionBlock("If ReturnValue is instance of " + onlyIfInstanceOf.Name, check));
             chain.Add(new InstructionBlock("Clear ReturnValue", instructions));
+            chain.Add(new InstructionBlock("End", end));
             return chain;
         }
         

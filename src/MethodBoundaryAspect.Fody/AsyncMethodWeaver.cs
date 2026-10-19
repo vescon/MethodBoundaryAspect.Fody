@@ -268,10 +268,12 @@ namespace MethodBoundaryAspect.Fody
 
             // the result of the task if an aspect swallows the exception (FlowBehavior.Continue)
             VariableDefinition result = null;
+            TypeReference returnedTaskType = null;
             if (setResultMethod.Parameters.Count == 1)
             {
-                result = new InstructionBlockCreator(_moveNext, new ReferenceFinder(_module)).CreateVariable(
-                    ((GenericInstanceType)setResultMethod.DeclaringType).GenericArguments[0]);
+                var builderType = (GenericInstanceType)setResultMethod.DeclaringType;
+                result = new InstructionBlockCreator(_moveNext, new ReferenceFinder(_module)).CreateVariable(builderType.GenericArguments[0]);
+                returnedTaskType = GetReturnedTaskType(builderType);
 
                 // ReturnValue holds the task returned to the caller (set before OnExit), it is no result of the task:
                 // without a ReturnValue set by an aspect the task completes with the default value
@@ -291,7 +293,13 @@ namespace MethodBoundaryAspect.Fody
 
                 var thenBody = new InstructionBlockChain();
                 if (result != null)
-                    thenBody.Add(_creator.ReadReturnValue(onExceptionAspect.GetMoveNextExecutionArgs(ExecutionArgs), result));
+                {
+                    // the method can return the task (and set it as ReturnValue) on another thread after the
+                    // ReturnValue was cleared above, e.g. if the exception is thrown after "await Task.Yield()"
+                    var executionArgs = onExceptionAspect.GetMoveNextExecutionArgs(ExecutionArgs);
+                    thenBody.Add(_creator.ClearMethodExecutionArgsReturnValue(executionArgs, returnedTaskType));
+                    thenBody.Add(_creator.ReadReturnValue(executionArgs, result));
+                }
                 thenBody.Add(loadBuilder.Clone());
                 if (result != null)
                     thenBody.Add(new InstructionBlock("Load result", Instruction.Create(OpCodes.Ldloc, result)));
@@ -327,6 +335,15 @@ namespace MethodBoundaryAspect.Fody
                 HandlerStart = catchOnException.First,
                 HandlerEnd = firstInstructionToSetException
             });
+        }
+
+        // the task returned to the caller, e.g. Task<TResult> for AsyncTaskMethodBuilder<TResult>
+        private TypeReference GetReturnedTaskType(GenericInstanceType builderType)
+        {
+            var taskType = (GenericInstanceType)builderType.Resolve().Methods.Single(m => m.Name == "get_Task").ReturnType;
+            var returnedTaskType = new GenericInstanceType(_module.ImportReference(taskType.ElementType));
+            returnedTaskType.GenericArguments.Add(builderType.GenericArguments[0]);
+            return returnedTaskType;
         }
 
         private static OpCode? GetLongFormBranch(OpCode opCode)
