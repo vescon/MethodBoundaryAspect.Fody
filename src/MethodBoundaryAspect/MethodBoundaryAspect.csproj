@@ -23,7 +23,9 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- the XML documentation is packed for IntelliSense; not every public member has a comment (CS1591) -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
   <!--Fixes problems with buildorder when using dotnet build-->
