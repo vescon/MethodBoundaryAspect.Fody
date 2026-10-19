@@ -418,10 +418,22 @@ namespace MethodBoundaryAspect.Fody
         }
 
         // ref/out parameters except ref structs and pointers, which cannot be boxed into ExecutionArgs.Arguments
-        // and are passed directly to the called method instead
+        // and are passed directly to the called method instead, and except read only parameters
         private IEnumerable<ParameterDefinition> GetByRefParametersPassedViaArguments()
         {
-            return _method.Parameters.Where(x => x.ParameterType.WithoutModifiers().IsByReference && !x.ParameterType.CannotBeBoxed());
+            return _method.Parameters.Where(x => x.ParameterType.WithoutModifiers().IsByReference
+                                                 && !x.ParameterType.CannotBeBoxed()
+                                                 && !IsReadOnly(x));
+        }
+
+        // in and ref readonly parameters: a changed argument is passed to the method, but not written back to the
+        // caller, whose variable (e.g. a readonly field) is read only for the method
+        private static bool IsReadOnly(ParameterDefinition parameter)
+        {
+            return (parameter.IsIn && !parameter.IsOut)
+                   || parameter.CustomAttributes.Any(a =>
+                       a.AttributeType.FullName == "System.Runtime.CompilerServices.IsReadOnlyAttribute"
+                       || a.AttributeType.FullName == "System.Runtime.CompilerServices.RequiresLocationAttribute");
         }
 
         private Instruction WeaveOnExit(bool hasReturnValue, NamedInstructionBlockChain returnValue)
