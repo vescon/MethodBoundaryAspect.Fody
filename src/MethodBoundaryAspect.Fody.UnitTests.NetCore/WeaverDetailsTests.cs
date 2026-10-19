@@ -16,6 +16,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
     /// </summary>
     public class WeaverDetailsTests
     {
+        // GenericParameterAttributes.AllowByRefLike ("allows ref struct"), not known by Mono.Cecil 0.11
+        private const GenericParameterAttributes AllowByRefLike = (GenericParameterAttributes)0x0020;
+
         [Fact]
         public void IfTheLastMethodOfATypeIsNotWoven_ThenTheTypeIsCountedAsWoven()
         {
@@ -25,6 +28,20 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 
             weaver.TotalWeavedMethods.Should().Be(1);
             weaver.TotalWeavedTypes.Should().Be(1);
+        }
+
+        [Fact]
+        public void IfAGenericMethodIsWoven_ThenTheExecutorKeepsTheFlagsOfTheGenericParameters()
+        {
+            var weaver = CreateWeaver(typeof(GenericParameterFlagsMethods));
+            var type = weaver.ModuleDefinition.GetType(typeof(GenericParameterFlagsMethods).FullName);
+            // "where T : allows ref struct" can't be written in C# 8, it has no type constraint
+            type.Methods.Single(m => m.Name == nameof(GenericParameterFlagsMethods.Generic)).GenericParameters[0].Attributes |= AllowByRefLike;
+
+            weaver.Execute();
+
+            var executor = type.Methods.Single(m => m.Name == "$_executor_" + nameof(GenericParameterFlagsMethods.Generic));
+            executor.GenericParameters[0].Attributes.Should().Be(AllowByRefLike);
         }
 
         [Fact]

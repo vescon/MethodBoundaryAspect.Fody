@@ -15,6 +15,12 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
         }
     }
 
+    public class GenericParameterFlagsMethods
+    {
+        [OnlyOnEntryAspect]
+        public T Generic<T>(T value) => value;
+    }
+
     public class PropertyFilterMethods
     {
         [OnlyOnEntryAspect]

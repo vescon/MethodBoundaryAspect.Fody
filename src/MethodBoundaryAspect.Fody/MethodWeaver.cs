@@ -149,33 +149,13 @@ namespace MethodBoundaryAspect.Fody
                 //  Selects the combination of all variance flags. This value is the result of using logical OR to combine the following flags: Contravariant and Covariant. 
                 foreach (var parameter in method.GenericParameters)
                 {
-                    var clonedParameter = new GenericParameter(parameter.Name, clonedMethod);
-                    if (parameter.HasConstraints)
+                    // all flags, also those without a type constraint, e.g. "allows ref struct"
+                    var clonedParameter = new GenericParameter(parameter.Name, clonedMethod)
                     {
-                        foreach (var parameterConstraint in parameter.Constraints)
-                        {
-                            clonedParameter.Attributes = parameter.Attributes;
-                            clonedParameter.Constraints.Add(parameterConstraint);
-                        }
-                    }
-
-                    if (parameter.HasReferenceTypeConstraint)
-                    {
-                        clonedParameter.Attributes |= GenericParameterAttributes.ReferenceTypeConstraint;
-                        clonedParameter.HasReferenceTypeConstraint = true;
-                    }
-
-                    if (parameter.HasNotNullableValueTypeConstraint)
-                    {
-                        clonedParameter.Attributes |= GenericParameterAttributes.NotNullableValueTypeConstraint;
-                        clonedParameter.HasNotNullableValueTypeConstraint = true;
-                    }
-
-                    if (parameter.HasDefaultConstructorConstraint)
-                    {
-                        clonedParameter.Attributes |= GenericParameterAttributes.DefaultConstructorConstraint;
-                        clonedParameter.HasDefaultConstructorConstraint = true;
-                    }
+                        Attributes = parameter.Attributes
+                    };
+                    foreach (var parameterConstraint in parameter.Constraints)
+                        clonedParameter.Constraints.Add(parameterConstraint);
 
                     clonedMethod.GenericParameters.Add(clonedParameter);
                 }
