@@ -15,9 +15,12 @@ namespace MethodBoundaryAspect.Fody
     {
         private readonly ModuleDefinition _mainModule;
         private TypeDefinition _methodInfosClass;
+        private MethodReference _getMethodFromHandle;
+        private MethodReference _getMethodFromHandleWithType;
 
-        private readonly Dictionary<MethodDefinition, FieldDefinition> _fieldsCache
-            = new Dictionary<MethodDefinition, FieldDefinition>();
+        // the method returning the cached method info of a woven method
+        private readonly Dictionary<MethodDefinition, MethodDefinition> _gettersCache
+            = new Dictionary<MethodDefinition, MethodDefinition>();
 
         private readonly string _cacheNamespace = "OnMethodBoundaryAspectCompile";
         private readonly string _cacheClass = "MethodInfos";
@@ -44,37 +47,70 @@ namespace MethodBoundaryAspect.Fody
                 BaseType = GetTypeReference(typeof(object))
             };
             _mainModule.Types.Add(_methodInfosClass);
+
+            // taken from https://gist.github.com/jbevain/390902
+            _getMethodFromHandle = ImportGetMethodFromHandle(typeof(RuntimeMethodHandle));
+            _getMethodFromHandleWithType = ImportGetMethodFromHandle(typeof(RuntimeMethodHandle), typeof(RuntimeTypeHandle));
         }
 
+        /// <summary>
+        /// Adds a field and a method returning the method info of <paramref name="method"/>. The method info is
+        /// loaded on the first call, not for all woven methods at once: that would take time at startup, and a method
+        /// which can't be loaded (e.g. a type of a missing assembly in its signature) would break all woven methods.
+        /// </summary>
         public void AddMethod(MethodDefinition method)
         {
             EnsureInit();
 
             var typeReferenceMethodBase = GetTypeReference(typeof(MethodBase));
-            _mainModule.ImportReference(typeReferenceMethodBase);
-
             // no hash of the method name: SHA256Managed throws on .NET Framework (Visual Studio) if FIPS mode is enabled
-            var identifier = $"{_fieldsCache.Count}_{method.Name}";
-            var fieldAttributes = FieldAttributes.Public | FieldAttributes.Static | FieldAttributes.InitOnly;
-            var fd = new FieldDefinition($"_methodInfo_{identifier}", fieldAttributes, typeReferenceMethodBase);
-            _methodInfosClass.Fields.Add(fd);
+            var identifier = $"{_gettersCache.Count}_{method.Name}";
 
-            _fieldsCache.Add(method, fd);
+            var field = new FieldDefinition($"_methodInfo_{identifier}", FieldAttributes.Private | FieldAttributes.Static, typeReferenceMethodBase);
+            _methodInfosClass.Fields.Add(field);
+
+            var getter = new MethodDefinition($"GetMethodInfo_{identifier}",
+                MethodAttributes.Assembly | MethodAttributes.Static | MethodAttributes.HideBySig,
+                typeReferenceMethodBase)
+            {
+                AggressiveInlining = true
+            };
+
+            // var methodInfo = _methodInfo; if (methodInfo == null) _methodInfo = methodInfo = GetMethodFromHandle(...);
+            // concurrent first calls may both load it, which is harmless
+            var instructions = getter.Body.Instructions;
+            var ret = Instruction.Create(OpCodes.Ret);
+            instructions.Add(Instruction.Create(OpCodes.Ldsfld, field));
+            instructions.Add(Instruction.Create(OpCodes.Dup));
+            instructions.Add(Instruction.Create(OpCodes.Brtrue, ret));
+            instructions.Add(Instruction.Create(OpCodes.Pop));
+            instructions.Add(Instruction.Create(OpCodes.Ldtoken, method));
+            if (ContainsOpenTypeRecursive(method))
+            {
+                // a method of a generic type needs its declaring type, the method info is the open
+                // definition for every instantiation, so it is cached as well
+                instructions.Add(Instruction.Create(OpCodes.Ldtoken, method.DeclaringType));
+                instructions.Add(Instruction.Create(OpCodes.Call, _getMethodFromHandleWithType));
+            }
+            else
+                instructions.Add(Instruction.Create(OpCodes.Call, _getMethodFromHandle));
+            instructions.Add(Instruction.Create(OpCodes.Dup));
+            instructions.Add(Instruction.Create(OpCodes.Stsfld, field));
+            instructions.Add(ret);
+            getter.Body.Optimize();
+
+            _methodInfosClass.Methods.Add(getter);
+            _gettersCache.Add(method, getter);
         }
 
         public InstructionBlock PushMethodInfoOnStack(MethodDefinition method, VariablePersistable variablePersistable)
         {
-            var fieldDefinition = _fieldsCache[method];
-            var instructions = new List<Instruction> { Instruction.Create(OpCodes.Ldsfld, fieldDefinition) };
+            var getter = _gettersCache[method];
+            var instructions = new List<Instruction> { Instruction.Create(OpCodes.Call, getter) };
             var store = variablePersistable.Store(
                 new InstructionBlock("", instructions),
                 variablePersistable.PersistedType);
             return new InstructionBlock($"Load method info for '{method.Name}'", store.Instructions);
-        }
-
-        public void Finish()
-        {
-            CreateStaticCtor();
         }
 
         private static bool ContainsOpenTypeRecursive(MethodDefinition method)
@@ -99,48 +135,6 @@ namespace MethodBoundaryAspect.Fody
             return method.GenericParameters.Any(x => x.ContainsGenericParameter);
         }
 
-        private void CreateStaticCtor()
-        {
-            var typeReferenceVoid = GetTypeReference(typeof(void));
-            var staticConstructorAttributes =
-                MethodAttributes.Private |
-                MethodAttributes.HideBySig |
-                MethodAttributes.SpecialName |
-                MethodAttributes.RTSpecialName |
-                MethodAttributes.Static;
-            var cctor = new MethodDefinition(".cctor", staticConstructorAttributes, typeReferenceVoid);
-
-            // taken from https://gist.github.com/jbevain/390902
-            var getMethodFromHandle = ImportGetMethodFromHandleArg1();
-            var getMethodFromHandleWithType = ImportGetMethodFromHandleArg2();
-            var cctorInstructions = new List<Instruction>();
-            foreach (var entry in _fieldsCache)
-            {
-                cctorInstructions.Add(Instruction.Create(OpCodes.Ldtoken, entry.Key));
-                if (ContainsOpenTypeRecursive(entry.Key))
-                {
-                    // a method of a generic type needs its declaring type, the method info is the open
-                    // definition for every instantiation, so it is cached as well
-                    cctorInstructions.Add(Instruction.Create(OpCodes.Ldtoken, entry.Key.DeclaringType));
-                    cctorInstructions.Add(Instruction.Create(OpCodes.Call, getMethodFromHandleWithType));
-                }
-                else
-                    cctorInstructions.Add(Instruction.Create(OpCodes.Call, getMethodFromHandle));
-                cctorInstructions.Add(Instruction.Create(OpCodes.Stsfld, entry.Value));
-            }
-
-            if (!cctorInstructions.Any())
-                return;
-
-            cctorInstructions.Add(Instruction.Create(OpCodes.Ret));
-
-            foreach (var methodInstruction in cctorInstructions)
-                cctor.Body.Instructions.Add(methodInstruction);
-            cctor.Body.Optimize();
-
-            _methodInfosClass.Methods.Add(cctor);
-        }
-
         private TypeReference GetTypeReference(Type type)
         {
             return GetTypeReference(type.FullName);
@@ -162,16 +156,6 @@ namespace MethodBoundaryAspect.Fody
                     return new TypeReference(namespaceName, typeName, _mainModule, _mainModule.TypeSystem.CoreLibrary);
                 }
             }
-        }
-
-        private MethodReference ImportGetMethodFromHandleArg1()
-        {
-            return ImportGetMethodFromHandle(typeof(RuntimeMethodHandle));
-        }
-
-        private MethodReference ImportGetMethodFromHandleArg2()
-        {
-            return ImportGetMethodFromHandle(typeof(RuntimeMethodHandle), typeof(RuntimeTypeHandle));
         }
 
         // Resolve from the target module's core library. Importing typeof(MethodBase).GetMethod(...)

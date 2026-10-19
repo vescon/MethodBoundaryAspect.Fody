@@ -180,8 +180,6 @@ namespace MethodBoundaryAspect.Fody
             foreach (var type in module.Types.ToList())
                 WeaveTypeAndNestedTypes(module, type, assemblyMethodBoundaryAspects);
 
-            _methodInfoCompileTimeWeaver.Finish();
-
             foreach (var aspect in DisableExecutionArgsOptimizationAspects)
             {
                 if (!_executionArgsUsageAnalyzer.MatchedDisabledAspects.Contains(ExecutionArgsUsageAnalyzer.NormalizeTypeName(aspect)))

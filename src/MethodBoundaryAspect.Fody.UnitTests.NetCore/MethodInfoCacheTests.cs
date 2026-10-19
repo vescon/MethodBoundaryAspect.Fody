@@ -15,6 +15,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
     /// MethodExecutionArgs.Method is loaded from a static field of OnMethodBoundaryAspectCompile.MethodInfos
     /// instead of being resolved by reflection on every call, also for methods of generic types and generic methods.
     /// see https://github.com/vescon/MethodBoundaryAspect.Fody/issues/85
+    /// Each woven method has its own getter, which loads the method info on its first call: a static constructor
+    /// loaded all method infos at once, and one which couldn't be loaded broke all woven methods.
     /// </summary>
     [Collection(RefStructWarningTests.TestAssemblyNetCoreWeaving)]
     public class MethodInfoCacheTests : IDisposable
@@ -34,10 +36,10 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 
             var instructions = weavedModule.GetType(type.FullName).Methods.Single(m => m.Name == methodName).Body.Instructions;
 
-            instructions.Select(i => i.Operand).OfType<MethodReference>().Select(m => m.Name)
-                .Should().NotContain(ReflectionMethods);
-            instructions.Where(i => i.OpCode == OpCodes.Ldsfld).Select(i => ((FieldReference)i.Operand).DeclaringType.FullName)
-                .Should().ContainSingle().Which.Should().Be("OnMethodBoundaryAspectCompile.MethodInfos");
+            var calledMethods = instructions.Select(i => i.Operand).OfType<MethodReference>().ToList();
+            calledMethods.Select(m => m.Name).Should().NotContain(ReflectionMethods);
+            calledMethods.Where(m => m.DeclaringType.FullName == "OnMethodBoundaryAspectCompile.MethodInfos")
+                .Should().ContainSingle().Which.Name.Should().StartWith("GetMethodInfo_");
         }
 
         [Fact]
@@ -45,8 +47,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         {
             var weavedModule = Weave();
 
-            var cctor = weavedModule.GetType("OnMethodBoundaryAspectCompile", "MethodInfos").Methods.Single(m => m.IsConstructor && m.IsStatic);
-            var getMethodFromHandleCalls = cctor.Body.Instructions
+            var getMethodFromHandleCalls = weavedModule.GetType("OnMethodBoundaryAspectCompile", "MethodInfos").Methods
+                .SelectMany(m => m.Body.Instructions)
                 .Where(i => i.OpCode == OpCodes.Call)
                 .Select(i => (MethodReference)i.Operand)
                 .Where(m => m.Name == "GetMethodFromHandle")
@@ -54,6 +56,18 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 
             // NonGeneric uses the overload without declaring type, the others need it
             getMethodFromHandleCalls.Select(m => m.Parameters.Count).Should().BeEquivalentTo(new[] { 1, 2, 2, 2 });
+        }
+
+        [Fact]
+        public void IfMethodsAreWeaved_ThenEachMethodInfoIsLoadedOnItsFirstUse()
+        {
+            var weavedModule = Weave();
+
+            var methodInfos = weavedModule.GetType("OnMethodBoundaryAspectCompile", "MethodInfos");
+
+            methodInfos.Methods.Should().NotContain(m => m.IsConstructor);
+            methodInfos.Methods.Should().HaveCount(4).And.OnlyContain(m => m.Name.StartsWith("GetMethodInfo_") && m.IsAssembly && m.IsStatic);
+            methodInfos.Fields.Should().HaveCount(4).And.OnlyContain(f => f.IsPrivate && f.IsStatic && !f.IsInitOnly);
         }
 
         [Fact]
