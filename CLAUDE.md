@@ -23,7 +23,7 @@ dotnet test src/MethodBoundaryAspect.Fody.RuntimeTests --configuration Release -
 - **Path length:** the NetFramework tests fail (PEVerify: "file name too long") and can hang when run from a deep path such as `.claude/worktrees/<name>`. Run them from a short path, e.g. `subst Q: <repo>` and `dotnet test` from `Q:\`, then `subst Q: /d`.
 - Benchmark (weaves with the local weaver): `dotnet run -c Release --project src/MethodBoundaryAspect.Fody.Benchmark -- --filter '*' --job short`
 - `Directory.Build.props`: C# 8, `TreatWarningsAsErrors`, strong-name signing.
-- Versioning is GitVersion (default config): `+semver: major|minor` in a commit message bumps the version. Pushing a `v*` tag publishes to nuget.org.
+- Versioning is GitVersion 6 (default config, run by the GitTools actions in the workflow): `+semver: major|minor` in a commit message bumps the version. Pushing a `v*` tag publishes to nuget.org. **Tag with three numbers (`v3.3.0`)**: GitVersion 6 does not read `v3.3` as a version. The workflow step "Check the version" fails a tag build whose version does not match the tag.
 
 ## Projects
 

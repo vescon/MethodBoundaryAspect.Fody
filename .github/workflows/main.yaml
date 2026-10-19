@@ -23,16 +23,18 @@ jobs:
           9.0.x
           10.0.x
 
-    # GitVersion is run directly, the GitTools actions need GitVersion 6 to run on Node 24, which calculates other
-    # versions (e.g. it ignores tags like v3.2). On GitHub Actions the tool writes the GitVersion_* variables used by
-    # src/Directory.Build.props into the environment of the following steps.
+    # The actions write the GitVersion_* variables used by src/Directory.Build.props into the environment of the
+    # following steps. GitVersion 6 only reads tags with three numbers (v3.3.0), see "Check the version".
     - name: Install GitVersion
-      run: dotnet tool install --global GitVersion.Tool --version 5.12.0
+      uses: gittools/actions/gitversion/setup@v4.7.0
+      with:
+        versionSpec: '6.x'
 
     - name: Use GitVersion
-      run: dotnet-gitversion /output buildserver
+      uses: gittools/actions/gitversion/execute@v4.7.0
 
-    # Without a version the package would be built as 0.0.1, and a release must not be published with a version that differs from its tag.
+    # Without a version the package would be built as 0.0.1, and a release must not be published with a version that
+    # differs from its tag (GitVersion 6 does not read a tag like v3.3 as version, it builds 3.3.0-tags-v3-3.1).
     - name: Check the version
       env:
         REF: ${{ github.ref }}
@@ -41,11 +43,15 @@ jobs:
         if (-not $env:GitVersion_SemVer) { throw 'GitVersion did not provide a version.' }
         Write-Host "Version: $env:GitVersion_SemVer"
         if ($env:REF.StartsWith('refs/tags/v')) {
-          # tags like v3.2 are version 3.2.0
-          $parts = @((($env:REF_NAME -replace '^v', '') -split '-')[0].Split('.'))
-          while ($parts.Count -lt 3) { $parts += '0' }
-          if (($parts -join '.') -ne $env:GitVersion_MajorMinorPatch) {
+          if ($env:REF_NAME -notmatch '^v(\d+\.\d+\.\d+)(-.+)?$') {
+            throw "The tag $env:REF_NAME needs three numbers, like v3.3.0."
+          }
+          if ($Matches[1] -ne $env:GitVersion_MajorMinorPatch) {
             throw "The tag $env:REF_NAME does not match the version $env:GitVersion_MajorMinorPatch calculated by GitVersion."
+          }
+          # a release has no suffix, GitVersion adds one if it did not find the tag as version
+          if (-not $Matches[2] -and $env:GitVersion_SemVer -ne $env:GitVersion_MajorMinorPatch) {
+            throw "The tag $env:REF_NAME is a release, but GitVersion calculated the version $env:GitVersion_SemVer."
           }
         }
 
