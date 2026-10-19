@@ -47,6 +47,7 @@ namespace MethodBoundaryAspect.Fody.Attributes
         {
         }
 
+        [Obsolete("CompileTimeValidate is never called by the weaver, which does not run the code of aspects. It will be removed in version 4.")]
         public virtual bool CompileTimeValidate(MethodBase method)
         {
             throw new NotImplementedException("TODO!");

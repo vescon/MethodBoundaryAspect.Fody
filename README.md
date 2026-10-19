@@ -248,7 +248,7 @@ public class OrderService
 }
 ```
 
-`[ProvideAspectRole]` and `[AspectRoleDependency]` are obsolete and will be removed in version 4, use `[AspectOrderIndex]` instead. A build warning is written for each aspect using them. They have known problems which are not fixed: a role is ignored if its aspect has no `[AspectRoleDependency]` itself, and a chain of dependencies (A after B, B after C) is rejected with an `InvalidAspectConfigurationException`.
+`[ProvideAspectRole]` and `[AspectRoleDependency]` are obsolete and will be removed in version 4, use `[AspectOrderIndex]` instead. A build warning is written for each aspect using them. They have known problems which are not fixed: a role is ignored if its aspect has no `[AspectRoleDependency]` itself, and a chain of dependencies (A after B, B after C) is rejected with an `InvalidAspectConfigurationException`. `OnMethodBoundaryAspect.CompileTimeValidate` is obsolete as well: the weaver never calls it (it does not run the code of aspects), and it will be removed in version 4.
 
 ## Changing the method behavior
 

@@ -27,7 +27,6 @@ namespace MethodBoundaryAspect.Fody
     /// Intetgrate with Fody -> ok
     /// Support for class aspects -> ok
     /// Support for assembly aspects -> ok
-    /// Implement CompileTimeValidate
     /// Optimize weaving: Dont generate code of "OnXXX()" method is empty or not used -> ok
     /// Optimize weaving: remove runtime dependency on "MethodBoundaryAspect.Attributes" assembly
     /// Optimize weaving: only put arguments in MethodExecutionArgs if they are accessed in "OnXXX()" method -> ok

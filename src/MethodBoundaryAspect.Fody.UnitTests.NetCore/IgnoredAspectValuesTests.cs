@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.Shared;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore;
@@ -11,7 +12,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 {
     /// <summary>
     /// The weaver doesn't run the code of aspects, so a filter set in a constructor or by overriding the property
-    /// was ignored without a hint.
+    /// was ignored without a hint. CompileTimeValidate is never called either.
     /// </summary>
     public class IgnoredAspectValuesTests
     {
@@ -43,6 +44,19 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 
             warnings.Should().NotContain(w => w.Contains("in its code"));
             Weave(typeof(IgnoredValueMethods)).Should().NotContain(w => w.Contains(typeof(OnlyOnEntryAspect).FullName));
+        }
+
+        [Fact]
+        public void IfCompileTimeValidateIsUsed_ThenTheCompilerWarns()
+        {
+            // the runtime library is no direct reference of this project, get it via the base class of an aspect
+            var runtimeLibrary = typeof(ConstructorFilterAspect).BaseType.Assembly;
+            var aspect = runtimeLibrary.GetType("MethodBoundaryAspect.Fody.Attributes.OnMethodBoundaryAspect", throwOnError: true);
+
+            var method = aspect.GetMethod("CompileTimeValidate");
+
+            method.GetCustomAttribute<ObsoleteAttribute>().Should().NotBeNull();
+            method.GetCustomAttribute<ObsoleteAttribute>().Message.Should().Contain("never called").And.Contain("version 4");
         }
 
         private static List<string> Weave(Type type)
