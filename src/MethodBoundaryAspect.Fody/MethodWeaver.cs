@@ -194,6 +194,9 @@ namespace MethodBoundaryAspect.Fody
             body.Variables.Clear();
             body.Instructions.Clear();
             body.ExceptionHandlers.Clear();
+
+            // the instructions moved to the executor method, which got the sequence points
+            method.DebugInformation.SequencePoints.Clear();
         }
 
         protected virtual void AddToSetup(InstructionBlockChain chain)

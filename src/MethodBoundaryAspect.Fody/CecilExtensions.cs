@@ -12,18 +12,12 @@ namespace Catel.Fody
     using Mono.Cecil.Cil;
     using Mono.Collections.Generic;
     using System.Linq;
-    using System.Reflection;
 
     /// <summary>
     /// taken from https://github.com/Catel/Catel.Fody/blob/master/src/Catel.Fody/Extensions/CecilExtensions.debuginfo.cs#L23
     /// </summary>
     public static partial class CecilExtensions
     {
-        private const long AddressToIgnore = 16707566;
-
-        private static readonly FieldInfo SequencePointOffsetFieldInfo = typeof(SequencePoint).GetField("offset", BindingFlags.Instance | BindingFlags.NonPublic);
-        private static readonly FieldInfo InstructionOffsetInstructionFieldInfo = typeof(InstructionOffset).GetField("instruction", BindingFlags.Instance | BindingFlags.NonPublic);
-
         public static void UpdateDebugInfo(this MethodDefinition method)
         {
             var debugInfo = method.DebugInformation;
@@ -34,9 +28,6 @@ namespace Catel.Fody
             {
                 return;
             }
-
-            var oldSequencePoints = debugInfo.SequencePoints;
-            var newSequencePoints = new Collection<SequencePoint>();
 
             // Step 1: check if all variables are present
             foreach (var variable in method.Body.Variables)
@@ -60,52 +51,11 @@ namespace Catel.Fody
                 }
             }
 
-            // Step 2: Make sure the instructions point to the correct items
-            foreach (var oldSequencePoint in oldSequencePoints)
-            {
-                //var isValid = false;
+            // The sequence points reference the instructions themselves, so they follow them when the weaver inserts
+            // instructions. Sequence points of instructions which are no longer part of the method are removed where
+            // the weaver removes or moves the instructions, see MethodWeaver.ClearMethod and AsyncMethodWeaver.HandleBody.
 
-                //// Special cases we need to ignore
-                //if (oldSequencePoint.StartLine == AddressToIgnore ||
-                //    oldSequencePoint.EndLine == AddressToIgnore)
-                //{
-                //    continue;
-                //}
-
-                var instructionOffset = (InstructionOffset)SequencePointOffsetFieldInfo.GetValue(oldSequencePoint);
-                var offsetInstruction = (Instruction)InstructionOffsetInstructionFieldInfo.GetValue(instructionOffset);
-
-                // Fix offset
-                for (var i = 0; i < instructions.Count; i++)
-                {
-                    var instruction = instructions[i];
-                    if (instruction == offsetInstruction)
-                    {
-                        var newSequencePoint = new SequencePoint(instruction, oldSequencePoint.Document)
-                        {
-                            StartLine = oldSequencePoint.StartLine,
-                            StartColumn = oldSequencePoint.StartColumn,
-                            EndLine = oldSequencePoint.EndLine,
-                            EndColumn = oldSequencePoint.EndColumn
-                        };
-
-                        newSequencePoints.Add(newSequencePoint);
-
-                        //isValid = true;
-
-                        break;
-                    }
-                }
-            }
-
-            debugInfo.SequencePoints.Clear();
-
-            foreach (var newSequencePoint in newSequencePoints)
-            {
-                debugInfo.SequencePoints.Add(newSequencePoint);
-            }
-
-            // Step 3: Remove any unused variables
+            // Step 2: Remove any unused variables
             RemoveUnusedVariablesFromDebugInfo(scope);
 
             // Final step: update the scopes by setting the indices

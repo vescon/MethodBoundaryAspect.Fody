@@ -26,4 +26,35 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
         [OnlyOnEntryAspect]
         public int Value { get; set; }
     }
+
+    public class DebugInformationMethods
+    {
+        [OnlyOnEntryAspect]
+        public int Sync(int a, int b)
+        {
+            var sum = a + b;
+            if (sum > 10)
+            {
+                sum -= 10;
+            }
+
+            return sum;
+        }
+
+        [OnlyOnEntryAspect]
+        public async System.Threading.Tasks.Task<int> Async(int a)
+        {
+            await System.Threading.Tasks.Task.Yield();
+            var doubled = a * 2;
+            return doubled;
+        }
+
+        [OnlyOnExceptionAspect]
+        public async System.Threading.Tasks.Task AsyncWithOnException(int a)
+        {
+            await System.Threading.Tasks.Task.Yield();
+            if (a < 0)
+                throw new System.ArgumentException("negative");
+        }
+    }
 }

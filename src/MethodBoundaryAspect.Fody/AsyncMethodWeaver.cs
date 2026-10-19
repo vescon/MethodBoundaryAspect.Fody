@@ -123,6 +123,11 @@ namespace MethodBoundaryAspect.Fody
             instructionCallEnd = _ilProcessor.Body.Instructions.Last();
             if (instructionCallEnd.OpCode == OpCodes.Ret)
             {
+                // the instruction is removed, so is its sequence point
+                var sequencePoint = _method.DebugInformation.GetSequencePoint(instructionCallEnd);
+                if (sequencePoint != null)
+                    _method.DebugInformation.SequencePoints.Remove(sequencePoint);
+
                 _ilProcessor.Remove(_ilProcessor.Body.Instructions.Last());
 
                 if (returnValue != null)
