@@ -571,6 +571,25 @@ Overhead of an aspect with `OnEntry` and `OnExit` compared to the same call with
 | uses `args.Method` | +4.1 ns | 72 B | - | - |
 | all properties provided (`DisableExecutionArgsOptimization`) | +10.9 ns | 152 B | +9.6 ns | 128 B |
 
+To reproduce the numbers (the project weaves with the local weaver, so build it first; run it from its folder, BenchmarkDotNet needs to find exactly one project file):
+
+```
+dotnet build -c Release src/MethodBoundaryAspect.Fody
+cd src/MethodBoundaryAspect.Fody.Benchmark
+dotnet run -c Release -f net10.0 -- --filter "*" --job short
+```
+
+The project targets `net8.0` and `net10.0`. The same benchmark on .NET 10 (baseline 20.9 ns, the generic call without an aspect allocates nothing there):
+
+| Aspect | Static method: time | Static method: allocated | Open generic method: time | Open generic method: allocated |
+|---|---:|---:|---:|---:|
+| uses no property | +2.8 ns | 72 B | +2.1 ns | 72 B |
+| uses no property, created for every call (`DisableAspectInstanceReuse`) | +0.0 ns | 0 B | - | - |
+| uses `args.Method` | +23.2 ns | 72 B | - | - |
+| all properties provided (`DisableExecutionArgsOptimization`) | +10.6 ns | 152 B | +7.6 ns | 128 B |
+
+The .NET 10 JIT removes the allocation of an aspect that is created for every call when the aspect does nothing and doesn't leak (escape analysis), so the numbers of that row only apply to such empty aspects.
+
 ### Tips for hot paths
 
 - Use only the `args` properties you need, and don't pass `args` to other code (see above). Providing `Arguments` and `ReturnValue` costs the most: an array and boxing.
