@@ -9,6 +9,9 @@ on:
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: read # a permissions block replaces the defaults, checkout needs it
+      id-token: write # OIDC token for the trusted publishing policy on nuget.org
     steps:    
     - name: Checkout
       uses: actions/checkout@v7
@@ -75,8 +78,18 @@ jobs:
       with:
         name: nupkg
         path: 'Artifacts/Packages/**/*.nupkg'
+    # Trusted publishing: nuget.org exchanges the OIDC token of this workflow run for an API key that is valid for one
+    # hour (policy of the nuget.org account: owner vescon, repository MethodBoundaryAspect.Fody, workflow main.yaml),
+    # so the login is right before the push. NUGET_USER is the profile name on nuget.org, not the email address.
+    - name: NuGet login (OIDC, short-lived API key)
+      uses: NuGet/login@v1
+      id: login
+      if: startsWith(github.ref, 'refs/tags/v')
+      with:
+        user: ${{ secrets.NUGET_USER }}
+
     - name: Publish to nuget.org
-      run: dotnet nuget push Artifacts/Packages/**/*.nupkg --api-key ${{secrets.NUGET_ORG_API_KEY}} -s https://api.nuget.org/v3/index.json --skip-duplicate
+      run: dotnet nuget push Artifacts/Packages/**/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
       if: startsWith(github.ref, 'refs/tags/v')
 #     - name: Publish to github packages
 #       run: dotnet nuget push Artifacts/Packages/**/*.nupkg -s https://nuget.pkg.github.com/vescon/index.json --skip-duplicate
