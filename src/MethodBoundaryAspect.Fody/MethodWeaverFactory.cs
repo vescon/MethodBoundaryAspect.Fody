@@ -23,6 +23,13 @@ namespace MethodBoundaryAspect.Fody
                                   select new { Aspect = a, Methods = methods })
                 .ToList();
 
+            // the executor method would not get the variable arguments, the method would silently lose them
+            if (filteredAspects.Count > 0 && method.CallingConvention == MethodCallingConvention.VarArg)
+            {
+                unsupportedReason = "methods with a variable argument list (__arglist) are not supported";
+                return null;
+            }
+
             // all aspects of a method share one MethodExecutionArgs instance
             var executionArgsUsage = filteredAspects.Aggregate(
                 ExecutionArgsUsage.None,
