@@ -35,6 +35,10 @@ namespace MethodBoundaryAspect.Fody
                 ExecutionArgsUsage.None,
                 (usage, a) => usage | executionArgsUsageAnalyzer.GetUsage(a.Aspect.AspectTypeDefinition));
 
+            // nothing to weave: the method stays as it is, also if it is of a structure the weavers don't know
+            if (filteredAspects.Count == 0)
+                return new MethodWeaver(module, method, new List<AspectData>(), methodInfoCompileTimeWeaver, executionArgsUsage);
+
             var asyncAttribute = method.CustomAttributes.FirstOrDefault(a => a.AttributeType.FullName.Equals(typeof(AsyncStateMachineAttribute).FullName));
             if (asyncAttribute == null)
             {
@@ -50,13 +54,9 @@ namespace MethodBoundaryAspect.Fody
             }
 
             var weavesOnException = filteredAspects.Any(a => (a.Methods & AspectMethods.OnException) != 0);
-            // methods without any aspect method to weave are not touched, nothing to check
-            if (filteredAspects.Count > 0)
-            {
-                unsupportedReason = AsyncMethodWeaver.GetUnsupportedReason(method, moveNextMethod, weavesOnException);
-                if (unsupportedReason != null)
-                    return null;
-            }
+            unsupportedReason = AsyncMethodWeaver.GetUnsupportedReason(method, moveNextMethod, weavesOnException);
+            if (unsupportedReason != null)
+                return null;
 
             var aspectDatas = filteredAspects.Select(a => new AspectDataOnAsyncMethod(moveNextMethod, a.Aspect, a.Methods, method, module)).ToList<AspectData>();
             return new AsyncMethodWeaver(

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
@@ -61,6 +62,27 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             stateMachine.Fields.Select(f => f.FieldType.FullName).Should().NotContain(typeof(OnlyOnExceptionAspect).FullName);
             stateMachine.Fields.Select(f => f.FieldType.Name).Should().NotContain("MethodExecutionArgs");
             type.Methods.Select(m => m.Name).Should().NotContain("$_executor_" + nameof(CustomTaskMethods.WithOnException));
+        }
+
+        [Fact]
+        public void IfNoAspectMethodIsOverridden_ThenAnAsyncMethodOfAnUnknownStructureIsLeftAlone()
+        {
+            var weaver = new ModuleWeaver
+            {
+                ModuleDefinition = ModuleDefinition.ReadModule(typeof(AsyncWithoutAspectMethods).Assembly.Location,
+                    new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver })
+            };
+            weaver.AddClassFilter(typeof(AsyncWithoutAspectMethods).FullName);
+            var kickoff = weaver.ModuleDefinition.GetType(typeof(AsyncWithoutAspectMethods).FullName).Methods
+                .Single(m => m.Name == nameof(AsyncWithoutAspectMethods.Async));
+            // the state machine is no longer created in the way the async weaver expects
+            kickoff.Body.Instructions.RemoveAt(0);
+            var instructionCount = kickoff.Body.Instructions.Count;
+
+            Action weave = () => weaver.Execute();
+
+            weave.Should().NotThrow();
+            kickoff.Body.Instructions.Should().HaveCount(instructionCount);
         }
 
         [Fact]

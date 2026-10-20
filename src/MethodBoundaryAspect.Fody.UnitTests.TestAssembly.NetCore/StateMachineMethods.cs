@@ -4,6 +4,17 @@ using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore.Aspects;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
 {
+    // the aspect overrides no aspect method, the async method is not changed
+    [NoAspectMethodsAspect]
+    public class AsyncWithoutAspectMethods
+    {
+        public async Task<int> Async()
+        {
+            await Task.Yield();
+            return 1;
+        }
+    }
+
     [OnlyOnEntryAspect]
     public class StateMachineMethods
     {

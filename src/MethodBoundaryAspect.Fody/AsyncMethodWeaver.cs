@@ -46,7 +46,8 @@ namespace MethodBoundaryAspect.Fody
                 if (instructions[0].OpCode != OpCodes.Newobj)
                     throw new InvalidOperationException($"Async state machine on {method.FullName} does not create expected state machine. Opcode = {instructions[0].OpCode}");
 
-                if (!(instructions[0].Operand is MethodReference mr) || mr.DeclaringType?.Resolve()?.Interfaces?[0]?.InterfaceType?.FullName != typeof(IAsyncStateMachine).FullName)
+                if (!(instructions[0].Operand is MethodReference mr)
+                    || mr.DeclaringType?.Resolve()?.Interfaces.Any(i => i.InterfaceType.FullName == typeof(IAsyncStateMachine).FullName) != true)
                     throw new InvalidOperationException($"Async state machine on {method.FullName} does not create correct state machine type.");
 
                 var stlocOpcodes = new[]
