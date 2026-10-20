@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
 using Xunit;
@@ -34,7 +34,6 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
             var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), testMethodName);
 
             // Assert
-            RunIlSpy();
             result.Should().Be("[FirstAspect_OnEntry][SecondAspect_OnEntry][SecondAspect_OnExit][FirstAspect_OnExit]");
         }
     }

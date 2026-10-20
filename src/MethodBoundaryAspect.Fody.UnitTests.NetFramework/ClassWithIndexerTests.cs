@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
 using Xunit;
@@ -19,7 +19,6 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
             Action call = () => AssemblyLoader.InvokeMethod(testClassType.TypeInfo(), testMethodName);
 
             // Assert
-            RunIlSpy();
             call.Should().NotThrow();
         }
     }

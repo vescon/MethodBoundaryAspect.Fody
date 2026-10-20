@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.Shared;
 
@@ -29,29 +28,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified
 
         protected void AssertRunPeVerify(ModuleWeaver weaver)
         {
-            Action action = () =>
-            {
-                var runIlSpy = false;
-                try
-                {
-                    PeVerifier.Verify(Weave.DllPath);
-                }
-                catch (Exception)
-                {
-                    runIlSpy = true;
-                    throw;
-                }
-                finally
-                {
-                    if (runIlSpy || IlSpy.AlwaysRunIlSpy)
-                    {
-                        var methodName = weaver?.MethodFilters.Single();
-                        IlSpy.ShowMethod(methodName, Weave.DllPath);
-                        IlSpy.ShowMethod(methodName, Source.DllPath);
-                        Thread.Sleep(TimeSpan.FromSeconds(2)); // wait until ILSpy is started because weaved dll will be deleted when unittests exits -> TryCleanupWeavedFiles()
-                    }
-                }
-            };
+            Action action = () => PeVerifier.Verify(Weave.DllPath);
             action.Should().NotThrow();
         }
 
