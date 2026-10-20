@@ -8,14 +8,14 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
     {
         private readonly int _offset = 100;
 
-        [ChangingInputDerived]
+        [ChangingInput]
         public async Task<int> Changed(int value)
         {
             await Task.Yield();
             return value;
         }
 
-        [ChangingInputDerived]
+        [ChangingInput]
         public async Task<int> ChangedOfInstance(int value)
         {
             await Task.Yield();
@@ -43,7 +43,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
             return value;
         }
 
-        [ChangingInputDerived]
+        [ChangingInput]
         public async Task ChangedWithoutResult(int value)
         {
             await Task.Yield();

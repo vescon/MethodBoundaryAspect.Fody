@@ -206,7 +206,7 @@ public class OrderService
 }
 ```
 
-Class and assembly aspects also hit property getters and setters. To exclude them, annotate the aspect class with `[AspectSkipProperties(true)]`. Like `[AllowChangingInputArguments]` the attribute is inherited by derived aspects, which can override it with their own `[AspectSkipProperties]`.
+Class and assembly aspects also hit property getters and setters. To exclude them, annotate the aspect class with `[AspectSkipProperties(true)]`.
 
 Not woven: aspects applied directly to an event (class and assembly aspects do hit the `add`/`remove` accessors; weaving aspects of an event is planned for 4.0), constructors, abstract and interface methods, `extern` methods, methods with a variable argument list (`__arglist`, with a build warning), compiler-generated methods and types (lambdas, local functions, the state machines of async and iterator methods) and aspect classes: classes derived from `OnMethodBoundaryAspect` (also base aspect classes) and their nested classes, so an assembly aspect doesn't call itself ([#70](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/70)).
 
