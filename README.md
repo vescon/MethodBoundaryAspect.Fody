@@ -579,14 +579,14 @@ cd src/MethodBoundaryAspect.Fody.Benchmark
 dotnet run -c Release -f net10.0 -- --filter "*" --job short
 ```
 
-The project targets `net8.0` and `net10.0`. The same benchmark on .NET 10 (baseline 20.9 ns, the generic call without an aspect allocates nothing there):
+The project targets `net8.0` and `net10.0`. The same benchmark on .NET 10 (default BenchmarkDotNet job, baseline 20.9 ns, the generic call without an aspect allocates nothing there):
 
 | Aspect | Static method: time | Static method: allocated | Open generic method: time | Open generic method: allocated |
 |---|---:|---:|---:|---:|
-| uses no property | +2.8 ns | 72 B | +2.1 ns | 72 B |
+| uses no property | +2.8 ns | 72 B | +2.7 ns | 72 B |
 | uses no property, created for every call (`DisableAspectInstanceReuse`) | +0.0 ns | 0 B | - | - |
-| uses `args.Method` | +23.2 ns | 72 B | - | - |
-| all properties provided (`DisableExecutionArgsOptimization`) | +10.6 ns | 152 B | +7.6 ns | 128 B |
+| uses `args.Method` | +4.0 ns | 72 B | - | - |
+| all properties provided (`DisableExecutionArgsOptimization`) | +11.3 ns | 152 B | +8.3 ns | 128 B |
 
 The .NET 10 JIT removes the allocation of an aspect that is created for every call when the aspect does nothing and doesn't leak (escape analysis), so the numbers of that row only apply to such empty aspects.
 
