@@ -97,12 +97,10 @@ public int Add(int a, int b)
     };
 
     aspect.OnEntry(args);
+    int result;
     try
     {
-        var result = $_executor_Add(a, b);     // the original method body
-        args.ReturnValue = result;
-        aspect.OnExit(args);
-        return (int)args.ReturnValue;
+        result = $_executor_Add(a, b);         // the original method body
     }
     catch (Exception ex)                       // only woven if the aspect overrides OnException
     {
@@ -110,6 +108,10 @@ public int Add(int a, int b)
         aspect.OnException(args);
         throw;
     }
+
+    args.ReturnValue = result;
+    aspect.OnExit(args);
+    return (int)args.ReturnValue;
 }
 ```
 
@@ -117,6 +119,7 @@ Consequences worth knowing:
 
 - The aspect's constructor arguments and properties from the attribute (e.g. `[Log(Level = "Debug")]`) are applied to the new instance on every call. Instance fields of an aspect are **not** shared between calls; use `args.MethodExecutionTag` to pass data from `OnEntry` to `OnExit`/`OnException`.
 - The original body runs in the private method `$_executor_<Name>`, which shows up in stack traces next to the original method, and `MethodBase.GetCurrentMethod()` called in the method body returns the executor, not the original method. `[SkipLocalsInit]` and `MethodImplOptions.NoOptimization`/`AggressiveOptimization` of the method apply to the executor, the other `MethodImpl` flags (e.g. `NoInlining`) stay on the original method.
+- Only the method body is guarded by `OnException`: an exception thrown by `OnEntry` or `OnExit` itself does not call `OnException` and is thrown to the caller.
 - Only overridden aspect methods are called, and only the `MethodExecutionArgs` properties the aspects actually use are filled (see [Performance](#performance)).
 - Async methods are woven differently, see [Async methods](#async-methods).
 
@@ -241,6 +244,8 @@ The filter is applied to the visibility of the method itself, so a public method
 ### Several aspects on one method
 
 Without further configuration the aspects are called in the order assembly → class → method, and in declaration order on the same level. `OnExit` and `OnException` are called in reverse order.
+
+An aspect applied on several levels runs once per application: with `[Log]` on the class and on one of its methods, that method calls `Log` twice. Remove the attribute from the method to call it once.
 
 To define the order explicitly, use `[AspectOrderIndex]` on the assembly, class or method (the lower index runs `OnEntry` first; a method level index overrides a class level index, which overrides an assembly level index; for a nested class the index of the closest class that has one wins). If one aspect of a method has an index, all aspects of the method need a unique one:
 
