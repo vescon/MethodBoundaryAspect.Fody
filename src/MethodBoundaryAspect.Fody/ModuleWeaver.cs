@@ -273,10 +273,10 @@ namespace MethodBoundaryAspect.Fody
 
             var typeNamespace = GetNamespace(type);
             var weavedAtLeastOneMethod = false;
-            foreach (var method in type.Methods.ToList())
+            bool WeaveMethodWithAspects(MethodDefinition method)
             {
                 if (!IsWeavableMethod(method))
-                    continue;
+                    return false;
 
                 Collection<CustomAttribute> methodMethodBoundaryAspects;
 
@@ -303,7 +303,7 @@ namespace MethodBoundaryAspect.Fody
                     .Where(info => MatchesFilter(method.Name, info.MethodNameFilter, info, nameof(AspectInfo.MethodNameFilter)))
                     .ToList();
                 if (aspectInfos.Count == 0)
-                    continue;
+                    return false;
 
                 foreach (var aspectInfo in aspectInfos.Where(x => x.UsesAspectRoles && _warnedAboutAspectRoles.Add(x.Name)))
                 {
@@ -327,15 +327,40 @@ namespace MethodBoundaryAspect.Fody
                 foreach (var aspectInfo in aspectInfos)
                     aspectInfo.InitOrderIndex(assemblyMethodBoundaryAspects, enclosingTypeAttributes, classMethodBoundaryAspects, methodMethodBoundaryAspects);
 
-                weavedAtLeastOneMethod |= WeaveMethod(
+                return WeaveMethod(
                     module,
                     method,
                     aspectInfos,
                     _methodInfoCompileTimeWeaver);
-            }   
+            }
+
+            foreach (var method in type.Methods.ToList())
+            {
+                try
+                {
+                    weavedAtLeastOneMethod |= WeaveMethodWithAspects(method);
+                }
+                catch (Exception e) when (!(e is WeavingException))
+                {
+                    throw CreateWeavingException(method, e);
+                }
+            }
 
             if (weavedAtLeastOneMethod)
                 TotalWeavedTypes++;
+        }
+
+        // Fody writes an unexpected exception with its stack trace as "An unhandled exception occurred", without
+        // saying which method caused it. Invalid configurations of the aspects are errors of the user, not bugs.
+        private static WeavingException CreateWeavingException(MethodDefinition method, Exception exception)
+        {
+            var isConfigurationError = exception is InvalidAspectConfigurationException || exception is NotSupportedException;
+            var reason = isConfigurationError ? exception.Message : exception.ToString();
+
+            return new WeavingException($"Method '{method.FullName}' could not be weaved: {reason}")
+            {
+                SequencePoint = method.DebugInformation.SequencePoints.FirstOrDefault()
+            };
         }
 
         private bool WeaveMethod(

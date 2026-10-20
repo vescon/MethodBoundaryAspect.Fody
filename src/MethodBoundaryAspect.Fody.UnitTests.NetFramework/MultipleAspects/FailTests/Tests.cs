@@ -1,6 +1,6 @@
 using System;
+using Fody;
 using FluentAssertions;
-using MethodBoundaryAspect.Fody.Ordering;
 using MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified;
 using MethodBoundaryAspect.Fody.UnitTests.Shared;
 using Xunit;
@@ -22,7 +22,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects.FailT
             Action call = () => weaver.Weave(Weave.DllPath, ModuleHelper.AssemblyResolver);
 
             // Arrange
-            call.Should().Throw<InvalidAspectConfigurationException>();
+            call.Should().Throw<WeavingException>()
+                .Which.Message.Should().Contain("VoidEmptyMethod")
+                .And.Contain("can't have role");
         }
 
         [Fact]

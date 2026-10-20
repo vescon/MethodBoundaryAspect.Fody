@@ -92,6 +92,31 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfTheConfigurationOfTheAspectsIsInvalid_ThenWeavingFailsWithTheMethod()
+        {
+            var weaver = CreateWeaver(typeof(MultipleAspectsMethods));
+            var module = weaver.ModuleDefinition;
+            var method = module.GetType(typeof(MultipleAspectsMethods).FullName).Methods
+                .Single(m => m.Name == nameof(MultipleAspectsMethods.Add));
+            // an order index for one of two aspects: all aspects of a method need one
+            var aspectType = method.CustomAttributes[0].AttributeType;
+            var runtimeModule = aspectType.Resolve().BaseType.Resolve().Module;
+            var orderIndexType = runtimeModule.GetType("MethodBoundaryAspect.Fody.Attributes.AspectOrderIndexAttribute");
+            var orderIndex = new CustomAttribute(module.ImportReference(orderIndexType.Methods.Single(m => m.IsConstructor)));
+            orderIndex.ConstructorArguments.Add(new CustomAttributeArgument(module.ImportReference(typeof(Type)), aspectType));
+            orderIndex.ConstructorArguments.Add(new CustomAttributeArgument(module.TypeSystem.Int32, 1));
+            method.CustomAttributes.Add(orderIndex);
+
+            Action weave = () => weaver.Execute();
+
+            weave.Should().Throw<WeavingException>()
+                .Which.Message.Should()
+                .Contain("MultipleAspectsMethods::Add")
+                .And.Contain("No order index provided for aspect")
+                .And.Contain("OnlyOnExitAspect");
+        }
+
+        [Fact]
         public void IfAnArgumentAfterThe255thIsLoaded_ThenItIsLoadedByItsParameter()
         {
             var module = ModuleDefinition.CreateModule("Arguments", ModuleKind.Dll);
