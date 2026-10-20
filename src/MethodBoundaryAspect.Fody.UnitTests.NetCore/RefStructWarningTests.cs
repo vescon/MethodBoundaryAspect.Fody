@@ -16,7 +16,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
     [Collection(TestAssemblyNetCoreWeaving)]
     public class RefStructWarningTests : IDisposable
     {
-        // shadow copies of the same assembly are named by Environment.TickCount, so weave them sequentially
+        // tests weaving the same assembly run one after another
         public const string TestAssemblyNetCoreWeaving = "TestAssembly.NetCore weaving";
 
         private readonly List<string> _weavedAssemblyPaths = new List<string>();

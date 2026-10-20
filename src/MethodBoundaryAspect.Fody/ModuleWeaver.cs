@@ -91,7 +91,8 @@ namespace MethodBoundaryAspect.Fody
 
         public string WeaveToShadowFile(string assemblyPath, IAssemblyResolver assemblyResolver)
         {
-            var prefix = Environment.TickCount.ToString();
+            // unique even for two calls within a few milliseconds (Environment.TickCount has a resolution of about 16 ms)
+            var prefix = Guid.NewGuid().ToString("N").Substring(0, 12);
             var shadowAssemblyPath = CreateShadowAssemblyPath(assemblyPath, prefix);
             File.Copy(assemblyPath, shadowAssemblyPath, true);
 

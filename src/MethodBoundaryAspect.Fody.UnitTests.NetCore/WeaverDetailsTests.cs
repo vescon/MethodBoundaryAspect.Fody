@@ -117,6 +117,34 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfAnAssemblyIsWeavedToAShadowFileTwiceInARow_ThenTheFilesHaveDifferentNames()
+        {
+            // named by Environment.TickCount, whose resolution is about 16 ms: a second weave within it overwrote the first
+            var assemblyPath = typeof(VarArgMethods).Assembly.Location;
+            var weaver = new ModuleWeaver();
+            weaver.AddClassFilter(typeof(VarArgMethods).FullName);
+
+            var first = weaver.WeaveToShadowFile(assemblyPath, ModuleHelper.AssemblyResolver);
+            var second = weaver.WeaveToShadowFile(assemblyPath, ModuleHelper.AssemblyResolver);
+
+            try
+            {
+                first.Should().NotBe(second);
+                System.IO.File.Exists(first).Should().BeTrue();
+                System.IO.File.Exists(second).Should().BeTrue();
+                System.IO.Path.GetFileName(first).Should().MatchRegex("^_[0-9a-f]{12}_.+_Weaved_\\.dll$", "the prefix is a random id");
+            }
+            finally
+            {
+                foreach (var path in new[] { first, second })
+                {
+                    System.IO.File.Delete(path);
+                    System.IO.File.Delete(System.IO.Path.ChangeExtension(path, "pdb"));
+                }
+            }
+        }
+
+        [Fact]
         public void IfOneAspectIsAppliedToManyMethods_ThenAllOfThemAreWoven()
         {
             var weaver = CreateWeaver(typeof(ManyMethodsOfOneAspect));
