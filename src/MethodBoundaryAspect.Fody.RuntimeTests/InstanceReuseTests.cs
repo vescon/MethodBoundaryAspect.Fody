@@ -42,8 +42,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         [Fact]
         public void EveryUseOfAnAttributeShouldHaveItsOwnInstance()
         {
-            // the values of the attribute differ: Sync, Async, Throwing and ThrowingAsync
-            SharedAspectFields<SharedAspectAttribute>().Should().HaveCount(4);
+            // the values of the attribute differ: Sync, Async, Throwing, ThrowingAsync, Two (2) and TwoAsync (2)
+            SharedAspectFields<SharedAspectAttribute>().Should().HaveCount(8);
         }
 
         [Fact]
@@ -97,6 +97,37 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 
             InstanceReuseAspects.MixedUpTags.Should().Be(0);
             InstanceReuseAspects.Calls.Count(c => c.StartsWith("async2:exit")).Should().Be(200);
+        }
+
+        [Fact]
+        public void SeveralSharedAspectsOnOneMethodShouldHaveTheirOwnInstanceAndTag()
+        {
+            _target.Two(7);
+            _target.Two(8);
+
+            InstanceReuseAspects.Calls.Where(c => c.StartsWith("first")).Should()
+                .Equal("first0:entry:Two", "first0:exit:Two", "first0:entry:Two", "first0:exit:Two");
+            InstanceReuseAspects.Calls.Where(c => c.StartsWith("second")).Should()
+                .Equal("second0:entry:Two", "second0:exit:Two", "second0:entry:Two", "second0:exit:Two");
+            // an aspect that wrote a foreign tag would have been counted
+            InstanceReuseAspects.MixedUpTags.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task SeveralSharedAspectsOnOneAsyncMethodShouldHaveTheirOwnInstanceAndTag()
+        {
+            await Task.WhenAll(Enumerable.Range(0, 100).Select(i => _target.TwoAsync(i)));
+
+            InstanceReuseAspects.MixedUpTags.Should().Be(0);
+            InstanceReuseAspects.Calls.Count(c => c.StartsWith("first0:exit")).Should().Be(100);
+            InstanceReuseAspects.Calls.Count(c => c.StartsWith("second0:exit")).Should().Be(100);
+        }
+
+        [Fact]
+        public void EachOfTheTwoAttributesOfTheSameTypeShouldHaveItsOwnField()
+        {
+            // "first" and "second" of Two/TwoAsync are separate attributes, so the instances differ
+            SharedAspectFields<SharedAspectAttribute>().Should().HaveCount(8);
         }
 
         [Fact]

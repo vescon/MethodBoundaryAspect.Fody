@@ -8,6 +8,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
     /// Holds no state (values of the attribute only), so the weaver shares one instance between all calls.
     /// Tests using the aspects belong to the collection <c>[Collection(nameof(InstanceReuseAspects))]</c>.
     /// </summary>
+    [System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = true)]
     public class SharedAspectAttribute : OnMethodBoundaryAspect
     {
         private readonly string _name;
