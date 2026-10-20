@@ -259,15 +259,8 @@ namespace MethodBoundaryAspect.Fody
 
                 if (_method.ReturnType.WithoutModifiers().IsByReference)
                 {
-                    var notSupportedExceptionCtorString =
-                        _module.ImportReference(
-                            _creator.GetExceptionTypeReference<NotSupportedException>()
-                                .Resolve().Methods
-                                .FirstOrDefault(m => m.IsConstructor && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.FullName == "System.String"));
-                    onExitChain.Add(new InstructionBlock("Throw NotSupported",
-                        Instruction.Create(OpCodes.Ldstr, "Weaving early return from a method with a byref return type is not supported."),
-                        Instruction.Create(OpCodes.Newobj, notSupportedExceptionCtorString),
-                        Instruction.Create(OpCodes.Throw)));
+                    onExitChain.Add(CreateThrowNotSupported(
+                        "Weaving early return from a method with a byref return type is not supported."));
                 }
                 else
                 {
@@ -307,6 +300,25 @@ namespace MethodBoundaryAspect.Fody
             }
         }
         
+        // a method with a ref return cannot return a default value (a null reference fails in the caller)
+        private InstructionBlock CreateThrowNotSupported(string message, VariableDefinition innerException = null)
+        {
+            var parameterCount = innerException == null ? 1 : 2;
+            var constructor = _module.ImportReference(
+                _creator.GetExceptionTypeReference<NotSupportedException>()
+                    .Resolve().Methods
+                    .First(m => m.IsConstructor && !m.IsStatic && m.Parameters.Count == parameterCount
+                                && m.Parameters[0].ParameterType.FullName == "System.String"
+                                && (parameterCount == 1 || m.Parameters[1].ParameterType.FullName == "System.Exception")));
+
+            var instructions = new List<Instruction> { Instruction.Create(OpCodes.Ldstr, message) };
+            if (innerException != null)
+                instructions.Add(Instruction.Create(OpCodes.Ldloc, innerException));
+            instructions.Add(Instruction.Create(OpCodes.Newobj, constructor));
+            instructions.Add(Instruction.Create(OpCodes.Throw));
+            return new InstructionBlock("Throw NotSupported", instructions);
+        }
+
         protected virtual void HandleBody(
             NamedInstructionBlockChain arguments,
             VariableDefinition returnValue,
@@ -501,10 +513,20 @@ namespace MethodBoundaryAspect.Fody
                 _creator.SetMethodExecutionArgsExceptionFromStack(ExecutionArgs);
             exceptionHandlerCurrent = setExceptionFromStack.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
             
+            var returnsByRef = _method.ReturnType.WithoutModifiers().IsByReference;
             var returnAfterHandling = new InstructionBlockChain();
-            if (returnValue != null)
-                returnAfterHandling.Add(_creator.LoadValueOnStack(returnValue));
-            returnAfterHandling.Add(new InstructionBlock("Return", Instruction.Create(OpCodes.Ret)));
+            if (returnsByRef)
+            {
+                returnAfterHandling.Add(CreateThrowNotSupported(
+                    "Swallowing an exception of a method with a ref return is not supported, the original exception is the inner exception.",
+                    exception.Variable));
+            }
+            else
+            {
+                if (returnValue != null)
+                    returnAfterHandling.Add(_creator.LoadValueOnStack(returnValue));
+                returnAfterHandling.Add(new InstructionBlock("Return", Instruction.Create(OpCodes.Ret)));
+            }
 
             var indices = allAspects
                 .Select((asp, index) => new { asp, index })
@@ -537,7 +559,7 @@ namespace MethodBoundaryAspect.Fody
                     callOnExitsAndReturn.Add(_creator.CallAspectOnExit(jthAspect, ExecutionArgs));
                 }
 
-                if (returnValue != null && ReadsBackReturnValue)
+                if (returnValue != null && ReadsBackReturnValue && !returnsByRef)
                     callOnExitsAndReturn.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue.Variable));
 
                 // long form: the handlers of the remaining aspects lie between here and the target,
