@@ -652,6 +652,18 @@ The configuration in `FodyWeavers.xml` is unchanged; the optimization is enabled
 
 ### Changed in 3.4.0
 
+Fixes of cases that did not work, listed because the behavior of existing code can change:
+
+- **Init accessors, records and `in` parameters of virtual methods can be woven.** They crashed at runtime (`InvalidProgramException`, `AccessViolationException`).
+- **A skipped method body or a swallowed exception returns the default value** if no aspect sets `args.ReturnValue`, instead of throwing a `NullReferenceException` for value types (also for async methods, where the swallowed exception could complete the task with an `InvalidCastException`).
+- **`[AllowChangingInputArguments]`:** `in` arguments are not written back to the caller anymore, and `ref` arrays of enums (e.g. `ref Color[]`) are written back as references.
+- **Methods with more than 255 arguments** passed the wrong arguments to the method from the 256th argument on.
+- **The method infos of `args.Method` are loaded on the first call of each method**, not all at once on the first call of any woven method, and a method that can't be loaded doesn't break the others. The cache fields are numbered instead of named by a SHA256 hash, which failed in .NET Framework MSBuild and Visual Studio with the FIPS mode of Windows enabled.
+- **An invalid regular expression in `NamespaceFilter`, `TypeNameFilter` or `MethodNameFilter`** fails the build with a message that names the aspect.
+- The XML documentation of the attributes is part of the package, so IntelliSense shows it.
+
+### Changed in 3.5.0
+
 Mostly fixes of cases that did not work, listed because the behavior of existing code can change:
 
 - **`[DisableWeaving]` on a property or an event is honored.** It was ignored there, a class or assembly aspect still hit the getter, setter, `add` and `remove` accessors.
@@ -662,6 +674,9 @@ Mostly fixes of cases that did not work, listed because the behavior of existing
 - **`null` for a value type argument passes the default value** instead of throwing a `NullReferenceException`.
 - **Aspects without state are created once** instead of for every call, see [Aspect instances](#aspect-instances). Opt-out: `DisableAspectInstanceReuse`.
 - **The executor method keeps `[SkipLocalsInit]`, `MethodImplOptions.NoOptimization` and `AggressiveOptimization`** of the woven method.
+- **The attributes `[DisableWeaving]`, `[AspectOrderIndex]`, `[AspectSkipProperties]` and `[AllowChangingInputArguments]` can only be applied where the weaver reads them** (and not twice). Applied anywhere else, they were ignored before and the code doesn't compile now.
+- **`[AspectOrderIndex]` of an assembly and of an enclosing class** failed the build for the methods of a nested class. The closest level wins now.
+- **Async methods whose aspects override none of the aspect methods** are left alone.
 - Fixed: generic aspects (`[Aspect<int>]`) crashed at runtime, `[AspectOrderIndex]` on a nested class failed the build, a ref struct warning was written for methods the weaver does not change, and an invalid aspect setup was reported as an unhandled exception without the method.
 
 ## Contributing
