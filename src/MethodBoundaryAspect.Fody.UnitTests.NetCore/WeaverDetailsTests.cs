@@ -117,6 +117,18 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfOneAspectIsAppliedToManyMethods_ThenAllOfThemAreWoven()
+        {
+            var weaver = CreateWeaver(typeof(ManyMethodsOfOneAspect));
+
+            weaver.Execute();
+
+            weaver.TotalWeavedMethods.Should().Be(4);
+            weaver.ModuleDefinition.GetType(typeof(ManyMethodsOfOneAspect).FullName).Methods
+                .Count(m => m.Name.StartsWith("$_executor_")).Should().Be(4);
+        }
+
+        [Fact]
         public void IfATypeIsNamedVoid_ThenItIsNotVoid()
         {
             var module = ModuleDefinition.CreateModule("Void", ModuleKind.Dll);

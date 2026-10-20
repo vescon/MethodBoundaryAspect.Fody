@@ -51,6 +51,9 @@ namespace MethodBoundaryAspect.Fody
         // aspects which were checked for filters set in their code
         private readonly HashSet<string> _checkedAspectFilters = new HashSet<string>();
 
+        // attribute types of the module which were checked to be aspects
+        private readonly Dictionary<string, bool> _isAspectAttributeCache = new Dictionary<string, bool>();
+
         public int TotalWeavedTypes { get; private set; }
         public int TotalWeavedMethods { get; private set; }
         public int TotalWeavedProperties { get; private set; }
@@ -149,6 +152,7 @@ namespace MethodBoundaryAspect.Fody
 
             ReadExecutionArgsOptimizationConfig();
 
+            _isAspectAttributeCache.Clear();
             _methodInfoCompileTimeWeaver = new MethodInfoCompileTimeWeaver(module)
             {
                 IsEnabled = !DisableCompileTimeMethodInfos
@@ -437,7 +441,16 @@ namespace MethodBoundaryAspect.Fody
 
         private bool IsMethodBoundaryAspect(CustomAttribute customAttribute)
         {
-            return IsMethodBoundaryAspect(customAttribute.AttributeType.Resolve());
+            // the attributes of the assembly and the classes are checked for every method
+            var attributeType = customAttribute.AttributeType;
+            var key = attributeType.Scope?.Name + ":" + attributeType.FullName;
+            if (!_isAspectAttributeCache.TryGetValue(key, out var isAspect))
+            {
+                isAspect = IsMethodBoundaryAspect(attributeType.Resolve());
+                _isAspectAttributeCache.Add(key, isAspect);
+            }
+
+            return isAspect;
         }
 
         private bool IsWeavableMethod(MethodDefinition method)

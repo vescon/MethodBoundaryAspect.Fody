@@ -68,7 +68,21 @@ namespace MethodBoundaryAspect.Fody
                 executionArgsUsage);
         }
 
-        static AspectMethods GetUsedAspectMethods(TypeReference aspectTypeDefinition)
+        // the aspect methods of an aspect type, determined once for all methods it is applied to. Keyed by the type
+        // definition, which belongs to the module that was read (another module has other definitions).
+        private static readonly ConditionalWeakTable<TypeDefinition, object> AspectMethodsCache =
+            new ConditionalWeakTable<TypeDefinition, object>();
+
+        static AspectMethods GetUsedAspectMethods(TypeReference aspectType)
+        {
+            var key = aspectType.Resolve();
+            if (key == null)
+                return DetermineUsedAspectMethods(aspectType);
+
+            return (AspectMethods)AspectMethodsCache.GetValue(key, _ => DetermineUsedAspectMethods(aspectType));
+        }
+
+        static AspectMethods DetermineUsedAspectMethods(TypeReference aspectTypeDefinition)
         {
             var overloadedMethods = new Dictionary<string, MethodDefinition>();
 
