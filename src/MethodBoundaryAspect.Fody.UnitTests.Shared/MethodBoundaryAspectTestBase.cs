@@ -97,9 +97,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
             
             if (propertyName != null)
             {
-                var fullPropertyName = CreateFullPropertyName(type, propertyName);
-                Weaver.AddPropertyFilter(fullPropertyName.Item1);
-                Weaver.AddPropertyFilter(fullPropertyName.Item2);
+                foreach (var accessorName in CreateFullPropertyAccessorNames(type, propertyName))
+                    Weaver.AddPropertyFilter(accessorName);
             }
             else if (methodName == null)
             {
@@ -164,16 +163,18 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
             return $"{type.FullName.Replace('+','/')}.{methodInfo.Name}";
         }
 
-        private Tuple<string,string> CreateFullPropertyName(Type type, string propertyName)
+        // the names of the accessors the property has (a property can be read only or write only),
+        // nested types are separated by '/' like in Cecil
+        private IEnumerable<string> CreateFullPropertyAccessorNames(Type type, string propertyName)
         {
             var propertyInfo = type.GetProperty(propertyName);
             if (propertyInfo == null)
                 throw new InvalidOperationException($"Property '{propertyName}' not found in type '{type.FullName}'");
 
-
-            return new Tuple<string, string>(
-                $"{type.FullName}.{propertyInfo.SetMethod.Name}",
-                $"{type.FullName}.{propertyInfo.GetMethod.Name}");
+            return new[] { propertyInfo.SetMethod, propertyInfo.GetMethod }
+                .Where(accessor => accessor != null)
+                .Select(accessor => $"{type.FullName.Replace('+', '/')}.{accessor.Name}")
+                .ToList();
         }
 
         private void RunPeVerify(Type type)

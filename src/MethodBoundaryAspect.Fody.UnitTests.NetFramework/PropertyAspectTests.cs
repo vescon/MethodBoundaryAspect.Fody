@@ -24,6 +24,33 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
         }
 
         [Fact]
+        public void IfThePropertyHasNoSetter_ThenOnlyTheGetterIsWeaved()
+        {
+            // Arrange
+            WeaveAssemblyPropertyAndLoad(TestClassType, "GetterOnlyProperty");
+
+            // Act
+            var result = AssemblyLoader.InvokeMethod(TestClassType.TypeInfo(), "GetterOnlyCall");
+
+            // Assert
+            result.Should().Be("[get_GetterOnlyProperty]");
+        }
+
+        [Fact]
+        public void IfThePropertyIsOfANestedClass_ThenItIsWeaved()
+        {
+            // Arrange
+            var nestedType = typeof(PropertyAspectMethods.NestedClass);
+            WeaveAssemblyPropertyAndLoad(nestedType, "NestedProperty");
+
+            // Act
+            var result = AssemblyLoader.InvokeMethod(nestedType.TypeInfo(), "NestedCall");
+
+            // Assert
+            result.Should().Be("[set_NestedProperty][get_NestedProperty]");
+        }
+
+        [Fact]
         public void IfInstanceMethodWithValueTypeIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
         {
             // Arrange
