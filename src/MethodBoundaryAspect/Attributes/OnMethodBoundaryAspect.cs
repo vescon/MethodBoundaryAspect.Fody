@@ -35,14 +35,26 @@ namespace MethodBoundaryAspect.Fody.Attributes
         /// </summary>
         public virtual string MethodNameFilter { get; set; }
 
+        /// <summary>
+        /// Called before the method body. For async methods when the method is called.
+        /// </summary>
         public virtual void OnEntry(MethodExecutionArgs arg)
         {
         }
 
+        /// <summary>
+        /// Called after the method body completed successfully, not after an exception. For async methods when
+        /// the method returns its task to the caller, usually before the asynchronous work is done.
+        /// </summary>
         public virtual void OnExit(MethodExecutionArgs arg)
         {
         }
 
+        /// <summary>
+        /// Called when the method body throws. For async methods when the asynchronous work fails, possibly
+        /// long after <see cref="OnExit"/>. The exception is rethrown unless
+        /// <see cref="MethodExecutionArgs.FlowBehavior"/> is changed.
+        /// </summary>
         public virtual void OnException(MethodExecutionArgs arg)
         {
         }
