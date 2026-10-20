@@ -25,17 +25,32 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
                 Arguments = path,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
+                RedirectStandardError = true,
                 UseShellExecute = false
             };
 
-            var process = Process.Start(psi);
-            var output = process.StandardOutput.ReadToEnd();
-            var processExitCode = process.ExitCode;
-            Trace.WriteLine("PEVerify output: " + Environment.NewLine + output);
+            using (var process = Process.Start(psi))
+            {
+                // read both streams while waiting: a full pipe blocks the process, and the wait would never end
+                var outputTask = process.StandardOutput.ReadToEndAsync();
+                var errorTask = process.StandardError.ReadToEndAsync();
+                if (!process.WaitForExit((int)VerifyTimeout.TotalMilliseconds))
+                {
+                    process.Kill();
+                    throw new TimeoutException($"PEVerify did not finish within {VerifyTimeout.TotalSeconds} seconds for '{assemblyPath}'.");
+                }
 
-            if (processExitCode != 0)
-                throw new PeVerifyException(processExitCode, output);
+                // the exit code is only reliable after the process (and the reading of its output) has ended
+                process.WaitForExit();
+                var output = outputTask.Result + errorTask.Result;
+                Trace.WriteLine("PEVerify output: " + Environment.NewLine + output);
+
+                if (process.ExitCode != 0)
+                    throw new PeVerifyException(process.ExitCode, output);
+            }
         }
+
+        private static readonly TimeSpan VerifyTimeout = TimeSpan.FromMinutes(2);
 
         private static string GetPeVerifyPath()
         {
