@@ -631,7 +631,7 @@ Also changed:
 
 The configuration in `FodyWeavers.xml` is unchanged; the optimization is enabled by default.
 
-### Changed since 3.3.0
+### Changed in 3.4.0
 
 Mostly fixes of cases that did not work, listed because the behavior of existing code can change:
 
