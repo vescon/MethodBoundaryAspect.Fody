@@ -34,7 +34,34 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
             IteratorRecordingAspect.Calls.Should().HaveCount(2, "OnException is not called while enumerating");
         }
 
+        [Fact]
+        public void EnumeratingAnIteratorSeveralTimesShouldNotCallTheAspectAgain()
+        {
+            var values = new IteratorMethods().Numbers();
+
+            values.ToList().Should().Equal(1, 2);
+            values.ToList().Should().Equal(1, 2);
+
+            // the state machine of the iterator is not woven: no call of MoveNext, Dispose or GetEnumerator
+            IteratorRecordingAspect.Calls.Should().HaveCount(2);
+        }
+
 #if NETCOREAPP
+        [Fact]
+        public async Task EnumeratingAnAsyncIteratorShouldNotCallTheAspectAgain()
+        {
+            var values = new IteratorMethods().NumbersAsync();
+
+            var result = new System.Collections.Generic.List<int>();
+            await foreach (var value in values)
+                result.Add(value);
+
+            result.Should().Equal(1, 2);
+            IteratorRecordingAspect.Calls.Should().Equal(
+                "OnEntry NumbersAsync",
+                $"OnExit NumbersAsync returned {values.GetType().Name}");
+        }
+
         [Fact]
         public async Task AsyncIteratorShouldCallTheAspectWhenTheEnumerableIsReturned()
         {
