@@ -453,6 +453,11 @@ namespace MethodBoundaryAspect.Fody
             if (ContainsDisableWeavingAttribute(method.CustomAttributes))
                 return true;
 
+            // the aspects of a property are read from the property, so is [DisableWeaving]
+            var property = method.DeclaringType.Properties.FirstOrDefault(p => p.GetMethod == method || p.SetMethod == method);
+            if (property != null && ContainsDisableWeavingAttribute(property.CustomAttributes))
+                return true;
+
             var currentClass = method.DeclaringType;
             do
             {
