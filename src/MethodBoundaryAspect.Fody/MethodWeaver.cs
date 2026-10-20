@@ -288,6 +288,7 @@ namespace MethodBoundaryAspect.Fody
                 {
                     if (ReadsBackReturnValue)
                         onExitChain.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue.Variable));
+                    onExitChain.Add(CreateReturnCompletedTaskIfNull(returnValue.Variable));
                     onExitChain.Add(_creator.LoadValueOnStack(returnValue));
                 }
 
@@ -300,6 +301,63 @@ namespace MethodBoundaryAspect.Fody
             }
         }
         
+        /// <summary>
+        /// A Task or Task&lt;T&gt; is never null for the caller: if the method body is skipped or an exception is
+        /// swallowed and no aspect set a ReturnValue, the method returns a completed task with the default result.
+        /// </summary>
+        private InstructionBlockChain CreateReturnCompletedTaskIfNull(VariableDefinition returnValue)
+        {
+            var chain = new InstructionBlockChain();
+            var returnType = _method.ReturnType.WithoutModifiers();
+
+            MethodReference createTask;
+            VariableDefinition defaultResult = null;
+            if (returnType.FullName == "System.Threading.Tasks.Task")
+            {
+                var getCompletedTask = returnType.Resolve()?.Methods
+                    .FirstOrDefault(m => m.Name == "get_CompletedTask" && m.IsStatic && m.Parameters.Count == 0);
+                if (getCompletedTask == null)
+                    return chain;
+
+                createTask = _module.ImportReference(getCompletedTask);
+            }
+            else if (returnType is GenericInstanceType taskOfResult
+                     && taskOfResult.ElementType.FullName == "System.Threading.Tasks.Task`1")
+            {
+                var fromResult = taskOfResult.ElementType.Resolve()?.Module.GetType("System.Threading.Tasks.Task")?.Methods
+                    .FirstOrDefault(m => m.Name == "FromResult" && m.IsStatic && m.HasGenericParameters && m.Parameters.Count == 1);
+                if (fromResult == null)
+                    return chain;
+
+                var resultType = taskOfResult.GenericArguments[0];
+                var fromResultOfResult = new GenericInstanceMethod(_module.ImportReference(fromResult));
+                fromResultOfResult.GenericArguments.Add(resultType);
+                createTask = fromResultOfResult;
+                defaultResult = _creator.CreateVariable(resultType).Variable;
+            }
+            else
+                return chain;
+
+            var end = Instruction.Create(OpCodes.Nop);
+            var instructions = new List<Instruction>
+            {
+                Instruction.Create(OpCodes.Ldloc, returnValue),
+                Instruction.Create(OpCodes.Brtrue, end)
+            };
+            if (defaultResult != null)
+            {
+                instructions.Add(Instruction.Create(OpCodes.Ldloca, defaultResult));
+                instructions.Add(Instruction.Create(OpCodes.Initobj, defaultResult.VariableType));
+                instructions.Add(Instruction.Create(OpCodes.Ldloc, defaultResult));
+            }
+            instructions.Add(Instruction.Create(OpCodes.Call, createTask));
+            instructions.Add(Instruction.Create(OpCodes.Stloc, returnValue));
+
+            chain.Add(new InstructionBlock("Return a completed task if there is none", instructions));
+            chain.Add(new InstructionBlock("End", end));
+            return chain;
+        }
+
         // a method with a ref return cannot return a default value (a null reference fails in the caller)
         private InstructionBlock CreateThrowNotSupported(string message, VariableDefinition innerException = null)
         {
@@ -559,8 +617,12 @@ namespace MethodBoundaryAspect.Fody
                     callOnExitsAndReturn.Add(_creator.CallAspectOnExit(jthAspect, ExecutionArgs));
                 }
 
-                if (returnValue != null && ReadsBackReturnValue && !returnsByRef)
-                    callOnExitsAndReturn.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue.Variable));
+                if (returnValue != null && !returnsByRef)
+                {
+                    if (ReadsBackReturnValue)
+                        callOnExitsAndReturn.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue.Variable));
+                    callOnExitsAndReturn.Add(CreateReturnCompletedTaskIfNull(returnValue.Variable));
+                }
 
                 // long form: the handlers of the remaining aspects lie between here and the target,
                 // Optimize() shortens the branch if it fits

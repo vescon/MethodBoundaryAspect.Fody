@@ -11,6 +11,18 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
     }
 
     /// <summary>
+    /// Skips the method body and returns a task with the result 7.
+    /// </summary>
+    public class ReturnTaskInEntryAttribute : OnMethodBoundaryAspect
+    {
+        public override void OnEntry(MethodExecutionArgs arg)
+        {
+            arg.ReturnValue = System.Threading.Tasks.Task.FromResult(7);
+            arg.FlowBehavior = FlowBehavior.Return;
+        }
+    }
+
+    /// <summary>
     /// Skips the method body and returns the ReturnValue.
     /// </summary>
     public class ReturnInEntryFlowAttribute : OnMethodBoundaryAspect

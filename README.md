@@ -345,7 +345,7 @@ public class Program
 | `OnException` | `FlowBehavior.Continue` or `FlowBehavior.Return` | the exception is swallowed, the method returns `args.ReturnValue` |
 | `OnException` | `FlowBehavior.Default` or `FlowBehavior.RethrowException` | the exception is rethrown (default) |
 
-If no aspect sets `args.ReturnValue`, the method returns the default value of its return type. A method with a `ref` return has no default value to return: skipping its body or swallowing its exception throws a `NotSupportedException` (with the original exception as inner exception). With several aspects, the `OnExit` of the aspects ordered before the aspect that set `FlowBehavior` is still called. For async methods see [below](#flowbehavior-in-async-methods).
+If no aspect sets `args.ReturnValue`, the method returns the default value of its return type (a completed task for a method returning `Task` or `Task<T>`, not `null`). A method with a `ref` return has no default value to return: skipping its body or swallowing its exception throws a `NotSupportedException` (with the original exception as inner exception). With several aspects, the `OnExit` of the aspects ordered before the aspect that set `FlowBehavior` is still called. For async methods see [below](#flowbehavior-in-async-methods).
 
 ```csharp
 using System.Collections.Concurrent;
@@ -462,7 +462,7 @@ public static async Task<string> Process()
 
 ### FlowBehavior in async methods
 
-- `FlowBehavior.Return` in `OnEntry`: `args.ReturnValue` is what the method returns, so it has to be a task, e.g. `args.ReturnValue = Task.FromResult(42);`. Otherwise the method returns `null` instead of a task.
+- `FlowBehavior.Return` in `OnEntry`: `args.ReturnValue` is what the method returns, so it has to be a task, e.g. `args.ReturnValue = Task.FromResult(42);`. If no aspect sets it, the method returns a completed task (with the default value as result for `Task<T>`).
 - `FlowBehavior.Continue` in `OnException`: the returned task completes successfully with `args.ReturnValue` as its result (the value, not a task), e.g. `args.ReturnValue = 0;` for a `Task<int>`. If no aspect sets it, the result is the default value. `args.ReturnValue` is set to `null` before `OnException` is called, the task returned to the caller (provided to `OnExit`) is never the result.
 - An exception thrown in `OnException` (e.g. to wrap the original exception) faults the returned task with that exception, like it is thrown to the caller of a synchronous method. The `OnException` of the remaining aspects is not called.
 
