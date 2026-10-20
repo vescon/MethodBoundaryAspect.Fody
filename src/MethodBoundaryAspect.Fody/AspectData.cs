@@ -1,5 +1,6 @@
 ﻿using MethodBoundaryAspect.Fody.Ordering;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace MethodBoundaryAspect.Fody
 {
@@ -15,8 +16,17 @@ namespace MethodBoundaryAspect.Fody
 
         public IPersistable TagPersistable { get; protected set; }
         
-        public AspectData(AspectInfo info, AspectMethods methods, MethodDefinition method, ModuleDefinition module)
+        // returns the shared instance of the aspect, null if a new instance is created for every call
+        private readonly MethodDefinition _sharedInstanceGetter;
+
+        public AspectData(
+            AspectInfo info,
+            AspectMethods methods,
+            MethodDefinition method,
+            ModuleDefinition module,
+            MethodDefinition sharedInstanceGetter = null)
         {
+            _sharedInstanceGetter = sharedInstanceGetter;
             Info = info;
             AspectMethods = methods;
             _method = method;
@@ -35,9 +45,22 @@ namespace MethodBoundaryAspect.Fody
 
         public virtual InstructionBlockChain CreateAspectInstance()
         {
-            var chain = _creator.CreateAndNewUpAspect(Info.AspectAttribute);
+            var chain = CreateOrGetAspect();
             AspectPersistable = chain;
             return chain;
+        }
+
+        protected NamedInstructionBlockChain CreateOrGetAspect()
+        {
+            if (_sharedInstanceGetter == null)
+                return _creator.CreateAndNewUpAspect(Info.AspectAttribute);
+
+            var aspect = _creator.CreateVariable(_module.ImportReference(Info.AspectAttribute.AttributeType));
+            aspect.Add(new InstructionBlock(
+                "Get the shared aspect",
+                Instruction.Create(OpCodes.Call, _sharedInstanceGetter),
+                Instruction.Create(OpCodes.Stloc, aspect.Variable)));
+            return aspect;
         }
     }
 }

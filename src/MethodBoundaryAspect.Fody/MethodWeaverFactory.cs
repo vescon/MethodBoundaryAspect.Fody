@@ -13,6 +13,7 @@ namespace MethodBoundaryAspect.Fody
             IEnumerable<AspectInfo> aspects,
             MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver,
             ExecutionArgsUsageAnalyzer executionArgsUsageAnalyzer,
+            AspectInstanceCompileTimeWeaver aspectInstances,
             out string unsupportedReason)
         {
             unsupportedReason = null;
@@ -42,7 +43,7 @@ namespace MethodBoundaryAspect.Fody
             var asyncAttribute = method.CustomAttributes.FirstOrDefault(a => a.AttributeType.FullName.Equals(typeof(AsyncStateMachineAttribute).FullName));
             if (asyncAttribute == null)
             {
-                var aspectList = filteredAspects.Select(a => new AspectData(a.Aspect, a.Methods, method, module)).ToList();
+                var aspectList = filteredAspects.Select(a => new AspectData(a.Aspect, a.Methods, method, module, aspectInstances.GetGetter(a.Aspect))).ToList();
                 return new MethodWeaver(module, method, aspectList, methodInfoCompileTimeWeaver, executionArgsUsage);
             }
 
@@ -58,7 +59,7 @@ namespace MethodBoundaryAspect.Fody
             if (unsupportedReason != null)
                 return null;
 
-            var aspectDatas = filteredAspects.Select(a => new AspectDataOnAsyncMethod(moveNextMethod, a.Aspect, a.Methods, method, module)).ToList<AspectData>();
+            var aspectDatas = filteredAspects.Select(a => new AspectDataOnAsyncMethod(moveNextMethod, a.Aspect, a.Methods, method, module, aspectInstances.GetGetter(a.Aspect))).ToList<AspectData>();
             return new AsyncMethodWeaver(
                 module,
                 method,

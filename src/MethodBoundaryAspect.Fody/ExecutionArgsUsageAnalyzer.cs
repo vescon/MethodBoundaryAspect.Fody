@@ -217,7 +217,7 @@ namespace MethodBoundaryAspect.Fody
         /// Finds the instruction which pops the value pushed by <paramref name="load"/> from the stack.
         /// Returns null if the control flow is left before or the stack behavior is unknown.
         /// </summary>
-        private static Instruction FindConsumer(Instruction load, out int argumentIndex)
+        internal static Instruction FindConsumer(Instruction load, out int argumentIndex)
         {
             argumentIndex = -1;
 
@@ -381,7 +381,7 @@ namespace MethodBoundaryAspect.Fody
             }
         }
 
-        private static bool IsReferenceAssembly(ModuleDefinition module)
+        internal static bool IsReferenceAssembly(ModuleDefinition module)
         {
             return module.Assembly.CustomAttributes.Any(a => a.AttributeType.FullName == ReferenceAssemblyAttributeName);
         }

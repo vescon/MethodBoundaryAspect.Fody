@@ -88,7 +88,7 @@ When the project is built, Fody runs the weaver on the compiled assembly. For ev
 ```csharp
 public int Add(int a, int b)
 {
-    var aspect = new LogAttribute();           // a new aspect instance for every call
+    var aspect = new LogAttribute();           // a new aspect instance for every call (or a shared one, see Aspect instances)
     var args = new MethodExecutionArgs
     {
         Instance = this,
@@ -117,7 +117,7 @@ public int Add(int a, int b)
 
 Consequences worth knowing:
 
-- The aspect's constructor arguments and properties from the attribute (e.g. `[Log(Level = "Debug")]`) are applied to the new instance on every call. Instance fields of an aspect are **not** shared between calls; use `args.MethodExecutionTag` to pass data from `OnEntry` to `OnExit`/`OnException`.
+- The aspect's constructor arguments and properties from the attribute (e.g. `[Log(Level = "Debug")]`) are applied to the new instance on every call, unless the aspect holds no state and one instance is shared (see [Aspect instances](#aspect-instances)). Instance fields of an aspect are **not** shared between calls; use `args.MethodExecutionTag` to pass data from `OnEntry` to `OnExit`/`OnException`.
 - The original body runs in the private method `$_executor_<Name>`, which shows up in stack traces next to the original method, and `MethodBase.GetCurrentMethod()` called in the method body returns the executor, not the original method. `[SkipLocalsInit]` and `MethodImplOptions.NoOptimization`/`AggressiveOptimization` of the method apply to the executor, the other `MethodImpl` flags (e.g. `NoInlining`) stay on the original method.
 - Only the method body is guarded by `OnException`: an exception thrown by `OnEntry` or `OnExit` itself does not call `OnException` and is thrown to the caller.
 - Only overridden aspect methods are called, and only the `MethodExecutionArgs` properties the aspects actually use are filled (see [Performance](#performance)).
@@ -530,6 +530,19 @@ The analysis is conservative. If `args` is used in any other way than reading or
 
 The analysis runs when the project using the aspect is woven. If that project is not rebuilt when the aspect's assembly is updated (e.g. an aspect loaded from a plugin), a new aspect version could access properties that were not provided and are `null`. Disable the optimization for such aspects, see [Configuration reference](#configuration-reference).
 
+### Aspect instances
+
+An aspect that holds no state is created once and shared by all calls, instead of being created for every call. The weaver decides this by analyzing the IL of the aspect, and is conservative: an aspect is only shared if it can't be told from a new instance, i.e. all of these hold for the aspect and its base aspects:
+
+- the instance fields are primitives, enums, `string` or `Type` (no collections, arrays or other objects), and only the constructor writes them
+- the constructors only store their arguments and constants in fields (no counting of instances, no reading of a configuration, ...), and the property setters only store the value
+- no method of the aspect calls a setter, takes the address of a field, captures `this` in a lambda or hands `this` to other code (calling its own methods and `GetType()` is fine)
+- no finalizer, and the aspect and its constructors are accessible from the generated code (a `private` nested aspect is created for every call)
+
+Other aspects behave as before, a new instance for every call. Use `args.MethodExecutionTag` for data of a call, as the instance is shared between concurrent calls.
+
+The weaver decides when the project is woven, like for the [`MethodExecutionArgs` optimization](#performance). If the assembly of the aspect is replaced by a version holding state and the project using it is not rebuilt, the new version is still shared. Rebuild the projects using the aspect after changing it. Sharing is disabled in the [configuration](#configuration-reference) for all aspects, or for one aspect if it causes problems.
+
 ## Configuration reference
 
 All settings are optional and go into the `MethodBoundaryAspect` element of `FodyWeavers.xml`:
@@ -539,6 +552,7 @@ All settings are optional and go into the `MethodBoundaryAspect` element of `Fod
   <MethodBoundaryAspect SuppressRefStructWarnings="true">
     <DisableExecutionArgsOptimization Aspect="MyCompany.Logging.LogAttribute" />
     <DisableExecutionArgsOptimization Aspect="MyCompany.Plugins.PluginAttribute" />
+    <DisableAspectInstanceReuse Aspect="MyCompany.Logging.CachingAttribute" />
   </MethodBoundaryAspect>
 </Weavers>
 ```
@@ -548,6 +562,8 @@ All settings are optional and go into the `MethodBoundaryAspect` element of `Fod
 | `SuppressRefStructWarnings="true"` | no build warnings for woven methods using [ref structs](#ref-structs-spant-readonlyspant-) |
 | `<DisableExecutionArgsOptimization Aspect="..." />` | always provide all `MethodExecutionArgs` properties for this aspect (full type name, nested types as `Namespace.Outer+Inner`), see [Performance](#performance). A build warning is written if the aspect is not applied to any woven method |
 | `DisableExecutionArgsOptimization="true"` | the same for all aspects |
+| `<DisableAspectInstanceReuse Aspect="..." />` | create this aspect for every call instead of sharing one instance, see [Aspect instances](#aspect-instances) (full type name, nested types as `Namespace.Outer+Inner`). A build warning is written if the aspect is not applied to any woven method |
+| `DisableAspectInstanceReuse="true"` | the same for all aspects |
 
 ## Upgrading to version 3
 

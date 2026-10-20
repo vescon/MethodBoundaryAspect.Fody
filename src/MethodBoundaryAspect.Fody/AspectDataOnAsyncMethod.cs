@@ -13,8 +13,14 @@ namespace MethodBoundaryAspect.Fody
         FieldReference _tagField;
         FieldReference _aspectField;
 
-        public AspectDataOnAsyncMethod(MethodDefinition moveNext, AspectInfo info, AspectMethods methods, MethodDefinition method, ModuleDefinition module)
-            : base(info, methods, method, module)
+        public AspectDataOnAsyncMethod(
+            MethodDefinition moveNext,
+            AspectInfo info,
+            AspectMethods methods,
+            MethodDefinition method,
+            ModuleDefinition module,
+            MethodDefinition sharedInstanceGetter = null)
+            : base(info, methods, method, module, sharedInstanceGetter)
         {
             _moveNext = moveNext;
             _stateMachineLocal = method.Body.Variables.Single(v => v.VariableType.Resolve() == moveNext.DeclaringType);
@@ -36,7 +42,7 @@ namespace MethodBoundaryAspect.Fody
 
             var loadMachine = new VariablePersistable(_stateMachineLocal).Load(true, false);
 
-            var newObjectAspectBlock = _creator.CreateAndNewUpAspect(Info.AspectAttribute);
+            var newObjectAspectBlock = CreateOrGetAspect();
             var loadOnStack = new InstructionBlock("Load on stack", Instruction.Create(OpCodes.Ldloc, newObjectAspectBlock.Variable));
             var storeField = new InstructionBlock("Store Field", Instruction.Create(OpCodes.Stfld, _aspectField));
 

@@ -22,6 +22,8 @@ namespace MethodBoundaryAspect.Fody
     {
         private MethodInfoCompileTimeWeaver _methodInfoCompileTimeWeaver;
         private ExecutionArgsUsageAnalyzer _executionArgsUsageAnalyzer;
+        private AspectInstanceReuseAnalyzer _aspectInstanceReuseAnalyzer;
+        private AspectInstanceCompileTimeWeaver _aspectInstanceCompileTimeWeaver;
 
         public bool DisableCompileTimeMethodInfos { get; set; }
 
@@ -44,6 +46,20 @@ namespace MethodBoundaryAspect.Fody
         /// &lt;MethodBoundaryAspect&gt;&lt;DisableExecutionArgsOptimization Aspect="MyNamespace.MyAspect" /&gt;&lt;/MethodBoundaryAspect&gt;
         /// </summary>
         public List<string> DisableExecutionArgsOptimizationAspects { get; } = new List<string>();
+
+        /// <summary>
+        /// Disables sharing one instance of an aspect between all calls, if the aspect does not hold any state:
+        /// a new instance is created for every call.
+        /// Configurable in FodyWeavers.xml: &lt;MethodBoundaryAspect DisableAspectInstanceReuse="true" /&gt;
+        /// </summary>
+        public bool DisableAspectInstanceReuse { get; set; }
+
+        /// <summary>
+        /// Full names of the aspects which are created for every call.
+        /// Configurable in FodyWeavers.xml:
+        /// &lt;MethodBoundaryAspect&gt;&lt;DisableAspectInstanceReuse Aspect="MyNamespace.MyAspect" /&gt;&lt;/MethodBoundaryAspect&gt;
+        /// </summary>
+        public List<string> DisableAspectInstanceReuseAspects { get; } = new List<string>();
 
         // aspects for which the warning about the obsolete roles was written
         private readonly HashSet<string> _warnedAboutAspectRoles = new HashSet<string>();
@@ -152,6 +168,7 @@ namespace MethodBoundaryAspect.Fody
                 SuppressRefStructWarnings = ParseBool(suppressRefStructWarnings);
 
             ReadExecutionArgsOptimizationConfig();
+            ReadAspectInstanceReuseConfig();
 
             _isAspectAttributeCache.Clear();
             _methodInfoCompileTimeWeaver = new MethodInfoCompileTimeWeaver(module)
@@ -161,6 +178,10 @@ namespace MethodBoundaryAspect.Fody
             _executionArgsUsageAnalyzer = new ExecutionArgsUsageAnalyzer(
                 DisableExecutionArgsOptimization,
                 DisableExecutionArgsOptimizationAspects);
+            _aspectInstanceReuseAnalyzer = new AspectInstanceReuseAnalyzer(
+                DisableAspectInstanceReuse,
+                DisableAspectInstanceReuseAspects);
+            _aspectInstanceCompileTimeWeaver = new AspectInstanceCompileTimeWeaver(module, _aspectInstanceReuseAnalyzer);
 
             var assemblyMethodBoundaryAspects = module.Assembly.CustomAttributes;
 
@@ -171,6 +192,30 @@ namespace MethodBoundaryAspect.Fody
             {
                 if (!_executionArgsUsageAnalyzer.MatchedDisabledAspects.Contains(ExecutionArgsUsageAnalyzer.NormalizeTypeName(aspect)))
                     WriteWarning($"Aspect '{aspect}' configured in DisableExecutionArgsOptimization of FodyWeavers.xml was not found in any weaved method. Use the full type name, e.g. 'MyNamespace.MyAspect'.");
+            }
+
+            foreach (var aspect in DisableAspectInstanceReuseAspects)
+            {
+                if (!_aspectInstanceReuseAnalyzer.MatchedDisabledAspects.Contains(ExecutionArgsUsageAnalyzer.NormalizeTypeName(aspect)))
+                    WriteWarning($"Aspect '{aspect}' configured in DisableAspectInstanceReuse of FodyWeavers.xml was not found in any weaved method. Use the full type name, e.g. 'MyNamespace.MyAspect'.");
+            }
+        }
+
+        private void ReadAspectInstanceReuseConfig()
+        {
+            if (Config == null)
+                return;
+
+            var attribute = Config.Attribute(nameof(DisableAspectInstanceReuse));
+            if (attribute != null)
+                DisableAspectInstanceReuse = ParseBool(attribute);
+
+            foreach (var element in Config.Elements(nameof(DisableAspectInstanceReuse)))
+            {
+                var aspect = element.Attribute("Aspect")?.Value;
+                if (string.IsNullOrWhiteSpace(aspect))
+                    throw new WeavingException($"<{nameof(DisableAspectInstanceReuse)}> in FodyWeavers.xml requires the full type name of the aspect, e.g. <{nameof(DisableAspectInstanceReuse)} Aspect=\"MyNamespace.MyAspect\" />.");
+                DisableAspectInstanceReuseAspects.Add(aspect.Trim());
             }
         }
 
@@ -368,7 +413,7 @@ namespace MethodBoundaryAspect.Fody
                 .ToList();
 
             var methodWeaver = MethodWeaverFactory.MakeWeaver(
-                module, method, aspectInfosWithMethods, methodInfoCompileTimeWeaver, _executionArgsUsageAnalyzer, out var unsupportedReason);
+                module, method, aspectInfosWithMethods, methodInfoCompileTimeWeaver, _executionArgsUsageAnalyzer, _aspectInstanceCompileTimeWeaver, out var unsupportedReason);
             if (methodWeaver == null)
             {
                 // not touched at all, failing the build would block the whole project for a single method
