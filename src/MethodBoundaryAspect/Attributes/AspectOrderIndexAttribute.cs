@@ -8,10 +8,8 @@ namespace MethodBoundaryAspect.Fody.Attributes
     /// method need a unique one. An index on the method overrides an index on the class, which overrides
     /// an index on the assembly.
     /// </summary>
-    [AttributeUsage(
-        AttributeTargets.Assembly | AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Method
-        | AttributeTargets.Property | AttributeTargets.Event,
-        AllowMultiple = true)]
+    // the weaver reads it from an assembly, class, struct, method, property or event, the usage is restricted to these in version 4
+    [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
     public class AspectOrderIndexAttribute : Attribute
     {
         public AspectOrderIndexAttribute(

@@ -674,7 +674,6 @@ Mostly fixes of cases that did not work, listed because the behavior of existing
 - **`null` for a value type argument passes the default value** instead of throwing a `NullReferenceException`.
 - **Aspects without state are created once** instead of for every call, see [Aspect instances](#aspect-instances). Opt-out: `DisableAspectInstanceReuse`.
 - **The executor method keeps `[SkipLocalsInit]`, `MethodImplOptions.NoOptimization` and `AggressiveOptimization`** of the woven method.
-- **The attributes `[DisableWeaving]`, `[AspectOrderIndex]`, `[AspectSkipProperties]` and `[AllowChangingInputArguments]` can only be applied where the weaver reads them** (and not twice). Applied anywhere else, they were ignored before and the code doesn't compile now.
 - **`[AspectOrderIndex]` of an assembly and of an enclosing class** failed the build for the methods of a nested class. The closest level wins now.
 - **Async methods whose aspects override none of the aspect methods** are left alone.
 - Fixed: generic aspects (`[Aspect<int>]`) crashed at runtime, `[AspectOrderIndex]` on a nested class failed the build, a ref struct warning was written for methods the weaver does not change, and an invalid aspect setup was reported as an unhandled exception without the method.
