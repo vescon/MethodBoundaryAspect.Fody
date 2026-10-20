@@ -288,7 +288,7 @@ For async methods, `args.ReturnValue` is the returned `Task` and can be replaced
 
 ### Changing input arguments
 
-Change the elements of `args.Arguments` in `OnEntry`. The aspect class has to be annotated with `[AllowChangingInputArguments]`, because the weaver has to generate additional code to pass the changed values to the method (unnecessary and slower for aspects which don't change them). `ref` and `out` values are written back to the caller. A changed `in` (or `ref readonly`) argument is passed to the method, but not written back, because the variable of the caller is read only for the method. Not supported for async methods.
+Change the elements of `args.Arguments` in `OnEntry`. The aspect class has to be annotated with `[AllowChangingInputArguments]`, because the weaver has to generate additional code to pass the changed values to the method (unnecessary and slower for aspects which don't change them). `ref` and `out` values are written back to the caller. An element of a value type set to `null` passes the default value of the type. A changed `in` (or `ref readonly`) argument is passed to the method, but not written back, because the variable of the caller is read only for the method. Not supported for async methods.
 
 ```csharp
 using System;

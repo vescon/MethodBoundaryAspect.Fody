@@ -53,6 +53,8 @@ namespace MethodBoundaryAspect.Fody
                 castFromType,
                 castToType);
             instructions.AddRange(castOrUnbox);
+            if (instructions[instructions.Count - 1].OpCode == OpCodes.Unbox_Any)
+                MakeNullTheDefaultValue(instructions, castToType);
 
             if (!onlyValue && parameterType.IsByReference) // support for ref-Arguments
             {
@@ -63,6 +65,27 @@ namespace MethodBoundaryAspect.Fody
             }
 
             return new InstructionBlock($"Load {_index}", instructions);
+        }
+
+        // an aspect can set the element of a value type to null: unbox.any would throw a NullReferenceException,
+        // the argument is the default value of the type instead
+        private void MakeNullTheDefaultValue(List<Instruction> instructions, TypeReference valueType)
+        {
+            var unbox = instructions[instructions.Count - 1];
+            instructions.RemoveAt(instructions.Count - 1);
+
+            var defaultValue = _creator.CreateVariable(valueType).Variable;
+            var unboxLabel = unbox;
+            var end = _processor.Create(OpCodes.Nop);
+            instructions.Add(_processor.Create(OpCodes.Dup));
+            instructions.Add(_processor.Create(OpCodes.Brtrue, unboxLabel));
+            instructions.Add(_processor.Create(OpCodes.Pop));
+            instructions.Add(_processor.Create(OpCodes.Ldloca, defaultValue));
+            instructions.Add(_processor.Create(OpCodes.Initobj, valueType));
+            instructions.Add(_processor.Create(OpCodes.Ldloc, defaultValue));
+            instructions.Add(_processor.Create(OpCodes.Br, end));
+            instructions.Add(unbox);
+            instructions.Add(end);
         }
     }
 }
