@@ -159,12 +159,18 @@ namespace MethodBoundaryAspect.Fody.Ordering
             SkipProperties = skipProperties;
         }
 
+        /// <summary>
+        /// The order index of the closest level wins: method, class, enclosing classes (the innermost first), assembly.
+        /// </summary>
         public void InitOrderIndex(
             IEnumerable<CustomAttribute> assemblyAspectAttributes,
+            IEnumerable<IEnumerable<CustomAttribute>> enclosingClassAspectAttributes,
             IEnumerable<CustomAttribute> classAspectAttributes,
             IEnumerable<CustomAttribute> methodAspectAttributes)
         {
             InternalInitOrderIndex(assemblyAspectAttributes, "assembly");
+            foreach (var enclosingClassAttributes in enclosingClassAspectAttributes)
+                InternalInitOrderIndex(enclosingClassAttributes, "enclosing class");
             InternalInitOrderIndex(classAspectAttributes, "class");
             InternalInitOrderIndex(methodAspectAttributes, "method");
         }

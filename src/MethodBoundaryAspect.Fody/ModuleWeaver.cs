@@ -160,7 +160,7 @@ namespace MethodBoundaryAspect.Fody
             var assemblyMethodBoundaryAspects = module.Assembly.CustomAttributes;
 
             foreach (var type in module.Types.ToList())
-                WeaveTypeAndNestedTypes(module, type, assemblyMethodBoundaryAspects);
+                WeaveTypeAndNestedTypes(module, type, assemblyMethodBoundaryAspects, new List<Collection<CustomAttribute>>());
 
             foreach (var aspect in DisableExecutionArgsOptimizationAspects)
             {
@@ -216,7 +216,8 @@ namespace MethodBoundaryAspect.Fody
         }
 
         private void WeaveTypeAndNestedTypes(ModuleDefinition module, TypeDefinition type,
-            Collection<CustomAttribute> assemblyMethodBoundaryAspects)
+            Collection<CustomAttribute> assemblyMethodBoundaryAspects,
+            List<Collection<CustomAttribute>> enclosingTypeAttributes)
         {
             // Compiler generated types (async and iterator state machines, closures, anonymous types)
             // are no user code. The state machines of async methods are woven with the async method,
@@ -231,23 +232,24 @@ namespace MethodBoundaryAspect.Fody
             if (IsMethodBoundaryAspect(type))
                 return;
 
-            WeaveType(module, type, assemblyMethodBoundaryAspects);
+            WeaveType(module, type, assemblyMethodBoundaryAspects, enclosingTypeAttributes);
             if (type.HasNestedTypes)
             {
-                var classMethodBoundaryAspects = new Collection<CustomAttribute>();
-                foreach (var assemblyAspect in assemblyMethodBoundaryAspects)
-                    classMethodBoundaryAspects.Add(assemblyAspect);
-                foreach (var classAspect in type.CustomAttributes)
-                    classMethodBoundaryAspects.Add(classAspect);
+                // the aspects of a class also hit its nested classes, as a level of their own for the order index
+                var nestedEnclosingTypeAttributes = new List<Collection<CustomAttribute>>(enclosingTypeAttributes)
+                {
+                    type.CustomAttributes
+                };
                 foreach (var nestedType in type.NestedTypes)
-                    WeaveTypeAndNestedTypes(module, nestedType, classMethodBoundaryAspects);
+                    WeaveTypeAndNestedTypes(module, nestedType, assemblyMethodBoundaryAspects, nestedEnclosingTypeAttributes);
             }
         }
 
         private void WeaveType(
-            ModuleDefinition module, 
-            TypeDefinition type, 
-            Collection<CustomAttribute> assemblyMethodBoundaryAspects)
+            ModuleDefinition module,
+            TypeDefinition type,
+            Collection<CustomAttribute> assemblyMethodBoundaryAspects,
+            List<Collection<CustomAttribute>> enclosingTypeAttributes)
         {
             var classMethodBoundaryAspects = type.CustomAttributes;
 
@@ -278,6 +280,7 @@ namespace MethodBoundaryAspect.Fody
                 var methodVisibility = GetMethodVisibility(method);
 
                 var aspectInfos = assemblyMethodBoundaryAspects
+                    .Concat(enclosingTypeAttributes.SelectMany(attributes => attributes))
                     .Concat(classMethodBoundaryAspects)
                     .Concat(methodMethodBoundaryAspects)
                     .Where(IsMethodBoundaryAspect)
@@ -323,7 +326,7 @@ namespace MethodBoundaryAspect.Fody
                 }
 
                 foreach (var aspectInfo in aspectInfos)
-                    aspectInfo.InitOrderIndex(assemblyMethodBoundaryAspects, classMethodBoundaryAspects, methodMethodBoundaryAspects);
+                    aspectInfo.InitOrderIndex(assemblyMethodBoundaryAspects, enclosingTypeAttributes, classMethodBoundaryAspects, methodMethodBoundaryAspects);
 
                 weavedAtLeastOneMethod |= WeaveMethod(
                     module,

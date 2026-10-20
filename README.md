@@ -239,7 +239,7 @@ The filter is applied to the visibility of the method itself, so a public method
 
 Without further configuration the aspects are called in the order assembly → class → method, and in declaration order on the same level. `OnExit` and `OnException` are called in reverse order.
 
-To define the order explicitly, use `[AspectOrderIndex]` on the assembly, class or method (the lower index runs `OnEntry` first; a method level index overrides a class level index, which overrides an assembly level index). If one aspect of a method has an index, all aspects of the method need a unique one:
+To define the order explicitly, use `[AspectOrderIndex]` on the assembly, class or method (the lower index runs `OnEntry` first; a method level index overrides a class level index, which overrides an assembly level index; for a nested class the index of the closest class that has one wins). If one aspect of a method has an index, all aspects of the method need a unique one:
 
 ```csharp
 [AspectOrderIndex(typeof(TransactionScopeAttribute), 1)]
