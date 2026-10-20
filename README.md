@@ -243,6 +243,23 @@ The filter is applied to the visibility of the method itself, so a public method
 
 `NamespaceFilter`, `TypeNameFilter`, `MethodNameFilter` and `AttributeTargetMemberAttributes` are read **where the aspect is applied** (as named arguments of the attribute). The weaver does not run the code of your aspects, so a value set in the constructor of the aspect, or by overriding the property, is ignored. A build warning is written for each aspect which does that.
 
+### Applying an aspect only in some configurations
+
+To weave an aspect only in some builds (e.g. a tracing aspect only in Debug), put `[Conditional("DEBUG")]` on the aspect class. The C# compiler leaves out every use of an attribute class with `[Conditional]` where the symbol is not defined, so the weaver never sees the aspect and the method is not changed:
+
+```csharp
+[Conditional("DEBUG")]
+public class TracingAttribute : OnMethodBoundaryAspect
+{
+    public override void OnEntry(MethodExecutionArgs args) { /* ... */ }
+}
+
+[Tracing] // in a Release build the compiler removes this attribute
+public void DoWork() { }
+```
+
+The symbol has to be defined in the project where the aspect is applied (it works for assembly, class and method aspects, also if the aspect class is in another assembly). `#if DEBUG` around the attribute does the same for single places.
+
 ### Several aspects on one method
 
 Without further configuration the aspects are called in the order assembly → class → method, and in declaration order on the same level. `OnExit` and `OnException` are called in reverse order.
