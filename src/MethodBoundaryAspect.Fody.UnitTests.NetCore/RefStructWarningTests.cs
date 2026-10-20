@@ -49,7 +49,26 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             warnings.Should().HaveCount(2);
         }
 
-        private List<string> Weave(XElement config)
+        [Fact]
+        public void IfTheAspectOverridesNoAspectMethod_ThenNoWarningIsWritten()
+        {
+            var warnings = Weave(null, typeof(RefStructWithoutAspectMethods), expectedWeavedMethods: 0);
+
+            warnings.Should().BeEmpty("the method is not changed");
+        }
+
+        [Fact]
+        public void IfTheAspectSkipsPropertiesAndTheGetterReturnsARefStruct_ThenNoWarningIsWritten()
+        {
+            var warnings = Weave(null, typeof(RefStructPropertyWithSkippedProperties), expectedWeavedMethods: 1);
+
+            warnings.Should().BeEmpty("the getter is not changed");
+        }
+
+        private List<string> Weave(XElement config) =>
+            Weave(config, typeof(RefStructWarningMethods), expectedWeavedMethods: 3);
+
+        private List<string> Weave(XElement config, Type type, int expectedWeavedMethods)
         {
             var warnings = new List<string>();
             // Fody sets these (for consumers obsolete) callbacks, they are the only way to capture the warnings
@@ -61,12 +80,12 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
                 LogWarningPoint = (message, _) => warnings.Add(message)
             };
 #pragma warning restore CS0618
-            weaver.AddClassFilter(typeof(RefStructWarningMethods).FullName);
+            weaver.AddClassFilter(type.FullName);
 
-            var assemblyPath = typeof(RefStructWarningMethods).Assembly.Location;
+            var assemblyPath = type.Assembly.Location;
             _weavedAssemblyPaths.Add(weaver.WeaveToShadowFile(assemblyPath, ModuleHelper.AssemblyResolver));
 
-            weaver.TotalWeavedMethods.Should().Be(3, "the ref struct methods are still weaved, only [DisableWeaving] is skipped");
+            weaver.TotalWeavedMethods.Should().Be(expectedWeavedMethods, "the ref struct methods are still weaved, only [DisableWeaving] is skipped");
             return warnings;
         }
 

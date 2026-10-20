@@ -312,19 +312,6 @@ namespace MethodBoundaryAspect.Fody
                     }
                 }
 
-                var byRefLikeValues = method.GetByRefLikeValueNames().ToList();
-                if (byRefLikeValues.Any() && !SuppressRefStructWarnings)
-                {
-                    // Ref structs (e.g. Span<T>) cannot be boxed into MethodExecutionArgs,
-                    // they are weaved as null, see https://github.com/vescon/MethodBoundaryAspect.Fody/issues/129
-                    WriteWarning(
-                        $"Method '{method.FullName}' uses ref struct values which cannot be passed to the aspect ({string.Join(", ", byRefLikeValues)}). " +
-                        "They are null in MethodExecutionArgs and changes to them are ignored. " +
-                        "To suppress this warning add SuppressRefStructWarnings=\"true\" to the MethodBoundaryAspect element in FodyWeavers.xml, " +
-                        "or exclude the method from weaving with [DisableWeaving].",
-                        method);
-                }
-
                 foreach (var aspectInfo in aspectInfos)
                     aspectInfo.InitOrderIndex(assemblyMethodBoundaryAspects, enclosingTypeAttributes, classMethodBoundaryAspects, methodMethodBoundaryAspects);
 
@@ -371,7 +358,26 @@ namespace MethodBoundaryAspect.Fody
             else
                 TotalWeavedMethods++;
 
+            WarnAboutRefStructValues(method);
             return true;
+        }
+
+        // only for methods which are changed: the aspects of the others do nothing (they override no aspect method
+        // or are skipped for properties)
+        private void WarnAboutRefStructValues(MethodDefinition method)
+        {
+            var byRefLikeValues = method.GetByRefLikeValueNames().ToList();
+            if (!byRefLikeValues.Any() || SuppressRefStructWarnings)
+                return;
+
+            // Ref structs (e.g. Span<T>) cannot be boxed into MethodExecutionArgs,
+            // they are weaved as null, see https://github.com/vescon/MethodBoundaryAspect.Fody/issues/129
+            WriteWarning(
+                $"Method '{method.FullName}' uses ref struct values which cannot be passed to the aspect ({string.Join(", ", byRefLikeValues)}). " +
+                "They are null in MethodExecutionArgs and changes to them are ignored. " +
+                "To suppress this warning add SuppressRefStructWarnings=\"true\" to the MethodBoundaryAspect element in FodyWeavers.xml, " +
+                "or exclude the method from weaving with [DisableWeaving].",
+                method);
         }
 
         private bool IsMethodBoundaryAspect(TypeDefinition attributeTypeDefinition)
