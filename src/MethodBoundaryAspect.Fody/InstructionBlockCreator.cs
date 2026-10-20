@@ -91,7 +91,7 @@ namespace MethodBoundaryAspect.Fody
                 throw new InvalidOperationException(string.Format("Didn't find matching constructor on type '{0}'",
                     typeDefinition.FullName));
 
-            var ctorRef = module.ImportReference(constructor);
+            var ctorRef = _referenceFinder.ImportMethod(constructor, instanceTypeReference);
             var newObjectInstruction = _processor.Create(OpCodes.Newobj, ctorRef);
             var assignToVariableInstruction = _processor.Create(OpCodes.Stloc, newInstance);
 
@@ -137,7 +137,7 @@ namespace MethodBoundaryAspect.Fody
                     var loadInstanceOnStackInstruction = _processor.Create(OpCodes.Ldloc, newInstance);
                     var loadOnStackInstruction = LoadValueOnStack(fieldCopy.Argument.Type, fieldCopy.Argument.Value);
 
-                    var fieldRef = GetFieldReference(instanceTypeReference, fieldCopy.Name, module);
+                    var fieldRef = GetFieldReference(instanceTypeReference, fieldCopy.Name);
                     var loadFieldInstructionBlock = _processor.Create(OpCodes.Stfld, fieldRef);
 
                     loadSetConstValuesToAspect.Add(loadInstanceOnStackInstruction);
@@ -158,7 +158,7 @@ namespace MethodBoundaryAspect.Fody
         }
 
         // the field can be declared in a base class of the aspect and in another assembly
-        private static FieldReference GetFieldReference(TypeReference type, string name, ModuleDefinition module)
+        private FieldReference GetFieldReference(TypeReference type, string name)
         {
             var currentType = type;
             while (currentType != null)
@@ -166,9 +166,9 @@ namespace MethodBoundaryAspect.Fody
                 var typeDefinition = currentType.Resolve();
                 var field = typeDefinition.Fields.FirstOrDefault(f => f.Name == name);
                 if (field != null)
-                    return module.ImportReference(field);
+                    return _referenceFinder.ImportField(field, currentType);
 
-                currentType = typeDefinition.BaseType;
+                currentType = ReferenceFinder.GetBaseType(currentType, typeDefinition);
             }
 
             throw new InvalidOperationException($"Didn't find field '{name}' on type '{type.FullName}' or its base types");
