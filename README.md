@@ -14,6 +14,8 @@ MethodBoundaryAspect.Fody is a [Fody](https://github.com/Fody/Fody) weaver: the 
 
 Typical aspects: logging, measuring execution time, transaction handling, exception wrapping, showing a wait cursor, argument validation, caching.
 
+The overhead is small: the weaver only provides what your aspects use, loads the method info once, and creates aspects without state once instead of for every call, see [Performance](#performance).
+
 > Upgrading from version 2? See [Upgrading to version 3](#upgrading-to-version-3).
 
 ## Contents
@@ -27,6 +29,7 @@ Typical aspects: logging, measuring execution time, transaction handling, except
 - [Ref structs](#ref-structs-spant-readonlyspant-)
 - [Performance](#performance)
 - [Configuration reference](#configuration-reference)
+- [Build warnings and errors](#build-warnings-and-errors)
 - [Upgrading to version 3](#upgrading-to-version-3)
 - [Contributing](#contributing)
 
@@ -209,6 +212,8 @@ public class OrderService
 Class and assembly aspects also hit property getters and setters. To exclude them, annotate the aspect class with `[AspectSkipProperties(true)]`.
 
 Not woven: aspects applied directly to an event (class and assembly aspects do hit the `add`/`remove` accessors; weaving aspects of an event is planned for 4.0), constructors, abstract and interface methods, `extern` methods, methods with a variable argument list (`__arglist`, with a build warning), compiler-generated methods and types (lambdas, local functions, the state machines of async and iterator methods) and aspect classes: classes derived from `OnMethodBoundaryAspect` (also base aspect classes) and their nested classes, so an assembly aspect doesn't call itself ([#70](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/70)).
+
+Aspects can be generic (generic attributes need C# 11): `[Validate<int>]` weaves the aspect with the type argument `int`.
 
 ### Excluding methods: `[DisableWeaving]`
 
@@ -490,7 +495,23 @@ Unmanaged pointers (`int*`, `void*`, function pointers) cannot be boxed either a
 
 ## Performance
 
-Filling all `MethodExecutionArgs` properties on every call costs time and memory: the arguments are boxed into a new `object[]`, the return value is boxed, and the `MethodBase` is loaded from a static cache. Therefore the weaver analyzes the IL of the aspects' `OnEntry`, `OnExit` and `OnException` methods, and values that no aspect of a method uses are not provided:
+The aspect calls are woven into the IL at build time, so there is no reflection and no proxy at runtime. On top of that the weaver avoids work wherever it can prove that an aspect doesn't need it:
+
+| Optimization | What it saves | Opt-out |
+|---|---|---|
+| [Only the `MethodExecutionArgs` properties that the aspects use are provided](#providing-only-what-is-used) | creating and boxing the arguments array, boxing the return value (and reading it back), setting the instance, looking up the method | `DisableExecutionArgsOptimization` |
+| [Aspects without state are created once](#aspect-instances) | the allocation of the aspect on every call | `DisableAspectInstanceReuse` |
+| [The method info is loaded once](#method-info-of-args-method) | the reflection call that resolves `args.Method`, on every call | - |
+| Only the aspect methods you override are called | calls of empty base methods, and the `try`/`catch` for `OnException` if no aspect overrides it | - |
+| The original body runs in a method marked `AggressiveInlining` | the JIT can inline it again, so there is usually no additional stack frame | - |
+| `MethodExecutionTag` is only saved and restored with several aspects on a method | a local variable and two assignments per aspect | - |
+| Async methods get no wrapper method | no additional call level, the aspect state lives in the compiler-generated state machine | - |
+
+Measured overhead of an aspect with `OnEntry` and `OnExit` compared to the same call without an aspect: see [Measured overhead](#measured-overhead).
+
+### Providing only what is used
+
+Filling all `MethodExecutionArgs` properties on every call costs time and memory: the arguments are boxed into a new `object[]`, the return value is boxed, and the `MethodBase` is loaded. Therefore the weaver analyzes the IL of the aspects' `OnEntry`, `OnExit` and `OnException` methods, and values that no aspect of a method uses are not provided:
 
 | Not used by any aspect of the method | Not done at runtime |
 |---|---|
@@ -518,17 +539,13 @@ public sealed class TimingAttribute : OnMethodBoundaryAspect
 }
 ```
 
-Overhead of an aspect with `OnEntry` and `OnExit` compared to the same call without an aspect ([benchmark](src/MethodBoundaryAspect.Fody.Benchmark/Program.cs), .NET 8, BenchmarkDotNet short run):
-
-| Aspect | Static method: time | Static method: allocated | Open generic method: time | Open generic method: allocated |
-|---|---:|---:|---:|---:|
-| uses no property | +14 ns | 120 B | +12 ns | 120 B |
-| uses `args.Method` | +12 ns | 120 B | - | - |
-| all properties provided (optimization disabled) | +35 ns | 200 B | +20 ns | 152 B |
-
 The analysis is conservative. If `args` is used in any other way than reading or writing its properties (for example, passed to a logger, stored in a field, or captured by a lambda), the aspect gets all properties. Calls to non-virtual methods of the aspect and its base classes are followed, e.g. `base.OnEntry(args)` or a private helper. When several aspects are applied to a method, a property is provided if any of them uses it. Aspects whose assembly can only be resolved as a reference assembly are never optimized.
 
 The analysis runs when the project using the aspect is woven. If that project is not rebuilt when the aspect's assembly is updated (e.g. an aspect loaded from a plugin), a new aspect version could access properties that were not provided and are `null`. Disable the optimization for such aspects, see [Configuration reference](#configuration-reference).
+
+### Method info of `args.Method`
+
+`args.Method` is not resolved by reflection on every call. The weaver generates the internal static class `OnMethodBoundaryAspectCompile.MethodInfos` with a field and a getter for each woven method. The getter loads the `MethodBase` the first time it is called (from the metadata token of the method, with the declaring type for methods of generic types and for generic methods) and returns it from the field afterwards. Each method has its own getter, so a method whose `MethodBase` cannot be loaded does not affect the others.
 
 ### Aspect instances
 
@@ -542,6 +559,25 @@ An aspect that holds no state is created once and shared by all calls, instead o
 Other aspects behave as before, a new instance for every call. Use `args.MethodExecutionTag` for data of a call, as the instance is shared between concurrent calls.
 
 The weaver decides when the project is woven, like for the [`MethodExecutionArgs` optimization](#performance). If the assembly of the aspect is replaced by a version holding state and the project using it is not rebuilt, the new version is still shared. Rebuild the projects using the aspect after changing it. Sharing is disabled in the [configuration](#configuration-reference) for all aspects, or for one aspect if it causes problems.
+
+### Measured overhead
+
+Overhead of an aspect with `OnEntry` and `OnExit` compared to the same call without an aspect ([benchmark](src/MethodBoundaryAspect.Fody.Benchmark/Program.cs), .NET 8, BenchmarkDotNet short run). The allocations are what the call allocates in total (the call without an aspect allocates nothing, the generic one 24 B); the times of a short run vary by some ns between machines and runs:
+
+| Aspect | Static method: time | Static method: allocated | Open generic method: time | Open generic method: allocated |
+|---|---:|---:|---:|---:|
+| uses no property | +2.8 ns | 72 B | +4.8 ns | 96 B |
+| uses no property, created for every call (`DisableAspectInstanceReuse`) | +3.3 ns | 120 B | - | - |
+| uses `args.Method` | +4.1 ns | 72 B | - | - |
+| all properties provided (`DisableExecutionArgsOptimization`) | +10.9 ns | 152 B | +9.6 ns | 128 B |
+
+### Tips for hot paths
+
+- Use only the `args` properties you need, and don't pass `args` to other code (see above). Providing `Arguments` and `ReturnValue` costs the most: an array and boxing.
+- Keep aspects free of state: use `args.MethodExecutionTag` for the data of a call. Then the aspect is [shared](#aspect-instances).
+- Override only the aspect methods you need. An aspect with `OnEntry` only has no `try`/`catch` and no `OnExit` call.
+- `[AllowChangingInputArguments]` makes the weaver create the arguments array and copy the values back, use it only for aspects that change arguments.
+- Weave less: [filter](#filtering-by-name-and-visibility) class and assembly aspects by namespace, type, method name or visibility, and exclude hot paths with [`[DisableWeaving]`](#excluding-methods-disableweaving).
 
 ## Configuration reference
 
@@ -565,6 +601,20 @@ All settings are optional and go into the `MethodBoundaryAspect` element of `Fod
 | `<DisableAspectInstanceReuse Aspect="..." />` | create this aspect for every call instead of sharing one instance, see [Aspect instances](#aspect-instances) (full type name, nested types as `Namespace.Outer+Inner`). A build warning is written if the aspect is not applied to any woven method |
 | `DisableAspectInstanceReuse="true"` | the same for all aspects |
 
+## Build warnings and errors
+
+The weaver writes a build warning instead of failing if it leaves something as it is or ignores a setting.
+
+| Warning | Cause | What to do |
+|---|---|---|
+| `Method '...' is not weaved: ...` | the method can't be woven: an async method of a task-like type with its own builder and an `OnException` aspect, a method with a variable argument list (`__arglist`) | [`[DisableWeaving]`](#excluding-methods-disableweaving) on the method removes the warning |
+| `Method '...' uses ref struct values ...` | the method has `Span<T>` or other [ref structs](#ref-structs-spant-readonlyspant-) in its signature | `SuppressRefStructWarnings="true"` or `[DisableWeaving]` |
+| `Aspect '...' sets NamespaceFilter ...` | a filter is set in the constructor of the aspect or by overriding the property, the weaver ignores it | set it [where the aspect is applied](#filtering-by-name-and-visibility) |
+| `Aspect '...' uses [ProvideAspectRole] or [AspectRoleDependency] ...` | the obsolete roles are used | use [`[AspectOrderIndex]`](#several-aspects-on-one-method) |
+| `Aspect '...' configured in DisableExecutionArgsOptimization/DisableAspectInstanceReuse ... was not found` | the aspect named in `FodyWeavers.xml` is not applied to any woven method | use the full type name, or remove the entry |
+
+An invalid setup of an aspect (e.g. an invalid regular expression in a filter, two aspects of a method with the same order index) fails the build with a message that names the aspect or the method, e.g. `Aspect '...' has an invalid regular expression in ...` or `Method '...' could not be weaved: ...`.
+
 ## Upgrading to version 3
 
 Version 3 only provides the `MethodExecutionArgs` properties that the aspects of a method use (see [Performance](#performance)). Which properties are used is determined when the project using the aspect is woven. This changes the runtime behavior in these cases:
@@ -580,6 +630,20 @@ Also changed:
 - **Class and assembly aspects no longer hit the state machines of async and iterator methods** ([#66](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/66)). In version 2 they were also woven into the compiler-generated `MoveNext` and `SetStateMachine` methods (and the other members of iterator state machines), so the aspect was additionally called with `args.Method.Name == "MoveNext"` each time an async method started or resumed after an `await`, and each time an iterator was advanced. The async or iterator method itself is still woven.
 
 The configuration in `FodyWeavers.xml` is unchanged; the optimization is enabled by default.
+
+### Changed since 3.3.0
+
+Mostly fixes of cases that did not work, listed because the behavior of existing code can change:
+
+- **`[DisableWeaving]` on a property or an event is honored.** It was ignored there, a class or assembly aspect still hit the getter, setter, `add` and `remove` accessors.
+- **A method that an aspect skips or whose exception it swallows returns a completed task**, not `null`, if it returns `Task` or `Task<T>` and no aspect sets `args.ReturnValue`.
+- **A `ref` returning method throws a `NotSupportedException`** if its exception is swallowed (`FlowBehavior.Continue` in `OnException`), like it already did for `FlowBehavior.Return` in `OnEntry`. It returned a null reference before, which failed in the caller as soon as it used it.
+- **Methods with a variable argument list (`__arglist`) are not woven** and a build warning is written. They were woven, but lost the variable arguments.
+- **`[AllowChangingInputArguments]` works for async methods.** The changed arguments were ignored.
+- **`null` for a value type argument passes the default value** instead of throwing a `NullReferenceException`.
+- **Aspects without state are created once** instead of for every call, see [Aspect instances](#aspect-instances). Opt-out: `DisableAspectInstanceReuse`.
+- **The executor method keeps `[SkipLocalsInit]`, `MethodImplOptions.NoOptimization` and `AggressiveOptimization`** of the woven method.
+- Fixed: generic aspects (`[Aspect<int>]`) crashed at runtime, `[AspectOrderIndex]` on a nested class failed the build, a ref struct warning was written for methods the weaver does not change, and an invalid aspect setup was reported as an unhandled exception without the method.
 
 ## Contributing
 
