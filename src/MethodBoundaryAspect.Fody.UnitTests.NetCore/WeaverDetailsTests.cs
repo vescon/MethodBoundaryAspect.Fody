@@ -117,6 +117,21 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfATypeIsNamedVoid_ThenItIsNotVoid()
+        {
+            var module = ModuleDefinition.CreateModule("Void", ModuleKind.Dll);
+            var ownVoid = new TypeDefinition("MyNamespace", "Void", TypeAttributes.Class | TypeAttributes.Public, module.TypeSystem.Object);
+            module.Types.Add(ownVoid);
+
+            InstructionBlockCreator.IsVoid(module.TypeSystem.Void).Should().BeTrue();
+            // RequiredModifierType(modifier, type)
+            InstructionBlockCreator.IsVoid(new RequiredModifierType(module.TypeSystem.Object, module.TypeSystem.Void)).Should().BeTrue("void modreq(IsExternalInit) of an init accessor");
+            InstructionBlockCreator.IsVoid(new RequiredModifierType(module.TypeSystem.Void, module.TypeSystem.Object)).Should().BeFalse();
+            InstructionBlockCreator.IsVoid(ownVoid).Should().BeFalse();
+            InstructionBlockCreator.IsVoid(module.TypeSystem.Int32).Should().BeFalse();
+        }
+
+        [Fact]
         public void IfAnArgumentAfterThe255thIsLoaded_ThenItIsLoadedByItsParameter()
         {
             var module = ModuleDefinition.CreateModule("Arguments", ModuleKind.Dll);

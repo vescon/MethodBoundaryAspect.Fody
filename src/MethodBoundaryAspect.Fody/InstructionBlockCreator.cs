@@ -8,8 +8,6 @@ namespace MethodBoundaryAspect.Fody
 {
     public class InstructionBlockCreator
     {
-        private const string VoidType = "Void";
-
         private readonly MethodDefinition _method;
         private readonly ReferenceFinder _referenceFinder;
 
@@ -599,7 +597,7 @@ namespace MethodBoundaryAspect.Fody
         public static bool IsVoid(TypeReference type)
         {
             // the return type of an init accessor is "void modreq(IsExternalInit)"
-            return type.WithoutModifiers().Name == VoidType;
+            return type.WithoutModifiers().MetadataType == MetadataType.Void;
         }
 
         public Instruction CreateReturn()
