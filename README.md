@@ -200,6 +200,9 @@ public class OrderService
 
     [Log]                         // getter and setter
     public string Name { get; set; }
+
+    [Log]                         // add and remove accessor
+    public event EventHandler Changed;
 }
 ```
 
@@ -209,7 +212,7 @@ Not woven: constructors, abstract and interface methods, `extern` methods, compi
 
 ### Excluding methods: `[DisableWeaving]`
 
-`[DisableWeaving]` excludes a method, a property (getter and setter), a class (including its nested classes) or a whole assembly from weaving, e.g. to skip a hot path that is hit by an assembly-wide aspect.
+`[DisableWeaving]` excludes a method, a property (getter and setter), an event (add and remove accessor), a class (including its nested classes) or a whole assembly from weaving, e.g. to skip a hot path that is hit by an assembly-wide aspect.
 
 ### Filtering by name and visibility
 

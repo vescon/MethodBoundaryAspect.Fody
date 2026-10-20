@@ -261,6 +261,16 @@ namespace MethodBoundaryAspect.Fody
                 .Where(x => x.SetMethod != null)
                 .ToDictionary(x => x.SetMethod);
 
+            // the aspects of an event are read from the event, like the ones of a property
+            var eventAccessors = new Dictionary<MethodDefinition, Collection<CustomAttribute>>();
+            foreach (var eventDefinition in type.Events)
+            {
+                if (eventDefinition.AddMethod != null)
+                    eventAccessors[eventDefinition.AddMethod] = eventDefinition.CustomAttributes;
+                if (eventDefinition.RemoveMethod != null)
+                    eventAccessors[eventDefinition.RemoveMethod] = eventDefinition.CustomAttributes;
+            }
+
             var typeNamespace = GetNamespace(type);
             var weavedAtLeastOneMethod = false;
             foreach (var method in type.Methods.ToList())
@@ -274,6 +284,8 @@ namespace MethodBoundaryAspect.Fody
                     methodMethodBoundaryAspects = propertyGetters[method].CustomAttributes;
                 else if (method.IsSetter)
                     methodMethodBoundaryAspects = propertySetters[method].CustomAttributes;
+                else if (eventAccessors.TryGetValue(method, out var eventAttributes))
+                    methodMethodBoundaryAspects = eventAttributes;
                 else
                     methodMethodBoundaryAspects = method.CustomAttributes;
 
@@ -465,6 +477,10 @@ namespace MethodBoundaryAspect.Fody
             // the aspects of a property are read from the property, so is [DisableWeaving]
             var property = method.DeclaringType.Properties.FirstOrDefault(p => p.GetMethod == method || p.SetMethod == method);
             if (property != null && ContainsDisableWeavingAttribute(property.CustomAttributes))
+                return true;
+
+            var eventDefinition = method.DeclaringType.Events.FirstOrDefault(e => e.AddMethod == method || e.RemoveMethod == method);
+            if (eventDefinition != null && ContainsDisableWeavingAttribute(eventDefinition.CustomAttributes))
                 return true;
 
             var currentClass = method.DeclaringType;
