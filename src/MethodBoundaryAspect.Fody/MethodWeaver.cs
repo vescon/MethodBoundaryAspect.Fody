@@ -116,6 +116,12 @@ namespace MethodBoundaryAspect.Fody
                 CallingConvention = method.CallingConvention
             };
 
+            // the settings of the original method stay with its body (NoInlining stays on the original method
+            // which calls the executor), e.g. [SkipLocalsInit] and [MethodImpl(MethodImplOptions.NoOptimization)]
+            clonedMethod.Body.InitLocals = method.Body.InitLocals;
+            clonedMethod.ImplAttributes |= method.ImplAttributes
+                                           & (MethodImplAttributes.NoOptimization | MethodImplAttributes.AggressiveOptimization);
+
             foreach (var parameter in method.Parameters)
                 clonedMethod.Parameters.Add(parameter);
 
@@ -578,7 +584,6 @@ namespace MethodBoundaryAspect.Fody
 
         protected virtual void Finish()
         {
-            _clonedMethod.Body.InitLocals = true;
             _clonedMethod.Body.Optimize();
         }
         

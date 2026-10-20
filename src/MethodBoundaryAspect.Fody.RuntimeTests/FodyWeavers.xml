@@ -1,9 +1,10 @@
 ﻿<Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd"
     GenerateXsd="true"
     VerifyAssembly="true"
-    VerifyIgnoreCodes="0x80131870,0x80131884">
-  <!-- PEVerify cannot verify code the C# compiler emits (ModifierTypesTests), also without weaving:
-       0x80131870 a method returns a ref, 0x80131884 an init accessor or ref readonly return value accesses a readonly field -->
+    VerifyIgnoreCodes="0x80131870,0x80131884,0x801318BD">
+  <!-- PEVerify cannot verify code the C# compiler emits (ModifierTypesTests, ExecutorMethodTests), also without weaving:
+       0x80131870 a method returns a ref, 0x80131884 an init accessor or ref readonly return value accesses a readonly field,
+       0x801318BD a method with locals has [SkipLocalsInit] -->
   <ModuleWeaver>
     <DisableExecutionArgsOptimization Aspect="MethodBoundaryAspect.Fody.RuntimeTests.Aspects.OptOutSkipBodyAspect" />
   </ModuleWeaver>

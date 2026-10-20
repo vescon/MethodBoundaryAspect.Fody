@@ -116,6 +116,7 @@ public int Add(int a, int b)
 Consequences worth knowing:
 
 - The aspect's constructor arguments and properties from the attribute (e.g. `[Log(Level = "Debug")]`) are applied to the new instance on every call. Instance fields of an aspect are **not** shared between calls; use `args.MethodExecutionTag` to pass data from `OnEntry` to `OnExit`/`OnException`.
+- The original body runs in the private method `$_executor_<Name>`, which shows up in stack traces next to the original method, and `MethodBase.GetCurrentMethod()` called in the method body returns the executor, not the original method. `[SkipLocalsInit]` and `MethodImplOptions.NoOptimization`/`AggressiveOptimization` of the method apply to the executor, the other `MethodImpl` flags (e.g. `NoInlining`) stay on the original method.
 - Only overridden aspect methods are called, and only the `MethodExecutionArgs` properties the aspects actually use are filled (see [Performance](#performance)).
 - Async methods are woven differently, see [Async methods](#async-methods).
 
