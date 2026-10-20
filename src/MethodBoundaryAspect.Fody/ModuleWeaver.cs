@@ -266,16 +266,6 @@ namespace MethodBoundaryAspect.Fody
                 .Where(x => x.SetMethod != null)
                 .ToDictionary(x => x.SetMethod);
 
-            // the aspects of an event are read from the event, like the ones of a property
-            var eventAccessors = new Dictionary<MethodDefinition, Collection<CustomAttribute>>();
-            foreach (var eventDefinition in type.Events)
-            {
-                if (eventDefinition.AddMethod != null)
-                    eventAccessors[eventDefinition.AddMethod] = eventDefinition.CustomAttributes;
-                if (eventDefinition.RemoveMethod != null)
-                    eventAccessors[eventDefinition.RemoveMethod] = eventDefinition.CustomAttributes;
-            }
-
             var typeNamespace = GetNamespace(type);
             var weavedAtLeastOneMethod = false;
             bool WeaveMethodWithAspects(MethodDefinition method)
@@ -289,8 +279,6 @@ namespace MethodBoundaryAspect.Fody
                     methodMethodBoundaryAspects = propertyGetters[method].CustomAttributes;
                 else if (method.IsSetter)
                     methodMethodBoundaryAspects = propertySetters[method].CustomAttributes;
-                else if (eventAccessors.TryGetValue(method, out var eventAttributes))
-                    methodMethodBoundaryAspects = eventAttributes;
                 else
                     methodMethodBoundaryAspects = method.CustomAttributes;
 

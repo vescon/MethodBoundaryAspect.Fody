@@ -18,16 +18,19 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
             remove => _explicitHandler -= value;
         }
 
-        public event EventHandler WithoutAspect;
-
         public void Raise()
         {
             FieldLike?.Invoke(this, EventArgs.Empty);
             _explicitHandler?.Invoke(this, EventArgs.Empty);
-            WithoutAspect?.Invoke(this, EventArgs.Empty);
         }
+    }
 
-        public void SubscribeWithoutAspect(EventHandler handler) => WithoutAspect += handler;
+    [NameRecordingAspect]
+    public class ClassAspectEventMethods
+    {
+        public event EventHandler Changed;
+
+        public void Raise() => Changed?.Invoke(this, EventArgs.Empty);
     }
 
     [NameRecordingAspect]
