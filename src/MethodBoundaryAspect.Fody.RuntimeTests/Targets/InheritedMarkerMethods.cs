@@ -4,7 +4,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
 {
     public class InheritedMarkerMethods
     {
-        [ChangingInputDerivedAspect]
+        [ChangingInputDerived]
         public int Derived(int value) => value;
 
         [ChangingInputDerivedTwiceAspect]

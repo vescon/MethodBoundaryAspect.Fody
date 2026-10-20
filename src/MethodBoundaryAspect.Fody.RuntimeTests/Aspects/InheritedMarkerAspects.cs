@@ -13,11 +13,11 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
         public override void OnEntry(MethodExecutionArgs arg) => arg.Arguments[0] = 42;
     }
 
-    public class ChangingInputDerivedAspect : ChangingInputBaseAspect
+    public class ChangingInputDerivedAttribute : ChangingInputBaseAspect
     {
     }
 
-    public class ChangingInputDerivedTwiceAspect : ChangingInputDerivedAspect
+    public class ChangingInputDerivedTwiceAspect : ChangingInputDerivedAttribute
     {
     }
 

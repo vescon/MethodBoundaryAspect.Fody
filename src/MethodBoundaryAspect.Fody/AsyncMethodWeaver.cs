@@ -121,6 +121,9 @@ namespace MethodBoundaryAspect.Fody
             out Instruction instructionCallStart,
             out Instruction instructionCallEnd)
         {
+            if (AllowChangingInputArguments)
+                AddToSetup(CreateWriteChangedArgumentsToParameters(arguments));
+
             instructionCallEnd = _ilProcessor.Body.Instructions.Last();
             if (instructionCallEnd.OpCode == OpCodes.Ret)
             {
@@ -139,6 +142,23 @@ namespace MethodBoundaryAspect.Fody
 
             instructionCallStart = _ilProcessor.Body.Instructions.First();
             instructionCallEnd = _ilProcessor.Body.Instructions.Last();
+        }
+
+        // The compiler copies the parameters into the state machine after the code inserted by the weaver, so the
+        // changed arguments reach it if they are written back to the parameters (async methods have no ref, out or in parameters).
+        private InstructionBlockChain CreateWriteChangedArgumentsToParameters(NamedInstructionBlockChain arguments)
+        {
+            var instructions = new List<Instruction>();
+            foreach (var parameter in _method.Parameters)
+            {
+                var element = new ArrayElementLoadable(arguments.Variable, parameter.Index, parameter, _ilProcessor, _creator);
+                instructions.AddRange(element.Load(false, true).Instructions);
+                instructions.Add(_ilProcessor.Create(OpCodes.Starg, parameter));
+            }
+
+            var chain = new InstructionBlockChain();
+            chain.Add(new InstructionBlock("Write the changed arguments to the parameters", instructions));
+            return chain;
         }
 
         protected override void AddToSetup(InstructionBlockChain chain)
