@@ -25,9 +25,11 @@ namespace MethodBoundaryAspect.Fody.Ordering
             var aspectAttributes = AspectTypeDefinition.CustomAttributes;
             InitRole(aspectAttributes);
             InitOrder(aspectAttributes);
-            InitSkipProperties(aspectAttributes);
+            // like for reflection, the marker attributes of the base aspects apply to the derived aspects
+            var inheritedAspectAttributes = GetAttributesOfHierarchy(AspectTypeDefinition);
+            InitSkipProperties(inheritedAspectAttributes);
             InitTargetMembers();
-            InitChangingInputArguments(aspectAttributes);
+            InitChangingInputArguments(inheritedAspectAttributes);
             InitNamespaceFilter();
             InitTypeNameFilter();
             InitMethodNameFilter();
@@ -132,10 +134,22 @@ namespace MethodBoundaryAspect.Fody.Ordering
             Order = aspectOrder;
         }
 
+        /// <summary>
+        /// The attributes of the aspect type and of its base aspects, the most derived first.
+        /// </summary>
+        private static List<CustomAttribute> GetAttributesOfHierarchy(TypeDefinition aspectType)
+        {
+            var attributes = new List<CustomAttribute>();
+            // Resolve() returns null if the assembly of a base type cannot be found
+            for (var type = aspectType; type != null && type.FullName != AttributeFullNames.OnMethodBoundaryAspect; type = type.BaseType?.Resolve())
+                attributes.AddRange(type.CustomAttributes);
+            return attributes;
+        }
+
         private void InitSkipProperties(IEnumerable<CustomAttribute> aspectAttributes)
         {
             var skipPropertiesAttribute = aspectAttributes
-                .SingleOrDefault(c => c.AttributeType.FullName == AttributeFullNames.AspectSkipPropertiesAttribute);
+                .FirstOrDefault(c => c.AttributeType.FullName == AttributeFullNames.AspectSkipPropertiesAttribute);
 
             if (skipPropertiesAttribute == null)
                 return;
