@@ -78,8 +78,11 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
             Func<Task> throwing = () => _target.ThrowingAsync();
 
             await throwing.Should().ThrowAsync<InvalidOperationException>();
-            // the order of the async weaver: OnExit is called before OnException (not related to sharing the aspect)
-            InstanceReuseAspects.Calls.Should().Equal("throwing1:entry:ThrowingAsync", "throwing1:exit:ThrowingAsync", "throwing1:exception:failed async");
+            // OnExit is called when the method returns its task, OnException on the thread pool after the
+            // await: their order depends on timing (not related to sharing the aspect)
+            InstanceReuseAspects.Calls.Should().HaveCount(3);
+            InstanceReuseAspects.Calls[0].Should().Be("throwing1:entry:ThrowingAsync");
+            InstanceReuseAspects.Calls.Skip(1).Should().BeEquivalentTo("throwing1:exit:ThrowingAsync", "throwing1:exception:failed async");
         }
 
         [Fact]
