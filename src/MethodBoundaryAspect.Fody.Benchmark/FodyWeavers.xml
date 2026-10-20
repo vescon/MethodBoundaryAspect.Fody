@@ -3,5 +3,7 @@
   <ModuleWeaver>
     <!-- all MethodExecutionArgs properties are provided, like before the optimization -->
     <DisableExecutionArgsOptimization Aspect="MethodBoundaryAspect.Fody.Benchmark.AllPropertiesAspect" />
+    <!-- the aspect is created for every call, like before the instances were shared -->
+    <DisableAspectInstanceReuse Aspect="MethodBoundaryAspect.Fody.Benchmark.NewInstanceAspect" />
   </ModuleWeaver>
 </Weavers>

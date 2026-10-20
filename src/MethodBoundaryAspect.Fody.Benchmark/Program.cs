@@ -20,6 +20,9 @@ namespace MethodBoundaryAspect.Fody.Benchmark
         public int CallWithAllPropertiesAspect() => TestClass.ExecuteWithAllPropertiesAspect(5);
 
         [Benchmark]
+        public int CallWithNewInstanceAspect() => TestClass.ExecuteWithNewInstanceAspect(5);
+
+        [Benchmark]
         public object OpenGenericCallWithoutAspect() =>
             TestOpenGenericClass<int>.OpenGenericWithoutAspect(new object());
 
@@ -51,6 +54,12 @@ namespace MethodBoundaryAspect.Fody.Benchmark
 
         [MethodNameAspect]
         public static int ExecuteWithMethodNameAspect(int x)
+        {
+            return DoWork(x);
+        }
+
+        [NewInstanceAspect]
+        public static int ExecuteWithNewInstanceAspect(int x)
         {
             return DoWork(x);
         }
@@ -139,6 +148,21 @@ namespace MethodBoundaryAspect.Fody.Benchmark
     /// all properties are provided like before the optimization.
     /// </summary>
     class AllPropertiesAspect : OnMethodBoundaryAspect
+    {
+        public override void OnEntry(MethodExecutionArgs arg)
+        {
+        }
+
+        public override void OnExit(MethodExecutionArgs arg)
+        {
+        }
+    }
+
+    /// <summary>
+    /// Uses no MethodExecutionArgs property and holds no state, but sharing the instance is disabled for it in
+    /// FodyWeavers.xml: it is created for every call like before the instances were shared.
+    /// </summary>
+    class NewInstanceAspect : OnMethodBoundaryAspect
     {
         public override void OnEntry(MethodExecutionArgs arg)
         {
