@@ -31,7 +31,7 @@ dotnet test src/MethodBoundaryAspect.Fody.RuntimeTests --configuration Release -
 - `src/MethodBoundaryAspect.Fody` – the weaver. **netstandard2.0 only**, because Fody only loads that binary. Uses Mono.Cecil.
 - `UnitTests.NetFramework` (net462, largest suite) – weaves `UnitTests.TestAssembly.NetFramework` (and a VB and an unverifiable test assembly) into a shadow copy `_<tick>_..._Weaved_.dll`, runs PEVerify, loads it into a separate AppDomain and invokes methods via `AssemblyLoader`. Base classes: `MethodBoundaryAspectTestBase` (Shared), `MethodBoundaryAspectNetFrameworkTestBase`.
 - `UnitTests.NetCore` (net8) – weaves `UnitTests.TestAssembly.NetCore`/`NetStandard` and a net462 copy, inspects the woven IL with Cecil or captures warnings; tests that weave the same assembly share an xUnit collection and run one after another.
-- `RuntimeTests` (net462, net48, net8.0, net9.0, net10.0) – real Fody build with the local weaver (`<WeaverFiles ... WeaverClassNames="ModuleWeaver" />`), then plain xUnit tests of the woven code on each runtime. Its `FodyWeavers.xml` element is therefore `<ModuleWeaver>`; NuGet users write `<MethodBoundaryAspect>`. Prefer this project for behavior tests of woven code.
+- `RuntimeTests` (net462, net48, net481, net8.0, net9.0, net10.0) – real Fody build with the local weaver (`<WeaverFiles ... WeaverClassNames="ModuleWeaver" />`), then plain xUnit tests of the woven code on each runtime. Its `FodyWeavers.xml` element is therefore `<ModuleWeaver>`; NuGet users write `<MethodBoundaryAspect>`. Prefer this project for behavior tests of woven code.
 
 ## Weaver architecture
 
@@ -53,5 +53,5 @@ Special cases already handled (keep them working): ref structs (`Span<T>`) are p
 
 ## Conventions
 
-- Changes to woven behavior should get a RuntimeTests test (runs on all five runtimes); weaving-level details (emitted IL, warnings, config) go into UnitTests.NetCore.
+- Changes to woven behavior should get a RuntimeTests test (runs on all six runtimes); weaving-level details (emitted IL, warnings, config) go into UnitTests.NetCore.
 - Behavior changes for users belong in the README (user documentation, including breaking changes per major version) and in the "Unreleased" section of CHANGELOG.md. The benchmark tables are in docs/performance.md.

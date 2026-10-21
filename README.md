@@ -704,4 +704,4 @@ dotnet test src/MethodBoundaryAspect.Fody.UnitTests.NetCore --configuration Rele
 dotnet test src/MethodBoundaryAspect.Fody.RuntimeTests --configuration Release --no-build
 ```
 
-`RuntimeTests` builds a project with the weaver from this repository and runs the woven code on .NET Framework 4.6.2 and 4.8 and .NET 8, 9 and 10.
+`RuntimeTests` builds a project with the weaver from this repository and runs the woven code on .NET Framework 4.6.2, 4.8 and 4.8.1 and .NET 8, 9 and 10.

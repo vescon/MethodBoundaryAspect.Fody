@@ -67,7 +67,7 @@ jobs:
     - name: Run tests - NetCore
       run: dotnet test src\MethodBoundaryAspect.Fody.UnitTests.NetCore --configuration Release --no-build
 
-    - name: Run tests - Runtime (net462, net48, net8.0, net9.0, net10.0)
+    - name: Run tests - Runtime (net462, net48, net481, net8.0, net9.0, net10.0)
       run: dotnet test src\MethodBoundaryAspect.Fody.RuntimeTests --configuration Release --no-build
 
     - name: Create the nuget package
