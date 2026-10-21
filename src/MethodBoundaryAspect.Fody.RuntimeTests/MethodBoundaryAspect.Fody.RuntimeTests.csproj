@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <!-- woven against and executed on each runtime -->
-    <TargetFrameworks>net462;net48;net481;net8.0;net9.0;net10.0</TargetFrameworks>
+    <TargetFrameworks>net462;net48;net481;net8.0;net9.0;net10.0;net11.0</TargetFrameworks>
     <!-- records, init accessors (ModifierTypesTests) and generic attributes (GenericAspectTests),
          the woven code has to handle what newer compilers emit -->
     <LangVersion>11.0</LangVersion>

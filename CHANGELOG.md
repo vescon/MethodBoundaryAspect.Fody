@@ -7,6 +7,7 @@ listed as well). The migration from version 2 is described in the
 
 ## Unreleased
 
+- The runtime tests also run on .NET 11 (release candidate) and .NET Framework 4.8.1; no change for users.
 - **`[AllowChangingInputArguments]` and `[AspectSkipProperties]` are inherited** by aspects derived from the aspect class that has the attribute. The weaver only read them from the aspect class itself, so a derived aspect silently could not change arguments or skip properties.
 - **An invalid order of aspect roles fails the build with a message** naming the aspect (`InvalidAspectConfigurationException`), not with an empty `InvalidOperationException`.
 - **A type that cannot be resolved** (missing in its assembly) no longer fails the weaver with a `NullReferenceException` where values of that type are passed to the aspect.

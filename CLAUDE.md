@@ -17,6 +17,7 @@ dotnet test src/MethodBoundaryAspect.Fody.UnitTests.NetCore --configuration Rele
 dotnet test src/MethodBoundaryAspect.Fody.RuntimeTests --configuration Release --no-build
 ```
 
+- **.NET 11:** RuntimeTests targets `net11.0`, so building the solution needs a .NET 11 SDK (the release candidate until GA, installed in CI by a separate `setup-dotnet` step with `dotnet-quality: preview`). When 11.0.x is released: move `11.0.x` into the version list of the normal step in `.github/workflows/main.yaml`, delete the RC step, and drop this note. Nothing in the repo pins the RC version.
 - Single test: `dotnet test <project> -c Release --no-build --filter "FullyQualifiedName~ClassName.MethodName"`; RuntimeTests on one runtime: add `-f net8.0`.
 - Build with `-m:1 -nodeReuse:false`: a parallel build can fail with a locked `TestAssembly.NetFramework.dll` (it is built by two projects), and a reused MSBuild node may still hold a weaver DLL from another checkout ("Assembly with same name is already loaded").
 - RuntimeTests uses the weaver DLL from `src/MethodBoundaryAspect.Fody/bin/<Configuration>` (no project reference), so building only RuntimeTests does not rebuild the weaver, and an incremental build does not re-weave. After changing the weaver, build `src/MethodBoundaryAspect.Fody` (or the solution) first, then RuntimeTests with `--no-incremental`.
@@ -31,7 +32,7 @@ dotnet test src/MethodBoundaryAspect.Fody.RuntimeTests --configuration Release -
 - `src/MethodBoundaryAspect.Fody` – the weaver. **netstandard2.0 only**, because Fody only loads that binary. Uses Mono.Cecil.
 - `UnitTests.NetFramework` (net462, largest suite) – weaves `UnitTests.TestAssembly.NetFramework` (and a VB and an unverifiable test assembly) into a shadow copy `_<tick>_..._Weaved_.dll`, runs PEVerify, loads it into a separate AppDomain and invokes methods via `AssemblyLoader`. Base classes: `MethodBoundaryAspectTestBase` (Shared), `MethodBoundaryAspectNetFrameworkTestBase`.
 - `UnitTests.NetCore` (net8) – weaves `UnitTests.TestAssembly.NetCore`/`NetStandard` and a net462 copy, inspects the woven IL with Cecil or captures warnings; tests that weave the same assembly share an xUnit collection and run one after another.
-- `RuntimeTests` (net462, net48, net481, net8.0, net9.0, net10.0) – real Fody build with the local weaver (`<WeaverFiles ... WeaverClassNames="ModuleWeaver" />`), then plain xUnit tests of the woven code on each runtime. Its `FodyWeavers.xml` element is therefore `<ModuleWeaver>`; NuGet users write `<MethodBoundaryAspect>`. Prefer this project for behavior tests of woven code.
+- `RuntimeTests` (net462, net48, net481, net8.0, net9.0, net10.0, net11.0) – real Fody build with the local weaver (`<WeaverFiles ... WeaverClassNames="ModuleWeaver" />`), then plain xUnit tests of the woven code on each runtime. Its `FodyWeavers.xml` element is therefore `<ModuleWeaver>`; NuGet users write `<MethodBoundaryAspect>`. Prefer this project for behavior tests of woven code.
 
 ## Weaver architecture
 
@@ -53,5 +54,5 @@ Special cases already handled (keep them working): ref structs (`Span<T>`) are p
 
 ## Conventions
 
-- Changes to woven behavior should get a RuntimeTests test (runs on all six runtimes); weaving-level details (emitted IL, warnings, config) go into UnitTests.NetCore.
+- Changes to woven behavior should get a RuntimeTests test (runs on all seven runtimes); weaving-level details (emitted IL, warnings, config) go into UnitTests.NetCore.
 - Behavior changes for users belong in the README (user documentation, including breaking changes per major version) and in the "Unreleased" section of CHANGELOG.md. The benchmark tables are in docs/performance.md.

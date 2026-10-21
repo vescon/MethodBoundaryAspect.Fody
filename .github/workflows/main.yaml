@@ -26,6 +26,14 @@ jobs:
           9.0.x
           10.0.x
 
+    # .NET 11 is still a release candidate (GA is planned for November 2026). When 11.0.x is released, move it into the
+    # list above and delete this step, then remove the preview note in CLAUDE.md. The SDK 11 builds all targets.
+    - name: Setup .NET 11 (release candidate)
+      uses: actions/setup-dotnet@v6
+      with:
+        dotnet-version: 11.0.x
+        dotnet-quality: preview
+
     # The actions write the GitVersion_* variables used by src/Directory.Build.props into the environment of the
     # following steps. GitVersion 6 only reads tags with three numbers (v3.3.0), see "Check the version".
     - name: Install GitVersion
@@ -67,7 +75,7 @@ jobs:
     - name: Run tests - NetCore
       run: dotnet test src\MethodBoundaryAspect.Fody.UnitTests.NetCore --configuration Release --no-build
 
-    - name: Run tests - Runtime (net462, net48, net481, net8.0, net9.0, net10.0)
+    - name: Run tests - Runtime (net462, net48, net481, net8.0, net9.0, net10.0, net11.0)
       run: dotnet test src\MethodBoundaryAspect.Fody.RuntimeTests --configuration Release --no-build
 
     - name: Create the nuget package
