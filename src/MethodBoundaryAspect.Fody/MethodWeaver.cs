@@ -456,7 +456,7 @@ namespace MethodBoundaryAspect.Fody
 
                 var elementType = ((ByReferenceType)parameter.ParameterType.WithoutModifiers()).ElementType;
                 // Resolve() returns the element type of an array
-                if (elementType.IsGenericParameter || (!elementType.IsArray && (elementType.IsValueType || elementType.Resolve().IsValueType)))
+                if (elementType.IsGenericParameter || (!elementType.IsArray && (elementType.IsValueType || elementType.Resolve()?.IsValueType == true)))
                     instructions.Add(_ilProcessor.Create(OpCodes.Box, elementType));
 
                 instructions.Add(_ilProcessor.Create(OpCodes.Stelem_Ref));

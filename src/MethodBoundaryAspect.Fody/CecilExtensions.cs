@@ -183,8 +183,9 @@ namespace MethodBoundaryAspect.Fody
 
         public static bool IsEnum(this TypeReference typeRef, out TypeReference underlyingType)
         {
+            // Resolve() returns null if the assembly of the type cannot be found
             var typeDef = typeRef.Resolve();
-            if (typeDef.IsEnum)
+            if (typeDef != null && typeDef.IsEnum)
             {
                 underlyingType = typeDef.Fields.FirstOrDefault(f => f.Name == "value__").FieldType;
                 return true;
@@ -196,8 +197,7 @@ namespace MethodBoundaryAspect.Fody
 
         public static OpCode GetStElemCode(this TypeReference typeRef)
         {
-            var typeDef = typeRef.Resolve();
-            if (typeDef.IsEnum(out TypeReference underlying))
+            if (typeRef.IsEnum(out var underlying))
                 return underlying.MetadataType.GetStElemCode();
             if (typeRef.IsValueType)
                 return typeRef.MetadataType.GetStElemCode();
@@ -238,10 +238,9 @@ namespace MethodBoundaryAspect.Fody
             // Resolve() returns the element type of an array, e.g. the enum of an enum array
             if (typeRef.IsArray)
                 return Instruction.Create(OpCodes.Stind_Ref);
-            var typeDef = typeRef.Resolve();
-            if (typeDef.IsEnum(out TypeReference underlying))
+            if (typeRef.IsEnum(out var underlying))
                 return Instruction.Create(underlying.MetadataType.GetStIndCode());
-            if (typeRef.IsValueType || typeDef.IsValueType)
+            if (typeRef.IsValueType || typeRef.Resolve()?.IsValueType == true)
             {
                 // non-primitive value types (e.g. Guid, DateTime, custom structs) need stobj
                 var opCode = typeRef.MetadataType.GetStIndCode();
