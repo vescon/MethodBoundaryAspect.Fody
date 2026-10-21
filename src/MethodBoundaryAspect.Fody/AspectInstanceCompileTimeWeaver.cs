@@ -16,7 +16,6 @@ namespace MethodBoundaryAspect.Fody
     /// </summary>
     public class AspectInstanceCompileTimeWeaver
     {
-        private const string CacheNamespace = "OnMethodBoundaryAspectCompile";
         private const string CacheClass = "Aspects";
 
         private readonly ModuleDefinition _module;
@@ -68,18 +67,7 @@ namespace MethodBoundaryAspect.Fody
         private MethodDefinition AddGetter(CustomAttribute attribute)
         {
             if (_aspectsClass == null)
-            {
-                // internal: only the weaved code of the same assembly uses it, it is no API of the assembly
-                var classAttributes = TypeAttributes.Class
-                                      | TypeAttributes.NotPublic
-                                      | TypeAttributes.Abstract // abstract + sealed => static
-                                      | TypeAttributes.Sealed;
-                _aspectsClass = new TypeDefinition(CacheNamespace, CacheClass, classAttributes)
-                {
-                    BaseType = _module.TypeSystem.Object
-                };
-                _module.Types.Add(_aspectsClass);
-            }
+                _aspectsClass = CompileTimeClassBuilder.CreateStaticClass(_module, CacheClass, _module.TypeSystem.Object);
 
             var aspectType = _module.ImportReference(attribute.AttributeType);
             var identifier = $"{_getters.Count}_{attribute.AttributeType.Name}";
@@ -97,18 +85,12 @@ namespace MethodBoundaryAspect.Fody
             // var aspect = _aspect; if (aspect == null) _aspect = aspect = new Aspect(...);
             // concurrent first calls may both create it, which is harmless for a reusable aspect
             var processor = getter.Body.GetILProcessor();
-            var ret = Instruction.Create(OpCodes.Ret);
-            processor.Append(Instruction.Create(OpCodes.Ldsfld, field));
-            processor.Append(Instruction.Create(OpCodes.Dup));
-            processor.Append(Instruction.Create(OpCodes.Brtrue, ret));
-            processor.Append(Instruction.Create(OpCodes.Pop));
-
-            var newAspect = new InstructionBlockChainCreator(getter, _module).CreateAndNewUpAspect(attribute);
-            newAspect.Append(processor);
-            processor.Append(Instruction.Create(OpCodes.Ldloc, newAspect.Variable));
-            processor.Append(Instruction.Create(OpCodes.Dup));
-            processor.Append(Instruction.Create(OpCodes.Stsfld, field));
-            processor.Append(ret);
+            CompileTimeClassBuilder.AppendLazyGetterBody(processor, field, () =>
+            {
+                var newAspect = new InstructionBlockChainCreator(getter, _module).CreateAndNewUpAspect(attribute);
+                newAspect.Append(processor);
+                processor.Append(Instruction.Create(OpCodes.Ldloc, newAspect.Variable));
+            });
 
             _getters[attribute] = getter;
             return getter;

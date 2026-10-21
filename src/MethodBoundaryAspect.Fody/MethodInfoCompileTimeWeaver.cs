@@ -22,8 +22,7 @@ namespace MethodBoundaryAspect.Fody
         private readonly Dictionary<MethodDefinition, MethodDefinition> _gettersCache
             = new Dictionary<MethodDefinition, MethodDefinition>();
 
-        private readonly string _cacheNamespace = "OnMethodBoundaryAspectCompile";
-        private readonly string _cacheClass = "MethodInfos";
+        private const string CacheClass = "MethodInfos";
 
         public MethodInfoCompileTimeWeaver(ModuleDefinition module)
         {
@@ -35,16 +34,7 @@ namespace MethodBoundaryAspect.Fody
             if (_methodInfosClass != null)
                 return;
             
-            // internal: only the weaved code of the same assembly uses it, it is no API of the assembly
-            var classAttributes = TypeAttributes.Class
-                                  | TypeAttributes.NotPublic
-                                  | TypeAttributes.Abstract // abstract + sealed => static
-                                  | TypeAttributes.Sealed;
-            _methodInfosClass = new TypeDefinition(_cacheNamespace, _cacheClass, classAttributes)
-            {
-                BaseType = GetTypeReference(typeof(object))
-            };
-            _mainModule.Types.Add(_methodInfosClass);
+            _methodInfosClass = CompileTimeClassBuilder.CreateStaticClass(_mainModule, CacheClass, GetTypeReference(typeof(object)));
 
             // taken from https://gist.github.com/jbevain/390902
             _getMethodFromHandle = ImportGetMethodFromHandle(typeof(RuntimeMethodHandle));
@@ -76,25 +66,20 @@ namespace MethodBoundaryAspect.Fody
 
             // var methodInfo = _methodInfo; if (methodInfo == null) _methodInfo = methodInfo = GetMethodFromHandle(...);
             // concurrent first calls may both load it, which is harmless
-            var instructions = getter.Body.Instructions;
-            var ret = Instruction.Create(OpCodes.Ret);
-            instructions.Add(Instruction.Create(OpCodes.Ldsfld, field));
-            instructions.Add(Instruction.Create(OpCodes.Dup));
-            instructions.Add(Instruction.Create(OpCodes.Brtrue, ret));
-            instructions.Add(Instruction.Create(OpCodes.Pop));
-            instructions.Add(Instruction.Create(OpCodes.Ldtoken, method));
-            if (ContainsOpenTypeRecursive(method))
+            var processor = getter.Body.GetILProcessor();
+            CompileTimeClassBuilder.AppendLazyGetterBody(processor, field, () =>
             {
-                // a method of a generic type needs its declaring type, the method info is the open
-                // definition for every instantiation, so it is cached as well
-                instructions.Add(Instruction.Create(OpCodes.Ldtoken, method.DeclaringType));
-                instructions.Add(Instruction.Create(OpCodes.Call, _getMethodFromHandleWithType));
-            }
-            else
-                instructions.Add(Instruction.Create(OpCodes.Call, _getMethodFromHandle));
-            instructions.Add(Instruction.Create(OpCodes.Dup));
-            instructions.Add(Instruction.Create(OpCodes.Stsfld, field));
-            instructions.Add(ret);
+                processor.Append(Instruction.Create(OpCodes.Ldtoken, method));
+                if (ContainsOpenTypeRecursive(method))
+                {
+                    // a method of a generic type needs its declaring type, the method info is the open
+                    // definition for every instantiation, so it is cached as well
+                    processor.Append(Instruction.Create(OpCodes.Ldtoken, method.DeclaringType));
+                    processor.Append(Instruction.Create(OpCodes.Call, _getMethodFromHandleWithType));
+                }
+                else
+                    processor.Append(Instruction.Create(OpCodes.Call, _getMethodFromHandle));
+            });
             getter.Body.Optimize();
 
             _methodInfosClass.Methods.Add(getter);
