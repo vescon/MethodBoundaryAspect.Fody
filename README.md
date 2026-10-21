@@ -209,7 +209,7 @@ public class OrderService
 }
 ```
 
-Class and assembly aspects also hit property getters and setters. To exclude them, annotate the aspect class with `[AspectSkipProperties(true)]`.
+Class and assembly aspects also hit property getters and setters. To exclude them, annotate the aspect class with `[AspectSkipProperties(true)]`. Like `[AllowChangingInputArguments]`, it is inherited by aspects derived from the annotated aspect class.
 
 Not woven: aspects applied directly to an event (class and assembly aspects do hit the `add`/`remove` accessors; weaving aspects of an event is planned for 4.0), constructors, abstract and interface methods, `extern` methods, methods with a variable argument list (`__arglist`, with a build warning), compiler-generated methods and types (lambdas, local functions, the state machines of async and iterator methods) and aspect classes: classes derived from `OnMethodBoundaryAspect` (also base aspect classes) and their nested classes, so an assembly aspect doesn't call itself ([#70](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/70)).
 
@@ -315,7 +315,7 @@ For async methods, `args.ReturnValue` is the returned `Task` and can be replaced
 
 ### Changing input arguments
 
-Change the elements of `args.Arguments` in `OnEntry`. The aspect class has to be annotated with `[AllowChangingInputArguments]`, because the weaver has to generate additional code to pass the changed values to the method (unnecessary and slower for aspects which don't change them). `ref` and `out` values are written back to the caller. An element of a value type set to `null` passes the default value of the type. A changed `in` (or `ref readonly`) argument is passed to the method, but not written back, because the variable of the caller is read only for the method. Works for async methods as well: the changed values are passed to the method when it starts.
+Change the elements of `args.Arguments` in `OnEntry`. The aspect class has to be annotated with `[AllowChangingInputArguments]`, because the weaver has to generate additional code to pass the changed values to the method (unnecessary and slower for aspects which don't change them). Aspects derived from an annotated aspect class inherit it. `ref` and `out` values are written back to the caller. An element of a value type set to `null` passes the default value of the type. A changed `in` (or `ref readonly`) argument is passed to the method, but not written back, because the variable of the caller is read only for the method. Works for async methods as well: the changed values are passed to the method when it starts.
 
 ```csharp
 using System;

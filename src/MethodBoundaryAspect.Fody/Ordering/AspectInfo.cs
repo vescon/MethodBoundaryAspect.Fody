@@ -25,9 +25,11 @@ namespace MethodBoundaryAspect.Fody.Ordering
             var aspectAttributes = AspectTypeDefinition.CustomAttributes;
             InitRole(aspectAttributes);
             InitOrder(aspectAttributes);
-            InitSkipProperties(aspectAttributes);
+            // like the attributes of a type at runtime, these are inherited from the base aspects
+            var inheritedAspectAttributes = GetAttributesOfAspectAndBaseTypes(AspectTypeDefinition);
+            InitSkipProperties(inheritedAspectAttributes);
             InitTargetMembers();
-            InitChangingInputArguments(aspectAttributes);
+            InitChangingInputArguments(inheritedAspectAttributes);
             InitNamespaceFilter();
             InitTypeNameFilter();
             InitMethodNameFilter();
@@ -75,6 +77,18 @@ namespace MethodBoundaryAspect.Fody.Ordering
 
         public bool HasTargetMemberAttribute(MethodAttributes visibility) =>
             AttributeTargetMemberAttributes.Contains(visibility);
+
+        /// <summary>
+        /// The attributes of the aspect type and its base types, the most derived type first.
+        /// </summary>
+        private static List<CustomAttribute> GetAttributesOfAspectAndBaseTypes(TypeDefinition aspectType)
+        {
+            var attributes = new List<CustomAttribute>();
+            // Resolve() returns null if the assembly of a base type cannot be found
+            for (var type = aspectType; type != null; type = type.BaseType?.Resolve())
+                attributes.AddRange(type.CustomAttributes);
+            return attributes;
+        }
 
         private void InitRole(IEnumerable<CustomAttribute> aspectAttributes)
         {
@@ -134,8 +148,9 @@ namespace MethodBoundaryAspect.Fody.Ordering
 
         private void InitSkipProperties(IEnumerable<CustomAttribute> aspectAttributes)
         {
+            // the first one is the one of the most derived type
             var skipPropertiesAttribute = aspectAttributes
-                .SingleOrDefault(c => c.AttributeType.FullName == AttributeFullNames.AspectSkipPropertiesAttribute);
+                .FirstOrDefault(c => c.AttributeType.FullName == AttributeFullNames.AspectSkipPropertiesAttribute);
 
             if (skipPropertiesAttribute == null)
                 return;
