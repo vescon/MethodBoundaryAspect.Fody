@@ -2,7 +2,7 @@
 
 namespace MethodBoundaryAspect.Fody.Attributes
 {
-    [Obsolete("Use AspectOrderIndexAttribute to define the execution order of multiple aspects.")]
+    [Obsolete("Use AspectOrderIndexAttribute to define the execution order of multiple aspects. Aspect roles will be removed in version 4.")]
     public class AspectRoleDependencyAttribute : Attribute
     {
         public AspectRoleDependencyAttribute(

@@ -2,6 +2,10 @@ using System;
 
 namespace MethodBoundaryAspect.Fody.Attributes
 {
+    /// <summary>
+    /// The visibilities of methods, used by <see cref="OnMethodBoundaryAspect.AttributeTargetMemberAttributes"/>
+    /// to restrict an aspect. The flags can be combined, e.g. <c>Public | Internal</c>.
+    /// </summary>
     [Flags]
     public enum MulticastAttributes
     {

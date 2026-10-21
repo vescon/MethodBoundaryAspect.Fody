@@ -3,6 +3,11 @@ using System.Reflection;
 
 namespace MethodBoundaryAspect.Fody.Attributes
 {
+    /// <summary>
+    /// The base class of the aspects: override <see cref="OnEntry"/>, <see cref="OnExit"/> and/or
+    /// <see cref="OnException"/> and apply the attribute to a method, a property, a class or an assembly.
+    /// The weaver calls the overridden methods around the body of the method at build time.
+    /// </summary>
     public abstract class OnMethodBoundaryAspect : Attribute
     {
         /// <summary>
@@ -62,7 +67,7 @@ namespace MethodBoundaryAspect.Fody.Attributes
         [Obsolete("CompileTimeValidate is never called by the weaver, which does not run the code of aspects. It will be removed in version 4.")]
         public virtual bool CompileTimeValidate(MethodBase method)
         {
-            throw new NotImplementedException("TODO!");
+            throw new NotSupportedException("CompileTimeValidate is never called by the weaver and will be removed in version 4.");
         }
     }
 }
