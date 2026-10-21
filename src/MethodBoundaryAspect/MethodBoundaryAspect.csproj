@@ -16,6 +16,7 @@
     <RepositoryUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</RepositoryUrl>
     <PackageProjectUrl>https://github.com/vescon/MethodBoundaryAspect.Fody</PackageProjectUrl>
     <PackageIcon>NuGetIcon.png</PackageIcon>
+    <PackageReadmeFile>PackageReadme.md</PackageReadmeFile>
     <GitHubOrganization>VESCON</GitHubOrganization>    
 
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
@@ -43,6 +44,7 @@
 
   <ItemGroup>
     <None Include="..\..\docs\images\NuGetIcon.png" Pack="true" PackagePath="\" Visible="false" />
+    <None Include="PackageReadme.md" Pack="true" PackagePath="\" Visible="false" />
   </ItemGroup>
 
   <ItemGroup>

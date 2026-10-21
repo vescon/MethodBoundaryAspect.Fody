@@ -5,6 +5,10 @@ listed as well). The migration from version 2 is described in the
 [README](README.md#upgrading-to-version-3). Versions are created from the Git tags, see the
 [releases on GitHub](https://github.com/vescon/MethodBoundaryAspect.Fody/releases).
 
+## Unreleased
+
+- The NuGet package contains a README (shown on nuget.org); no change for users of the library.
+
 ## 3.6.0
 
 - The runtime tests also run on .NET 11 (release candidate) and .NET Framework 4.8.1; no change for users.
