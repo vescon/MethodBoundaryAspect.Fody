@@ -4,8 +4,10 @@
     VerifyIgnoreCodes="0x80131870,0x80131884,0x801318BD">
   <!-- PEVerify cannot verify code the C# compiler emits (ModifierTypesTests, ExecutorMethodTests), also without weaving:
        0x80131870 a method returns a ref, 0x80131884 an init accessor or ref readonly return value accesses a readonly field,
-       0x801318BD a method with locals has [SkipLocalsInit] -->
-  <ModuleWeaver>
+       0x801318BD a method with locals has [SkipLocalsInit].
+       SuppressRefStructWarnings: RefStructMethods weaves ref struct methods on purpose, the warning itself is tested in
+       UnitTests.NetCore (RefStructWarningTests) -->
+  <ModuleWeaver SuppressRefStructWarnings="true">
     <DisableExecutionArgsOptimization Aspect="MethodBoundaryAspect.Fody.RuntimeTests.Aspects.OptOutSkipBodyAspect" />
   </ModuleWeaver>
 </Weavers>
