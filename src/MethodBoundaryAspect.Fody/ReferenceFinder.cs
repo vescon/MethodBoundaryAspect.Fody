@@ -16,11 +16,6 @@ namespace MethodBoundaryAspect.Fody
             _reflectionImporter = new CoreLibraryReflectionImporter(moduleDefinition);
         }
 
-        public MethodReference GetMethodReference(Type declaringType, Func<MethodDefinition, bool> predicate)
-        {
-            return GetMethodReference(GetTypeReference(declaringType), predicate);
-        }
-
         public MethodReference GetMethodReference(TypeReference typeReference, Func<MethodDefinition, bool> predicate)
         {
             var currentType = typeReference;

@@ -172,17 +172,6 @@ namespace MethodBoundaryAspect.Fody
             throw new InvalidOperationException($"Didn't find field '{name}' on type '{type.FullName}' or its base types");
         }
 
-        public InstructionBlock SaveReturnValueFromStack(VariableDefinition returnValue)
-        {
-            if (IsVoid(_method.ReturnType))
-                return new InstructionBlock("SaveReturnValueFromStack - void", _processor.Create(OpCodes.Nop));
-
-            var assignReturnValueToVariableInstruction = _processor.Create(OpCodes.Stloc, returnValue);
-            return new InstructionBlock(
-                "SaveReturnValueFromStack",
-                assignReturnValueToVariableInstruction);
-        }
-
         public InstructionBlock AssignValueFromStack(VariableDefinition variable)
         {
             return new InstructionBlock(
@@ -468,7 +457,6 @@ namespace MethodBoundaryAspect.Fody
             yield return Instruction.Create(OpCodes.Ldloc, paramsArray);
             yield return Instruction.Create(OpCodes.Ldc_I4, parameterDefinition.Index);
             yield return Instruction.Create(OpCodes.Ldarg, parameterDefinition);
-            // Reset boolean flag variable to false
 
             // If a parameter is passed by reference then you need to use Ldind
             // ------------------------------------------------------------
@@ -581,11 +569,6 @@ namespace MethodBoundaryAspect.Fody
                 {
                     // Box the parameter type
                     yield return Instruction.Create(OpCodes.Box, paramType);
-                }
-                else if (paramType.Name == "String")
-                {
-                    //var elementType = paramsArray.VariableType.GetElementType();
-                    //yield return Instruction.Create(OpCodes.Castclass, elementType);
                 }
             }
 

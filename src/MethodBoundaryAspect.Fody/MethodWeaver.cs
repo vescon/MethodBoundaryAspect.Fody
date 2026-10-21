@@ -16,7 +16,7 @@ namespace MethodBoundaryAspect.Fody
         protected readonly InstructionBlockChainCreator _creator;
         protected readonly ILProcessor _ilProcessor;
         protected readonly IList<AspectData> _aspects;
-        private readonly MethodInfoCompileTimeWeaver _methodInfoCompileTimeWeaver;
+        protected readonly MethodInfoCompileTimeWeaver _methodInfoCompileTimeWeaver;
         protected readonly ExecutionArgsUsage _executionArgsUsage;
 
         protected bool HasMultipleAspects => _aspects.Count > 1;
@@ -212,14 +212,19 @@ namespace MethodBoundaryAspect.Fody
 
         protected virtual void WeaveMethodExecutionArgs(NamedInstructionBlockChain arguments)
         {
-            var executionArgs = _creator.CreateMethodExecutionArgsInstance(
+            var executionArgs = CreateExecutionArgsInstance(arguments);
+            AddToSetup(executionArgs);
+            ExecutionArgs = executionArgs;
+        }
+
+        protected NamedInstructionBlockChain CreateExecutionArgsInstance(NamedInstructionBlockChain arguments)
+        {
+            return _creator.CreateMethodExecutionArgsInstance(
                 arguments,
                 _aspects[0].Info.AspectAttribute.AttributeType,
                 _method,
                 _methodInfoCompileTimeWeaver,
                 _executionArgsUsage);
-            AddToSetup(executionArgs);
-            ExecutionArgs = executionArgs;
         }
 
         private void SetupAspects()

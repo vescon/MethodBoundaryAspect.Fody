@@ -32,18 +32,6 @@ namespace Catel.Fody
             // Step 1: check if all variables are present
             foreach (var variable in method.Body.Variables)
             {
-                if (method.IsAsyncMethod())
-                {
-                    // Skip some special items of an async method:
-                    // 1) int (state?)
-                    // 2) exception
-                    if (variable.Index == 0 && variable.VariableType.Name.Contains("Int") ||
-                        variable.VariableType.Name.Contains("Exception"))
-                    {
-                        continue;
-                    }
-                }
-
                 if (!ContainsVariable(scope, variable))
                 {
                     var variableDebugInfo = new VariableDebugInformation(variable, $"__var_{variable.Index}");
@@ -61,24 +49,6 @@ namespace Catel.Fody
             // Final step: update the scopes by setting the indices
             scope.Start = new InstructionOffset(instructions.First());
             scope.End = new InstructionOffset(instructions.Last());
-        }
-
-        public static bool IsAsyncMethod(this MethodDefinition method)
-        {
-            if (!method.Name.Contains("MoveNext"))
-            {
-                return false;
-            }
-
-            var declaringType = method.DeclaringType;
-
-            var setStateMachineMethod = declaringType?.Methods.FirstOrDefault(x => x.Name.Equals("SetStateMachine"));
-            if (setStateMachineMethod == null)
-            {
-                return false;
-            }
-
-            return true;
         }
 
         private static bool ContainsVariable(this ScopeDebugInformation debugInfo, VariableDefinition variable)

@@ -149,21 +149,9 @@ namespace MethodBoundaryAspect.Fody
             {
                 var methodBaseTypeRef = _referenceFinder.GetTypeReference(typeof (MethodBase));
                 var methodBaseVariable = _creator.CreateVariable(methodBaseTypeRef);
-                InstructionBlock callGetCurrentMethodBlock;
                 var variablePersistable = new VariablePersistable(methodBaseVariable);
-                if (methodInfoCompileTimeWeaver?.IsEnabled != true)
-                {
-                    // fallback: slow GetCurrentMethod
-                    var methodBaseGetCurrentMethod = _referenceFinder.GetMethodReference(methodBaseTypeRef,
-                        md => md.Name == "GetCurrentMethod");
-                    callGetCurrentMethodBlock = _creator.CallStaticMethod(methodBaseGetCurrentMethod, variablePersistable);
-                }
-                else
-                {
-                    // fast: precompiled method info token
-                    methodInfoCompileTimeWeaver.AddMethod(method);
-                    callGetCurrentMethodBlock = methodInfoCompileTimeWeaver.PushMethodInfoOnStack(method, variablePersistable);
-                }
+                methodInfoCompileTimeWeaver.AddMethod(method);
+                var loadMethodInfoBlock = methodInfoCompileTimeWeaver.PushMethodInfoOnStack(method, variablePersistable);
 
                 var methodExecutionArgsSetMethodBaseMethodRef =
                     _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Method");
@@ -171,7 +159,7 @@ namespace MethodBoundaryAspect.Fody
                     new VariablePersistable(methodExecutionArgsVariable),
                     variablePersistable);
 
-                newMethodExecutionArgsBlockChain.Add(callGetCurrentMethodBlock);
+                newMethodExecutionArgsBlockChain.Add(loadMethodInfoBlock);
                 newMethodExecutionArgsBlockChain.Add(callSetMethodBlock);
             }
 

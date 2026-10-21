@@ -30,9 +30,7 @@ namespace MethodBoundaryAspect.Fody
             _mainModule = module;
         }
 
-        public bool IsEnabled { get; set; }
-
-        public void EnsureInit()
+        private void EnsureInit()
         {
             if (_methodInfosClass != null)
                 return;
@@ -115,24 +113,19 @@ namespace MethodBoundaryAspect.Fody
 
         private static bool ContainsOpenTypeRecursive(MethodDefinition method)
         {
-            if (ContainsOpenType(method))
+            if (method.HasGenericParameters)
                 return true;
 
             var parentType = method.DeclaringType;
             while (parentType != null)
             {
-                if (ContainsOpenType(parentType))
+                if (parentType.HasGenericParameters)
                     return true;
 
                 parentType = parentType.DeclaringType;
             }
 
             return false;
-        }
-
-        private static bool ContainsOpenType(IGenericParameterProvider method)
-        {
-            return method.GenericParameters.Any(x => x.ContainsGenericParameter);
         }
 
         private TypeReference GetTypeReference(Type type)

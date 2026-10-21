@@ -11,7 +11,6 @@ namespace MethodBoundaryAspect.Fody
     public class AsyncMethodWeaver : MethodWeaver
     {
         private readonly MethodDefinition _moveNext;
-        private readonly MethodInfoCompileTimeWeaver _methodInfoCompileTimeWeaver;
 
         private readonly VariableDefinition _stateMachineLocal;
         private readonly TypeReference _stateMachine;
@@ -29,7 +28,6 @@ namespace MethodBoundaryAspect.Fody
             base(module, method, aspects, methodInfoCompileTimeWeaver, executionArgsUsage)
         {
             _moveNext = moveNext;
-            _methodInfoCompileTimeWeaver = methodInfoCompileTimeWeaver;
 
             var instructions = _ilProcessor.Body.Instructions;
             if (instructions.Count < 2)
@@ -175,12 +173,7 @@ namespace MethodBoundaryAspect.Fody
 
         protected override void WeaveMethodExecutionArgs(NamedInstructionBlockChain arguments)
         {
-            var executionArgs = _creator.CreateMethodExecutionArgsInstance(
-                arguments,
-                _aspects[0].Info.AspectAttribute.AttributeType,
-                _method,
-                _methodInfoCompileTimeWeaver,
-                _executionArgsUsage);
+            var executionArgs = CreateExecutionArgsInstance(arguments);
 
             _executionArgsField = _module.ImportReference(_stateMachine.AddPublicInstanceField(executionArgs.Variable.VariableType));
             executionArgs.Add(new InstructionBlock("", Instruction.Create(OpCodes.Ldloc, executionArgs.Variable)));

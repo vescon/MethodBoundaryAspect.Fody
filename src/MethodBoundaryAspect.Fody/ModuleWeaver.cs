@@ -25,8 +25,6 @@ namespace MethodBoundaryAspect.Fody
         private AspectInstanceReuseAnalyzer _aspectInstanceReuseAnalyzer;
         private AspectInstanceCompileTimeWeaver _aspectInstanceCompileTimeWeaver;
 
-        public bool DisableCompileTimeMethodInfos { get; set; }
-
         /// <summary>
         /// Suppresses the warning for weaved methods using ref struct values (e.g. Span&lt;T&gt;).
         /// Configurable in FodyWeavers.xml: &lt;MethodBoundaryAspect SuppressRefStructWarnings="true" /&gt;
@@ -85,12 +83,8 @@ namespace MethodBoundaryAspect.Fody
 
         public override IEnumerable<string> GetAssembliesForScanning()
         {
-            yield return "mscorlib";
-            yield return "System";
-            yield return "System.Runtime";
-            yield return "System.Reflection";
-            yield return "System.Diagnostics";
-            yield return "netstandard";
+            // the weaver does not use FindType, it imports the types it needs from the core library of the module
+            return Enumerable.Empty<string>();
         }
 
         private string CreateShadowAssemblyPath(string assemblyPath, string prefix)
@@ -173,10 +167,7 @@ namespace MethodBoundaryAspect.Fody
             _isAspectAttributeCache.Clear();
             _warnedAboutAspectRoles.Clear();
             _checkedAspectFilters.Clear();
-            _methodInfoCompileTimeWeaver = new MethodInfoCompileTimeWeaver(module)
-            {
-                IsEnabled = !DisableCompileTimeMethodInfos
-            };
+            _methodInfoCompileTimeWeaver = new MethodInfoCompileTimeWeaver(module);
             _executionArgsUsageAnalyzer = new ExecutionArgsUsageAnalyzer(
                 DisableExecutionArgsOptimization,
                 DisableExecutionArgsOptimizationAspects);
@@ -507,18 +498,13 @@ namespace MethodBoundaryAspect.Fody
             if (IsUserFiltered(fullName, name))
                 return false;
 
-            if (IsDelegate(method))
+            if (!method.HasBody) // e.g. the methods of a delegate, which the runtime implements
                 return false;
 
             return !(method.IsAbstract // abstract or interface method
                      || method.IsConstructor
                      || name.StartsWith("<") // anonymous
                      || method.IsPInvokeImpl); // extern
-        }
-
-        private bool IsDelegate(MethodDefinition method)
-        {
-            return !method.HasBody;
         }
 
         private bool IsUserFiltered(string fullName, string name)

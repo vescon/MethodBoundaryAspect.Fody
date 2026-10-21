@@ -30,13 +30,9 @@ namespace MethodBoundaryAspect.Fody.Ordering
                 return -1;
             }
 
+            // x is not an after role here
             if (AfterRoles.Contains(y))
-            {
-                if (AfterRoles.Contains(x))
-                    return String.Compare(x, y, StringComparison.Ordinal);
-
                 return 1;
-            }
 
             if (BeforeRoles.Contains(x))
             {
@@ -46,13 +42,9 @@ namespace MethodBoundaryAspect.Fody.Ordering
                 return 1;
             }
 
+            // x is not a before role here
             if (BeforeRoles.Contains(y))
-            {
-                if (BeforeRoles.Contains(x))
-                    return String.Compare(x, y, StringComparison.Ordinal);
-
                 return -1;
-            }
 
             return x.CompareTo(y);
         }
