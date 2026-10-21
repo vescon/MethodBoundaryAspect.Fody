@@ -13,53 +13,23 @@ namespace MethodBoundaryAspect.Fody
     /// the aspect is assumed to use all properties. Calls to methods of the aspect type hierarchy
     /// (e.g. base.OnEntry(arg) or a static helper) are followed.
     /// </summary>
-    public class ExecutionArgsUsageAnalyzer
+    public class ExecutionArgsUsageAnalyzer : AspectAnalyzerBase<ExecutionArgsUsage>
     {
         private const string ExecutionArgsTypeName = "MethodBoundaryAspect.Fody.Attributes.MethodExecutionArgs";
-        private const string ReferenceAssemblyAttributeName = "System.Runtime.CompilerServices.ReferenceAssemblyAttribute";
-
-        private readonly Dictionary<TypeDefinition, ExecutionArgsUsage> _cache = new Dictionary<TypeDefinition, ExecutionArgsUsage>();
-        private readonly HashSet<string> _disabledAspects;
-        private readonly bool _disabled;
 
         public ExecutionArgsUsageAnalyzer(bool disabled, IEnumerable<string> disabledAspects)
+            : base(disabled, disabledAspects)
         {
-            _disabled = disabled;
-            _disabledAspects = new HashSet<string>(disabledAspects.Select(NormalizeTypeName));
         }
-
-        /// <summary>
-        /// The configured aspect names which matched at least one weaved aspect.
-        /// </summary>
-        public HashSet<string> MatchedDisabledAspects { get; } = new HashSet<string>();
 
         public ExecutionArgsUsage GetUsage(TypeDefinition aspectType)
         {
-            if (aspectType == null)
-                return ExecutionArgsUsage.All;
-
-            var aspectTypeName = NormalizeTypeName(aspectType.FullName);
-            if (_disabledAspects.Contains(aspectTypeName))
-            {
-                MatchedDisabledAspects.Add(aspectTypeName);
-                return ExecutionArgsUsage.All;
-            }
-
-            if (_disabled)
-                return ExecutionArgsUsage.All;
-
-            if (!_cache.TryGetValue(aspectType, out var usage))
-            {
-                usage = Analyze(aspectType);
-                _cache.Add(aspectType, usage);
-            }
-
-            return usage;
+            return aspectType == null
+                ? ExecutionArgsUsage.All
+                : GetResult(aspectType, ExecutionArgsUsage.All);
         }
 
-        public static string NormalizeTypeName(string typeName) => typeName.Trim().Replace('+', '/');
-
-        private static ExecutionArgsUsage Analyze(TypeDefinition aspectType)
+        protected override ExecutionArgsUsage Analyze(TypeDefinition aspectType)
         {
             var hierarchy = GetHierarchy(aspectType);
             if (hierarchy == null)
@@ -75,25 +45,6 @@ namespace MethodBoundaryAspect.Fody
             }
 
             return usage;
-        }
-
-        /// <summary>
-        /// The aspect type and its base types up to OnMethodBoundaryAspect, null if a type can't be resolved.
-        /// </summary>
-        private static List<TypeDefinition> GetHierarchy(TypeDefinition aspectType)
-        {
-            var hierarchy = new List<TypeDefinition>();
-            var currentType = aspectType;
-            while (true)
-            {
-                hierarchy.Add(currentType);
-                if (currentType.FullName == AttributeFullNames.OnMethodBoundaryAspect)
-                    return hierarchy;
-
-                currentType = currentType.BaseType?.Resolve();
-                if (currentType == null)
-                    return null;
-            }
         }
 
         /// <summary>
@@ -379,11 +330,6 @@ namespace MethodBoundaryAspect.Fody
                 default:
                     return false;
             }
-        }
-
-        internal static bool IsReferenceAssembly(ModuleDefinition module)
-        {
-            return module.Assembly.CustomAttributes.Any(a => a.AttributeType.FullName == ReferenceAssemblyAttributeName);
         }
 
         /// <summary>

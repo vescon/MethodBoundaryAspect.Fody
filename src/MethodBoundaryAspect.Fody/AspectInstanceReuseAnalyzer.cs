@@ -20,48 +20,19 @@ namespace MethodBoundaryAspect.Fody
     /// </list>
     /// An aspect which is not found to be reusable is created for every call as before.
     /// </summary>
-    public class AspectInstanceReuseAnalyzer
+    public class AspectInstanceReuseAnalyzer : AspectAnalyzerBase<bool>
     {
-        private readonly Dictionary<TypeDefinition, bool> _cache = new Dictionary<TypeDefinition, bool>();
-        private readonly HashSet<string> _disabledAspects;
-        private readonly bool _disabled;
-
         public AspectInstanceReuseAnalyzer(bool disabled, IEnumerable<string> disabledAspects)
+            : base(disabled, disabledAspects)
         {
-            _disabled = disabled;
-            _disabledAspects = new HashSet<string>(disabledAspects.Select(ExecutionArgsUsageAnalyzer.NormalizeTypeName));
         }
-
-        /// <summary>
-        /// The configured aspect names which matched at least one weaved aspect.
-        /// </summary>
-        public HashSet<string> MatchedDisabledAspects { get; } = new HashSet<string>();
 
         public bool CanReuse(TypeDefinition aspectType)
         {
-            if (aspectType == null)
-                return false;
-
-            var aspectTypeName = ExecutionArgsUsageAnalyzer.NormalizeTypeName(aspectType.FullName);
-            if (_disabledAspects.Contains(aspectTypeName))
-            {
-                MatchedDisabledAspects.Add(aspectTypeName);
-                return false;
-            }
-
-            if (_disabled)
-                return false;
-
-            if (!_cache.TryGetValue(aspectType, out var canReuse))
-            {
-                canReuse = Analyze(aspectType);
-                _cache.Add(aspectType, canReuse);
-            }
-
-            return canReuse;
+            return aspectType != null && GetResult(aspectType, false);
         }
 
-        private static bool Analyze(TypeDefinition aspectType)
+        protected override bool Analyze(TypeDefinition aspectType)
         {
             var hierarchy = GetHierarchy(aspectType);
             if (hierarchy == null)
@@ -73,29 +44,10 @@ namespace MethodBoundaryAspect.Fody
                 .All(t => IsReusable(t, hierarchy));
         }
 
-        /// <summary>
-        /// The aspect type and its base types up to OnMethodBoundaryAspect, null if a type can't be resolved.
-        /// </summary>
-        private static List<TypeDefinition> GetHierarchy(TypeDefinition aspectType)
-        {
-            var hierarchy = new List<TypeDefinition>();
-            var currentType = aspectType;
-            while (true)
-            {
-                hierarchy.Add(currentType);
-                if (currentType.FullName == AttributeFullNames.OnMethodBoundaryAspect)
-                    return hierarchy;
-
-                currentType = currentType.BaseType?.Resolve();
-                if (currentType == null)
-                    return null;
-            }
-        }
-
         private static bool IsReusable(TypeDefinition type, List<TypeDefinition> hierarchy)
         {
             // no IL to analyze, e.g. the aspect was resolved from a reference assembly
-            if (ExecutionArgsUsageAnalyzer.IsReferenceAssembly(type.Module))
+            if (IsReferenceAssembly(type.Module))
                 return false;
 
             if (type.Fields.Any(f => !f.IsStatic && !IsImmutable(f.FieldType)))

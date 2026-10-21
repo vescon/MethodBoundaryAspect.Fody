@@ -181,60 +181,64 @@ namespace MethodBoundaryAspect.Fody
             foreach (var type in module.Types.ToList())
                 WeaveTypeAndNestedTypes(module, type, assemblyMethodBoundaryAspects, new List<Collection<CustomAttribute>>());
 
-            foreach (var aspect in DisableExecutionArgsOptimizationAspects)
-            {
-                if (!_executionArgsUsageAnalyzer.MatchedDisabledAspects.Contains(ExecutionArgsUsageAnalyzer.NormalizeTypeName(aspect)))
-                    WriteWarning($"Aspect '{aspect}' configured in DisableExecutionArgsOptimization of FodyWeavers.xml was not found in any weaved method. Use the full type name, e.g. 'MyNamespace.MyAspect'.");
-            }
+            WarnAboutUnmatchedAspects(
+                nameof(DisableExecutionArgsOptimization),
+                DisableExecutionArgsOptimizationAspects,
+                _executionArgsUsageAnalyzer.MatchedDisabledAspects);
+            WarnAboutUnmatchedAspects(
+                nameof(DisableAspectInstanceReuse),
+                DisableAspectInstanceReuseAspects,
+                _aspectInstanceReuseAnalyzer.MatchedDisabledAspects);
+        }
 
-            foreach (var aspect in DisableAspectInstanceReuseAspects)
+        private void WarnAboutUnmatchedAspects(string settingName, IEnumerable<string> configuredAspects, ISet<string> matchedAspects)
+        {
+            foreach (var aspect in configuredAspects)
             {
-                if (!_aspectInstanceReuseAnalyzer.MatchedDisabledAspects.Contains(ExecutionArgsUsageAnalyzer.NormalizeTypeName(aspect)))
-                    WriteWarning($"Aspect '{aspect}' configured in DisableAspectInstanceReuse of FodyWeavers.xml was not found in any weaved method. Use the full type name, e.g. 'MyNamespace.MyAspect'.");
+                if (!matchedAspects.Contains(AspectTypeName.Normalize(aspect)))
+                    WriteWarning($"Aspect '{aspect}' configured in {settingName} of FodyWeavers.xml was not found in any weaved method. Use the full type name, e.g. 'MyNamespace.MyAspect'.");
             }
         }
 
         private void ReadAspectInstanceReuseConfig()
         {
-            if (Config == null)
-                return;
-
-            var attribute = Config.Attribute(nameof(DisableAspectInstanceReuse));
-            if (attribute != null)
-                DisableAspectInstanceReuse = ParseBool(attribute);
-
-            foreach (var element in Config.Elements(nameof(DisableAspectInstanceReuse)))
-            {
-                var aspect = element.Attribute("Aspect")?.Value;
-                if (string.IsNullOrWhiteSpace(aspect))
-                    throw new WeavingException($"<{nameof(DisableAspectInstanceReuse)}> in FodyWeavers.xml requires the full type name of the aspect, e.g. <{nameof(DisableAspectInstanceReuse)} Aspect=\"MyNamespace.MyAspect\" />.");
-                AddOnce(DisableAspectInstanceReuseAspects, aspect.Trim());
-            }
+            var disableAll = ReadAspectSetting(nameof(DisableAspectInstanceReuse), DisableAspectInstanceReuseAspects);
+            if (disableAll.HasValue)
+                DisableAspectInstanceReuse = disableAll.Value;
         }
 
         private void ReadExecutionArgsOptimizationConfig()
         {
+            var disableAll = ReadAspectSetting(nameof(DisableExecutionArgsOptimization), DisableExecutionArgsOptimizationAspects);
+            if (disableAll.HasValue)
+                DisableExecutionArgsOptimization = disableAll.Value;
+        }
+
+        /// <summary>
+        /// Reads a setting which is an attribute for all aspects and an element per aspect, e.g.
+        /// &lt;MethodBoundaryAspect Name="true"&gt;&lt;Name Aspect="MyNamespace.MyAspect" /&gt;&lt;/MethodBoundaryAspect&gt;.
+        /// </summary>
+        /// <returns>The value of the attribute, null if it is not set.</returns>
+        private bool? ReadAspectSetting(string name, List<string> aspects)
+        {
             if (Config == null)
-                return;
+                return null;
 
-            var attribute = Config.Attribute(nameof(DisableExecutionArgsOptimization));
-            if (attribute != null)
-                DisableExecutionArgsOptimization = ParseBool(attribute);
+            var attribute = Config.Attribute(name);
+            var forAllAspects = attribute == null ? (bool?)null : ParseBool(attribute);
 
-            foreach (var element in Config.Elements(nameof(DisableExecutionArgsOptimization)))
+            foreach (var element in Config.Elements(name))
             {
                 var aspect = element.Attribute("Aspect")?.Value;
                 if (string.IsNullOrWhiteSpace(aspect))
-                    throw new WeavingException($"<{nameof(DisableExecutionArgsOptimization)}> in FodyWeavers.xml requires the full type name of the aspect, e.g. <{nameof(DisableExecutionArgsOptimization)} Aspect=\"MyNamespace.MyAspect\" />.");
-                AddOnce(DisableExecutionArgsOptimizationAspects, aspect.Trim());
-            }
-        }
+                    throw new WeavingException($"<{name}> in FodyWeavers.xml requires the full type name of the aspect, e.g. <{name} Aspect=\"MyNamespace.MyAspect\" />.");
 
-        // the weaver can run more than once (e.g. in tests), the configuration must not be added twice
-        private static void AddOnce(List<string> list, string value)
-        {
-            if (!list.Contains(value))
-                list.Add(value);
+                // the weaver can run more than once (e.g. in tests), the configuration must not be added twice
+                if (!aspects.Contains(aspect.Trim()))
+                    aspects.Add(aspect.Trim());
+            }
+
+            return forAllAspects;
         }
 
         private static string ShortName(string fullName)
