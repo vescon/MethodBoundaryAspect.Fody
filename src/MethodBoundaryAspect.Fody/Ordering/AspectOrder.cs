@@ -24,9 +24,9 @@ namespace MethodBoundaryAspect.Fody.Ordering
         public void AddRole(string role, int position)
         {
             if (ContainsRole(role))
-                throw new InvalidOperationException(
+                throw new InvalidAspectConfigurationException(
                     string.Format("Aspect '{0}' already defined role '{1}'",
-                        Aspect.AspectAttribute.AttributeType.Name,
+                        Aspect?.Name,
                         role));
 
             switch (position)
@@ -72,7 +72,12 @@ namespace MethodBoundaryAspect.Fody.Ordering
             }
 
             if (minIndex > maxIndex)
-                throw new InvalidOperationException();
+                throw new InvalidAspectConfigurationException(
+                    string.Format("Aspect '{0}' can't be ordered after the roles '{1}' and before the roles '{2}', " +
+                                  "there is no position between them",
+                        Aspect?.Name,
+                        string.Join("', '", AfterRoles),
+                        string.Join("', '", BeforeRoles)));
 
             return minIndex;
         }

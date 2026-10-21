@@ -11,7 +11,7 @@ namespace MethodBoundaryAspect.Fody.Ordering
             "Aspect '{0}' can't have role '{1}' and be ordered before or after that role";
 
         private const string AspectHasToProvideANonEmptyMethodBoundaryAspectAttributesProvideAspectRoleAttribute =
-            "Aspect '{0}' has to provide a non-empty MethodBoundaryAspect.Attributes.ProvideAspectRoleAttribute attribute";
+            "Aspect '{0}' has to provide a non-empty MethodBoundaryAspect.Fody.Attributes.ProvideAspectRoleAttribute attribute";
 
         private const string AspectHasMultipleOrderIndicesDefinedOnTheSameLevel =
             "Aspect '{0}' has multiple order indices defined on {1} level";
