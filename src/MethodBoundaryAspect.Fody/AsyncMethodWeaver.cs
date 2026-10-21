@@ -48,17 +48,7 @@ namespace MethodBoundaryAspect.Fody
                     || mr.DeclaringType?.Resolve()?.Interfaces.Any(i => i.InterfaceType.FullName == typeof(IAsyncStateMachine).FullName) != true)
                     throw new InvalidOperationException($"Async state machine on {method.FullName} does not create correct state machine type.");
 
-                var stlocOpcodes = new[]
-                {
-                    OpCodes.Stloc,
-                    OpCodes.Stloc_0,
-                    OpCodes.Stloc_1,
-                    OpCodes.Stloc_2,
-                    OpCodes.Stloc_3,
-                    OpCodes.Stloc_S
-                };
-
-                if (!stlocOpcodes.Contains(instructions[1].OpCode))
+                if (!IsStloc(instructions[1]))
                     throw new InvalidOperationException($"Async state machine on {method.FullName} not stored in expected manner.");
 
                 _setupPointer = instructions[1];
