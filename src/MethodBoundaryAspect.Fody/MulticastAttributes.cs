@@ -2,6 +2,10 @@ using System;
 
 namespace MethodBoundaryAspect.Fody
 {
+    /// <summary>
+    /// The values of <c>MethodBoundaryAspect.Fody.Attributes.MulticastAttributes</c> of the runtime library, which the
+    /// weaver does not reference: the aspect attribute holds the number. Both have to stay the same.
+    /// </summary>
     [Flags]
     public enum MulticastAttributes
     {

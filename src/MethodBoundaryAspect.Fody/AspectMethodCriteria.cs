@@ -5,9 +5,9 @@ namespace MethodBoundaryAspect.Fody
 {
     public static class AspectMethodCriteria
     {
-        public static readonly string OnEntryMethodName = "OnEntry";
-        public static readonly string OnExitMethodName = "OnExit";
-        public static readonly string OnExceptionMethodName = "OnException";
+        public const string OnEntryMethodName = "OnEntry";
+        public const string OnExitMethodName = "OnExit";
+        public const string OnExceptionMethodName = "OnException";
 
         public static bool MatchesSignature(MethodDefinition method)
         {
