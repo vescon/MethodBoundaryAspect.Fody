@@ -171,6 +171,8 @@ namespace MethodBoundaryAspect.Fody
             ReadAspectInstanceReuseConfig();
 
             _isAspectAttributeCache.Clear();
+            _warnedAboutAspectRoles.Clear();
+            _checkedAspectFilters.Clear();
             _methodInfoCompileTimeWeaver = new MethodInfoCompileTimeWeaver(module)
             {
                 IsEnabled = !DisableCompileTimeMethodInfos
@@ -215,7 +217,7 @@ namespace MethodBoundaryAspect.Fody
                 var aspect = element.Attribute("Aspect")?.Value;
                 if (string.IsNullOrWhiteSpace(aspect))
                     throw new WeavingException($"<{nameof(DisableAspectInstanceReuse)}> in FodyWeavers.xml requires the full type name of the aspect, e.g. <{nameof(DisableAspectInstanceReuse)} Aspect=\"MyNamespace.MyAspect\" />.");
-                DisableAspectInstanceReuseAspects.Add(aspect.Trim());
+                AddOnce(DisableAspectInstanceReuseAspects, aspect.Trim());
             }
         }
 
@@ -233,8 +235,15 @@ namespace MethodBoundaryAspect.Fody
                 var aspect = element.Attribute("Aspect")?.Value;
                 if (string.IsNullOrWhiteSpace(aspect))
                     throw new WeavingException($"<{nameof(DisableExecutionArgsOptimization)}> in FodyWeavers.xml requires the full type name of the aspect, e.g. <{nameof(DisableExecutionArgsOptimization)} Aspect=\"MyNamespace.MyAspect\" />.");
-                DisableExecutionArgsOptimizationAspects.Add(aspect.Trim());
+                AddOnce(DisableExecutionArgsOptimizationAspects, aspect.Trim());
             }
+        }
+
+        // the weaver can run more than once (e.g. in tests), the configuration must not be added twice
+        private static void AddOnce(List<string> list, string value)
+        {
+            if (!list.Contains(value))
+                list.Add(value);
         }
 
         private static string ShortName(string fullName)
