@@ -78,12 +78,10 @@ namespace MethodBoundaryAspect.Fody
             CustomAttribute aspect)
         {
             var typeDefinition = instanceTypeReference.Resolve();
-            var constructor = typeDefinition
-                .Methods
-                .SingleOrDefault(x => x.IsConstructor &&
-                            !x.IsStatic &&
-                            x.Parameters.Select(p => p.ParameterType.FullName)
-                                .SequenceEqual(aspect?.ConstructorArguments.Select(a => a.Type.FullName) ?? new string[0]));
+            // the attribute knows the constructor it calls, without an attribute (MethodExecutionArgs) it is the default one
+            var constructor = aspect != null
+                ? aspect.Constructor.Resolve()
+                : typeDefinition.Methods.SingleOrDefault(x => x.IsConstructor && !x.IsStatic && !x.HasParameters);
 
             if (constructor == null)
                 throw new InvalidOperationException(string.Format("Didn't find matching constructor on type '{0}'",
