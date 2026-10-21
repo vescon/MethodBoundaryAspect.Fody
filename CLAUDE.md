@@ -54,4 +54,4 @@ Special cases already handled (keep them working): ref structs (`Span<T>`) are p
 ## Conventions
 
 - Changes to woven behavior should get a RuntimeTests test (runs on all five runtimes); weaving-level details (emitted IL, warnings, config) go into UnitTests.NetCore.
-- Behavior changes for users belong in the README (user documentation, including breaking changes per major version).
+- Behavior changes for users belong in the README (user documentation, including breaking changes per major version) and in the "Unreleased" section of CHANGELOG.md. The benchmark tables are in docs/performance.md.
