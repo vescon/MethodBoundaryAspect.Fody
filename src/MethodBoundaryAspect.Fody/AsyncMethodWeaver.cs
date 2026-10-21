@@ -327,7 +327,7 @@ namespace MethodBoundaryAspect.Fody
                     onExceptionAspect.GetMoveNextExecutionArgs(ExecutionArgs),
                     nop,
                     thenBody,
-                    1, 3));
+                    FlowBehaviorValues.Continue, FlowBehaviorValues.Return));
                 callAspectOnException.Add(new InstructionBlock("", nop));
                 callAspectOnException.InsertAfter(exceptionHandlerCurrent, processor);
                 exceptionHandlerCurrent = callAspectOnException.Last;

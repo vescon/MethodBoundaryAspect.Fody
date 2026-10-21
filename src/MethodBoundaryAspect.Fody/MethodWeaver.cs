@@ -299,7 +299,7 @@ namespace MethodBoundaryAspect.Fody
 
                 onExitChain.Add(new InstructionBlock("Return", Instruction.Create(OpCodes.Ret)));
 
-                flowChain.Add(_creator.IfFlowBehaviorIsAnyOf(ExecutionArgs, nopChain.First, onExitChain, 3));
+                flowChain.Add(_creator.IfFlowBehaviorIsAnyOf(ExecutionArgs, nopChain.First, onExitChain, FlowBehaviorValues.Return));
 
                 flowChain.Add(nopChain);
                 AddToSetup(flowChain);
@@ -633,7 +633,7 @@ namespace MethodBoundaryAspect.Fody
                 // Optimize() shortens the branch if it fits
                 callOnExitsAndReturn.Add(new InstructionBlock("Leave", Instruction.Create(OpCodes.Leave, returnAfterHandling.First)));
 
-                callAspectOnException.Add(_creator.IfFlowBehaviorIsAnyOf(ExecutionArgs, nop.First, callOnExitsAndReturn, 1, 3));
+                callAspectOnException.Add(_creator.IfFlowBehaviorIsAnyOf(ExecutionArgs, nop.First, callOnExitsAndReturn, FlowBehaviorValues.Continue, FlowBehaviorValues.Return));
 
                 callAspectOnException.Add(nop);
                 callAspectOnException.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
