@@ -30,9 +30,9 @@ namespace MethodBoundaryAspect.Fody.Ordering
             InitSkipProperties(inheritedAspectAttributes);
             InitTargetMembers();
             InitChangingInputArguments(inheritedAspectAttributes);
-            InitNamespaceFilter();
-            InitTypeNameFilter();
-            InitMethodNameFilter();
+            NamespaceFilter = GetStringProperty(AttributeNames.NamespaceFilter);
+            TypeNameFilter = GetStringProperty(AttributeNames.TypeNameFilter);
+            MethodNameFilter = GetStringProperty(AttributeNames.MethodNameFilter);
         }
 
         public TypeDefinition AspectTypeDefinition { get; }
@@ -243,46 +243,11 @@ namespace MethodBoundaryAspect.Fody.Ordering
 
         }
 
-        private void InitNamespaceFilter()
+        // the filters are only read where the aspect is applied, as named arguments of the attribute
+        private string GetStringProperty(string name)
         {
-            var namespaceFilterArgument = AspectAttribute.Properties
-                .FirstOrDefault(property => property.Name == AttributeNames.NamespaceFilter);
-
-            if (namespaceFilterArgument.Equals(default(CustomAttributeNamedArgument)))
-                return;
-
-            if (!(namespaceFilterArgument.Argument.Value is string argumentValue))
-                return;
-
-            NamespaceFilter = argumentValue;
-        }
-
-        private void InitTypeNameFilter()
-        {
-            var typeNameFilterArgument = AspectAttribute.Properties
-                .FirstOrDefault(property => property.Name == AttributeNames.TypeNameFilter);
-
-            if (typeNameFilterArgument.Equals(default(CustomAttributeNamedArgument)))
-                return;
-
-            if (!(typeNameFilterArgument.Argument.Value is string argumentValue))
-                return;
-
-            TypeNameFilter = argumentValue;
-        }
-
-        private void InitMethodNameFilter()
-        {
-            var methodNameFilterArgument = AspectAttribute.Properties
-                .FirstOrDefault(property => property.Name == AttributeNames.MethodNameFilter);
-
-            if (methodNameFilterArgument.Equals(default(CustomAttributeNamedArgument)))
-                return;
-
-            if (!(methodNameFilterArgument.Argument.Value is string argumentValue))
-                return;
-
-            MethodNameFilter = argumentValue;
+            var argument = AspectAttribute.Properties.FirstOrDefault(property => property.Name == name);
+            return argument.Argument.Value as string;
         }
     }
 }
