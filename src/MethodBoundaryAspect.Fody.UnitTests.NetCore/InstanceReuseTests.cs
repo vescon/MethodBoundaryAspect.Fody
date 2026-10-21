@@ -10,6 +10,7 @@ using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore.Aspects;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Xunit;
+using static MethodBoundaryAspect.Fody.UnitTests.NetCore.WeaverTestHelper;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 {
@@ -224,37 +225,20 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 
         private ModuleDefinition Weave(XElement config, List<string> warnings = null)
         {
-#pragma warning disable CS0618
-            var weaver = new ModuleWeaver
-            {
-                Config = config,
-                LogWarning = warnings == null ? (Action<string>)(_ => { }) : warnings.Add,
-                LogWarningPoint = (message, _) => warnings?.Add(message)
-            };
-#pragma warning restore CS0618
+var weaver = new ModuleWeaver { Config = config }.CaptureWarnings(warnings ?? new List<string>());
             weaver.AddClassFilter(typeof(InstanceReuseMethods).FullName);
             weaver.AddClassFilter(typeof(InstanceReuseClassAspect).FullName);
 
             var weavedAssemblyPath = weaver.WeaveToShadowFile(typeof(InstanceReuseMethods).Assembly.Location, ModuleHelper.AssemblyResolver);
             _weavedAssemblyPaths.Add(weavedAssemblyPath);
 
-            return ModuleDefinition.ReadModule(new MemoryStream(File.ReadAllBytes(weavedAssemblyPath)),
-                new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver });
-        }
-
-        private static TypeDefinition ResolveType(Type type)
-        {
-            var module = ModuleDefinition.ReadModule(type.Assembly.Location, new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver });
-            return module.GetType(type.FullName);
+            return WeaverTestHelper.ReadWeavedModule(weavedAssemblyPath);
         }
 
         public void Dispose()
         {
             foreach (var path in _weavedAssemblyPaths)
-            {
-                File.Delete(path);
-                File.Delete(Path.ChangeExtension(path, "pdb"));
-            }
+                WeaverTestHelper.DeleteWeavedAssembly(path);
         }
     }
 }

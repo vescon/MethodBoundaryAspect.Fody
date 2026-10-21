@@ -90,8 +90,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             var weavedAssemblyPath = weaver.WeaveToShadowFile(assemblyPath, ModuleHelper.AssemblyResolver);
             _weavedAssemblyPaths.Add(weavedAssemblyPath);
 
-            return ModuleDefinition.ReadModule(new MemoryStream(File.ReadAllBytes(weavedAssemblyPath)),
-                new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver });
+            return WeaverTestHelper.ReadWeavedModule(weavedAssemblyPath);
         }
 
         public void Dispose()

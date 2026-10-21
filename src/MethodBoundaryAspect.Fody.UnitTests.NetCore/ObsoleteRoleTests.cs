@@ -54,16 +54,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         private static List<string> Weave(Type type)
         {
             var warnings = new List<string>();
-            // Fody sets these (for consumers obsolete) callbacks, they are the only way to capture the warnings
-#pragma warning disable CS0618
+
             var weaver = new ModuleWeaver
             {
-                ModuleDefinition = ModuleDefinition.ReadModule(type.Assembly.Location,
-                    new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver }),
-                LogWarning = warnings.Add,
-                LogWarningPoint = (message, _) => warnings.Add(message)
-            };
-#pragma warning restore CS0618
+                ModuleDefinition = WeaverTestHelper.ReadModule(type)
+            }.CaptureWarnings(warnings);
             weaver.AddClassFilter(type.FullName);
             weaver.Execute();
             return warnings;

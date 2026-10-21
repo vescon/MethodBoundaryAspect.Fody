@@ -18,8 +18,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 
         public UnresolvableTypeTests()
         {
-            var module = ModuleDefinition.ReadModule(typeof(VarArgMethods).Assembly.Location,
-                new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver });
+            var module = WeaverTestHelper.ReadModule(typeof(VarArgMethods));
             _unresolvable = new TypeReference("System", "DoesNotExist", module, module.TypeSystem.CoreLibrary, true);
         }
 

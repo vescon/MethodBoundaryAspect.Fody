@@ -217,8 +217,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         {
             var weaver = new ModuleWeaver
             {
-                ModuleDefinition = ModuleDefinition.ReadModule(type.Assembly.Location,
-                    new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver })
+                ModuleDefinition = WeaverTestHelper.ReadModule(type)
             };
             weaver.AddClassFilter(type.FullName);
             return weaver;

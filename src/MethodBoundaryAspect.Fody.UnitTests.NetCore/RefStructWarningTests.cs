@@ -71,15 +71,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         private List<string> Weave(XElement config, Type type, int expectedWeavedMethods)
         {
             var warnings = new List<string>();
-            // Fody sets these (for consumers obsolete) callbacks, they are the only way to capture the warnings
-#pragma warning disable CS0618
+
             var weaver = new ModuleWeaver
             {
-                Config = config,
-                LogWarning = warnings.Add,
-                LogWarningPoint = (message, _) => warnings.Add(message)
-            };
-#pragma warning restore CS0618
+                Config = config
+            }.CaptureWarnings(warnings);
             weaver.AddClassFilter(type.FullName);
 
             var assemblyPath = type.Assembly.Location;
@@ -92,10 +88,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         public void Dispose()
         {
             foreach (var path in _weavedAssemblyPaths)
-            {
-                File.Delete(path);
-                File.Delete(Path.ChangeExtension(path, "pdb"));
-            }
+                WeaverTestHelper.DeleteWeavedAssembly(path);
         }
     }
 }

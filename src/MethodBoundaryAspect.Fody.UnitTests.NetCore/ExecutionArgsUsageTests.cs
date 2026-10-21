@@ -10,6 +10,7 @@ using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore.Aspects;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Xunit;
+using static MethodBoundaryAspect.Fody.UnitTests.NetCore.WeaverTestHelper;
 
 namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 {
@@ -172,8 +173,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             var weaver = new ModuleWeaver
             {
                 Config = config,
-                ModuleDefinition = ModuleDefinition.ReadModule(typeof(ExecutionArgsUsageMethods).Assembly.Location,
-                    new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver })
+                ModuleDefinition = WeaverTestHelper.ReadModule(typeof(ExecutionArgsUsageMethods))
             };
 
             Action weave = () => weaver.Execute();
@@ -184,12 +184,6 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         private static XElement OptOutConfig() =>
             new XElement("MethodBoundaryAspect",
                 new XElement("DisableExecutionArgsOptimization", new XAttribute("Aspect", typeof(OptOutUsageAspect).FullName)));
-
-        private static TypeDefinition ResolveType(Type type)
-        {
-            var module = ModuleDefinition.ReadModule(type.Assembly.Location, new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver });
-            return module.GetType(type.FullName);
-        }
 
         private static string[] GetExecutionArgsAccessors(ModuleDefinition module, string methodName)
         {
@@ -216,15 +210,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         private ModuleDefinition Weave(XElement config, out List<string> warnings)
         {
             var loggedWarnings = new List<string>();
-            // Fody sets these (for consumers obsolete) callbacks, they are the only way to capture the warnings
-#pragma warning disable CS0618
+
             var weaver = new ModuleWeaver
             {
-                Config = config,
-                LogWarning = loggedWarnings.Add,
-                LogWarningPoint = (message, _) => loggedWarnings.Add(message)
-            };
-#pragma warning restore CS0618
+                Config = config
+            }.CaptureWarnings(loggedWarnings);
             weaver.AddClassFilter(typeof(ExecutionArgsUsageMethods).FullName);
 
             var assemblyPath = typeof(ExecutionArgsUsageMethods).Assembly.Location;
@@ -232,17 +222,13 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             _weavedAssemblyPaths.Add(weavedAssemblyPath);
 
             warnings = loggedWarnings;
-            return ModuleDefinition.ReadModule(new MemoryStream(File.ReadAllBytes(weavedAssemblyPath)),
-                new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver });
+            return WeaverTestHelper.ReadWeavedModule(weavedAssemblyPath);
         }
 
         public void Dispose()
         {
             foreach (var path in _weavedAssemblyPaths)
-            {
-                File.Delete(path);
-                File.Delete(Path.ChangeExtension(path, "pdb"));
-            }
+                WeaverTestHelper.DeleteWeavedAssembly(path);
         }
     }
 }

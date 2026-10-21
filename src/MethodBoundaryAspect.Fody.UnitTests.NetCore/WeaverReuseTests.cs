@@ -66,7 +66,6 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         private static ModuleDefinition ReadModule() =>
-            ModuleDefinition.ReadModule(typeof(ObsoleteRoleMethods).Assembly.Location,
-                new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver });
+            WeaverTestHelper.ReadModule(typeof(ObsoleteRoleMethods));
     }
 }

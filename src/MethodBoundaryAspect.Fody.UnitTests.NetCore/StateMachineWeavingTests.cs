@@ -37,8 +37,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 
             weaver.TotalWeavedMethods.Should().Be(2);
             weaver.TotalWeavedTypes.Should().Be(1);
-            var weavedType = ModuleDefinition.ReadModule(new MemoryStream(File.ReadAllBytes(weavedAssemblyPath)),
-                    new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver })
+            var weavedType = WeaverTestHelper.ReadWeavedModule(weavedAssemblyPath)
                 .GetType(type.FullName);
             weavedType.NestedTypes.Should().HaveCount(2);
             weavedType.NestedTypes.SelectMany(t => t.Methods).Should().NotContain(m => m.Name.StartsWith("$_executor_"));

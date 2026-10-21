@@ -19,16 +19,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 
         public VarArgMethodTests()
         {
-            // Fody sets these (for consumers obsolete) callbacks, they are the only way to capture the warnings
-#pragma warning disable CS0618
+
             _weaver = new ModuleWeaver
             {
-                ModuleDefinition = ModuleDefinition.ReadModule(typeof(VarArgMethods).Assembly.Location,
-                    new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver }),
-                LogWarning = _warnings.Add,
-                LogWarningPoint = (message, _) => _warnings.Add(message)
-            };
-#pragma warning restore CS0618
+                ModuleDefinition = WeaverTestHelper.ReadModule(typeof(VarArgMethods))
+            }.CaptureWarnings(_warnings);
             _weaver.AddClassFilter(typeof(VarArgMethods).FullName);
             _weaver.Execute();
         }

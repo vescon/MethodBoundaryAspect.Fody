@@ -23,16 +23,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 
         public UnsupportedAsyncMethodTests()
         {
-            // Fody sets these (for consumers obsolete) callbacks, they are the only way to capture the warnings
-#pragma warning disable CS0618
+
             _weaver = new ModuleWeaver
             {
-                ModuleDefinition = ModuleDefinition.ReadModule(typeof(CustomTaskMethods).Assembly.Location,
-                    new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver }),
-                LogWarning = _warnings.Add,
-                LogWarningPoint = (message, _) => _warnings.Add(message)
-            };
-#pragma warning restore CS0618
+                ModuleDefinition = WeaverTestHelper.ReadModule(typeof(CustomTaskMethods))
+            }.CaptureWarnings(_warnings);
             _weaver.AddClassFilter(typeof(CustomTaskMethods).FullName);
         }
 
@@ -69,8 +64,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         {
             var weaver = new ModuleWeaver
             {
-                ModuleDefinition = ModuleDefinition.ReadModule(typeof(AsyncWithoutAspectMethods).Assembly.Location,
-                    new ReaderParameters { AssemblyResolver = ModuleHelper.AssemblyResolver })
+                ModuleDefinition = WeaverTestHelper.ReadModule(typeof(AsyncWithoutAspectMethods))
             };
             weaver.AddClassFilter(typeof(AsyncWithoutAspectMethods).FullName);
             var kickoff = weaver.ModuleDefinition.GetType(typeof(AsyncWithoutAspectMethods).FullName).Methods
