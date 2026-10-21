@@ -255,7 +255,7 @@ namespace MethodBoundaryAspect.Fody
 
             var readValueBlockChain = new InstructionBlockChain();
             var type = returnValue.VariableType;
-            if (type.IsByReference || (!type.IsValueType && !type.IsGenericParameter))
+            if (type.IsByReference || !type.IsValueTypeOrGenericParameter())
             {
                 readValueBlockChain.Add(readValueBlock);
                 return readValueBlockChain;

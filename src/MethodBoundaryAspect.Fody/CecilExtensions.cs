@@ -116,6 +116,14 @@ namespace MethodBoundaryAspect.Fody
             return type;
         }
 
+        /// <summary>
+        /// A value of the type has to be boxed to be stored as object (a generic parameter can be a value type).
+        /// </summary>
+        public static bool IsValueTypeOrGenericParameter(this TypeReference type)
+        {
+            return type.IsValueType || type.IsGenericParameter;
+        }
+
         public static TypeReference CleanEnumsInTypeRef(this TypeReference type)
         {
             if (type.IsArray(out TypeReference elementType))
