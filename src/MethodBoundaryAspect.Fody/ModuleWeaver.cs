@@ -326,8 +326,14 @@ namespace MethodBoundaryAspect.Fody
             }
         }
 
+        // the schema (xs:boolean) allows true, false, 1 and 0
         private static bool ParseBool(XAttribute attribute)
         {
+            if (attribute.Value == "1")
+                return true;
+            if (attribute.Value == "0")
+                return false;
+
             if (!bool.TryParse(attribute.Value, out var value))
                 throw new WeavingException($"Invalid value '{attribute.Value}' for {attribute.Name} in FodyWeavers.xml, expected 'true' or 'false'.");
             return value;

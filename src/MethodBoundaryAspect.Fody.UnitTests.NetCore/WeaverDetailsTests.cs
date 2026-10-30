@@ -250,6 +250,21 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
                 .WithMessage($"Invalid value 'yes' for {attributeName} in FodyWeavers.xml, expected 'true' or 'false'.");
         }
 
+        [Theory]
+        [InlineData("1", true)]
+        [InlineData("0", false)]
+        [InlineData("true", true)]
+        [InlineData("false", false)]
+        public void IfABooleanConfigValueIsValidForTheSchema_ThenItIsAccepted(string value, bool expected)
+        {
+            var weaver = CreateWeaver(typeof(LastMethodNotWovenMethods));
+            weaver.Config = new XElement("MethodBoundaryAspect", new XAttribute("SuppressRefStructWarnings", value));
+
+            weaver.Execute();
+
+            weaver.SuppressRefStructWarnings.Should().Be(expected);
+        }
+
         private static ModuleWeaver CreateWeaver(Type type)
         {
             var weaver = new ModuleWeaver
