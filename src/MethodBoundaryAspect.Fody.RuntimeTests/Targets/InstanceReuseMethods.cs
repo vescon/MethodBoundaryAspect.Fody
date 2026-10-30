@@ -54,5 +54,10 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
 
         [PerCallState]
         public async Task PerCallAsync() => await Task.Yield();
+
+        [SynchronizedAspect]
+        public void SynchronizedAspect()
+        {
+        }
     }
 }

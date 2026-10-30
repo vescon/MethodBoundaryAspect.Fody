@@ -150,6 +150,14 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
             InstanceReuseAspects.Calls.Should().Equal("calls:1", "calls:1");
         }
 
+        [Fact]
+        public void AspectWithASynchronizedMethodShouldNotBeShared()
+        {
+            _target.SynchronizedAspect();
+
+            SharedAspectFields<SynchronizedAspectAttribute>().Should().BeEmpty();
+        }
+
         // the fields of the generated class holding the shared aspects
         private static FieldInfo[] SharedAspectFields<TAspect>()
         {

@@ -7,6 +7,7 @@ listed as well). The migration from version 2 is described in the
 
 ## Unreleased
 
+- **An aspect with a `[MethodImpl(MethodImplOptions.Synchronized)]` method is no longer shared between the calls.** The shared instance was locked by every call, so the calls of the whole process waited for each other (and a deadlock was possible). The aspect is created for every call.
 - **`args.Arguments` in `OnExit` contains the values of `ref` and `out` arguments after the call**, also if no aspect uses `[AllowChangingInputArguments]`. It contained the values from before the call.
 - **An argument of the wrong type set by an aspect (`[AllowChangingInputArguments]`) is not reported to `OnException`.** `Arguments[0] = "x"` for an `int` threw the `InvalidCastException` inside the try block of the call, so `OnException` handled it (and could swallow it) as if the method had thrown. The arguments are converted before the call now, the exception is thrown to the caller without `OnException`.
 - **The `ReturnValue` of a method with a `ref` return is handled safely.** An aspect which set the `ReturnValue` of a `ref readonly` method overwrote the read only variable it references (a `readonly` field). It is ignored now. Setting the `ReturnValue` of a `ref` method of a value type to `null` threw a `NullReferenceException`, the variable keeps its value now.

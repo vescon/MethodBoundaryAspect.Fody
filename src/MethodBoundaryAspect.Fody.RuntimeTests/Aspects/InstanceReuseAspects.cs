@@ -1,5 +1,6 @@
 using MethodBoundaryAspect.Fody.Attributes;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 
 namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
@@ -67,6 +68,17 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
         public override void OnExit(MethodExecutionArgs arg)
         {
             InstanceReuseAspects.Record("calls:" + _calls);
+        }
+    }
+
+    /// <summary>
+    /// Holds no state, but its method locks the instance: a shared instance would serialize all calls of the process.
+    /// </summary>
+    public class SynchronizedAspectAttribute : OnMethodBoundaryAspect
+    {
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public override void OnEntry(MethodExecutionArgs arg)
+        {
         }
     }
 

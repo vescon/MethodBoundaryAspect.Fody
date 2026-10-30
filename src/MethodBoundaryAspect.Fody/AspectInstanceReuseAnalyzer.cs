@@ -58,6 +58,10 @@ namespace MethodBoundaryAspect.Fody
                 if (method.Name == "Finalize" && !method.HasParameters)
                     return false;
 
+                // locks the instance: a shared instance would serialize the calls of the whole process
+                if (method.IsSynchronized)
+                    return false;
+
                 if (!method.HasBody)
                 {
                     if (method.IsAbstract)
