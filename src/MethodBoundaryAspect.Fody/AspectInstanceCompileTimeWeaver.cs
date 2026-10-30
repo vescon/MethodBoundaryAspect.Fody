@@ -42,22 +42,45 @@ namespace MethodBoundaryAspect.Fody
 
             if (!_analyzer.CanReuse(aspect.AspectTypeDefinition)
                 || attribute.AttributeType.ContainsGenericParameter
-                || !IsAccessible(aspect.AspectTypeDefinition))
+                || !IsAccessible(aspect.AspectTypeDefinition)
+                || !IsAccessible(attribute.AttributeType))
                 return null;
 
             return AddGetter(attribute);
         }
 
         // the aspect is created in another class than the one of the woven method, e.g. not possible for a private nested aspect
-        private bool IsAccessible(TypeDefinition aspectType)
+        private bool IsAccessible(TypeReference type)
         {
-            for (var type = aspectType; type != null; type = type.DeclaringType)
+            switch (type)
             {
-                var visible = type.IsPublic || type.IsNestedPublic
-                              || (type.Module == _module && (type.IsNotPublic || type.IsNestedAssembly || type.IsNestedFamilyOrAssembly));
+                case GenericInstanceType generic:
+                    return IsAccessible(generic.ElementType) && generic.GenericArguments.All(IsAccessible);
+                case TypeSpecification specification:
+                    return IsAccessible(specification.ElementType);
+                case GenericParameter _:
+                    return true;
+            }
+
+            var definition = type.Resolve();
+            if (definition == null)
+                return false;
+
+            for (var current = definition; current != null; current = current.DeclaringType)
+            {
+                var visible = current.IsPublic || current.IsNestedPublic
+                              || (current.Module == _module && (current.IsNotPublic || current.IsNestedAssembly || current.IsNestedFamilyOrAssembly));
                 if (!visible)
                     return false;
             }
+
+            return true;
+        }
+
+        private bool IsAccessible(TypeDefinition aspectType)
+        {
+            if (!IsAccessible((TypeReference)aspectType))
+                return false;
 
             return aspectType.Methods
                 .Where(m => m.IsConstructor && !m.IsStatic)

@@ -7,6 +7,8 @@ listed as well). The migration from version 2 is described in the
 
 ## Unreleased
 
+- **`TypedReference`, `ArgIterator` and `RuntimeArgumentHandle` parameters work on .NET Framework.** The compiler does not mark them as ref structs there, so the weaver boxed them: the build failed in PEVerify or the method was an invalid program. They are passed as `null` like other ref structs.
+- **A generic aspect with a private type as type argument** (`[Cached<Outer.PrivateKey>]`) **is created for every call instead of failing with a `MethodAccessException`.** The shared instance is created in a generated class, which cannot access the type.
 - **An aspect with a `[MethodImpl(MethodImplOptions.Synchronized)]` method is no longer shared between the calls.** The shared instance was locked by every call, so the calls of the whole process waited for each other (and a deadlock was possible). The aspect is created for every call.
 - **`args.Arguments` in `OnExit` contains the values of `ref` and `out` arguments after the call**, also if no aspect uses `[AllowChangingInputArguments]`. It contained the values from before the call.
 - **An argument of the wrong type set by an aspect (`[AllowChangingInputArguments]`) is not reported to `OnException`.** `Arguments[0] = "x"` for an `int` threw the `InvalidCastException` inside the try block of the call, so `OnException` handled it (and could swallow it) as if the method had thrown. The arguments are converted before the call now, the exception is thrown to the caller without `OnException`.
