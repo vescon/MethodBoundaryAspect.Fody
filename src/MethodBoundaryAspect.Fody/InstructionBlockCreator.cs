@@ -98,7 +98,8 @@ namespace MethodBoundaryAspect.Fody
                 // ctor parameters
                 var loadInstructions = aspect.Constructor.Parameters
                     .Zip(aspect.ConstructorArguments, (p, v) => new {Parameter = p, Value = v})
-                    .SelectMany(x => LoadValueOnStack(x.Parameter.ParameterType, x.Value.Value))
+                    // a parameter of the type parameter of a generic aspect (Aspect<int>(5)) is loaded as the type argument
+                    .SelectMany(x => LoadValueOnStack(x.Parameter.ParameterType.ResolveGenericParameter(aspect.Constructor), x.Value.Value))
                     .ToList();
                 loadConstValuesOnStack.AddRange(loadInstructions);
 

@@ -63,3 +63,40 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
         }
     }
 }
+
+namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
+{
+    public class GenericCtorValueMethods
+    {
+        [GenericCtorValue<int>(5)]
+        public void Int()
+        {
+        }
+
+#if NETCOREAPP
+        // .NET Framework cannot read the arguments of these attributes with reflection (CustomAttributeFormatException),
+        // so xunit fails to discover the methods. The weaver does not read them with reflection.
+        [GenericCtorValue<string>("text")]
+        public void String()
+        {
+        }
+#endif
+
+        [GenericCtorValue<double>("label", 1.5)]
+        public void LabelAndDouble()
+        {
+        }
+
+        [GenericCtorValue<DayOfWeek>(DayOfWeek.Friday)]
+        public void Enum()
+        {
+        }
+
+#if NETCOREAPP
+        [GenericCtorValue<Type>(typeof(int))]
+        public void TypeArgument()
+        {
+        }
+#endif
+    }
+}

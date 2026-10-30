@@ -70,3 +70,30 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
                 "Value<{0}> {1} {2}", typeof(T).Name, Value, ValueField));
     }
 }
+
+namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
+{
+    /// <summary>
+    /// A generic aspect with a constructor parameter of the type parameter: [GenericCtorValue&lt;int&gt;(5)].
+    /// </summary>
+    public class GenericCtorValueAttribute<T> : OnMethodBoundaryAspect
+    {
+        private readonly string _label;
+        private readonly T _value;
+
+        public GenericCtorValueAttribute(T value)
+            : this("none", value)
+        {
+        }
+
+        public GenericCtorValueAttribute(string label, T value)
+        {
+            _label = label;
+            _value = value;
+        }
+
+        public override void OnEntry(MethodExecutionArgs arg) =>
+            GenericAspectLog.Add(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                "CtorValue<{0}> {1} {2}", typeof(T).Name, _label, _value));
+    }
+}

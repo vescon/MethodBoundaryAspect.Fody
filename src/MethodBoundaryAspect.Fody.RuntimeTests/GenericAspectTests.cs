@@ -37,6 +37,36 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         }
 
         [Fact]
+        public void ConstructorParameterOfTheTypeParameterShouldBePassed()
+        {
+            var target = new GenericCtorValueMethods();
+
+            target.Int();
+            target.LabelAndDouble();
+            target.Enum();
+
+            GenericAspectLog.Calls.Should().Equal(
+                "CtorValue<Int32> none 5",
+                "CtorValue<Double> label 1.5",
+                "CtorValue<DayOfWeek> none Friday");
+        }
+
+#if NETCOREAPP
+        [Fact]
+        public void ConstructorParameterOfTheTypeParameterShouldBePassedForReferenceTypes()
+        {
+            var target = new GenericCtorValueMethods();
+
+            target.String();
+            target.TypeArgument();
+
+            GenericAspectLog.Calls.Should().Equal(
+                "CtorValue<String> none text",
+                "CtorValue<Type> none System.Int32");
+        }
+#endif
+
+        [Fact]
         public void GenericAspectShouldBeCalledWithItsConstructorArgumentPropertyAndField()
         {
             new GenericAspectMethods().Sync(5).Should().Be(5);
