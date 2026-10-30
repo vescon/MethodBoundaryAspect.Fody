@@ -266,12 +266,37 @@ namespace MethodBoundaryAspect.Fody
             if (_method.ReturnType.CannotBeBoxed())
                 return new InstructionBlockChain();
 
+            // the variable which is referenced by a ref readonly return value must not be changed
+            if (_method.ReturnsRefReadonly())
+                return new InstructionBlockChain();
+
             var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "get_ReturnValue");
             var readValueBlock = _creator.CallInstanceMethod(getReturnValue, executionArgs, new VariablePersistable(returnValue));
 
             var readValueBlockChain = new InstructionBlockChain();
             var type = returnValue.VariableType;
-            if (type.IsByReference || !type.IsValueTypeOrGenericParameter())
+            if (type.IsByReference)
+            {
+                var elementType = ((ByReferenceType)type.WithoutModifiers()).ElementType;
+                if (!elementType.IsValueTypeOrGenericParameter())
+                {
+                    readValueBlockChain.Add(readValueBlock);
+                    return readValueBlockChain;
+                }
+
+                // a value type cannot be unboxed from null: the referenced variable keeps its value
+                var skip = Instruction.Create(OpCodes.Nop);
+                var isNull = executionArgs.Load(true, false).Instructions.ToList();
+                isNull.Add(Instruction.Create(OpCodes.Call, getReturnValue));
+                isNull.Add(Instruction.Create(OpCodes.Brfalse, skip));
+
+                readValueBlockChain.Add(new InstructionBlock("If ReturnValue is not null", isNull));
+                readValueBlockChain.Add(readValueBlock);
+                readValueBlockChain.Add(new InstructionBlock("End", skip));
+                return readValueBlockChain;
+            }
+
+            if (!type.IsValueTypeOrGenericParameter())
             {
                 readValueBlockChain.Add(readValueBlock);
                 return readValueBlockChain;

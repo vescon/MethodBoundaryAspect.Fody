@@ -22,6 +22,27 @@ namespace MethodBoundaryAspect.Fody
         }
 
         /// <summary>
+        /// The method returns a read only reference (ref readonly): "int&amp; modreq(InAttribute)" for virtual methods,
+        /// otherwise the return value is marked with IsReadOnlyAttribute (or RequiresLocationAttribute).
+        /// </summary>
+        public static bool ReturnsRefReadonly(this MethodDefinition method)
+        {
+            var returnType = method.ReturnType;
+            if (!returnType.WithoutModifiers().IsByReference)
+                return false;
+
+            for (var type = returnType; type is IModifierType modifierType; type = modifierType.ElementType)
+            {
+                if (modifierType is RequiredModifierType && modifierType.ModifierType.FullName == "System.Runtime.InteropServices.InAttribute")
+                    return true;
+            }
+
+            return method.MethodReturnType.CustomAttributes.Any(a =>
+                a.AttributeType.FullName == "System.Runtime.CompilerServices.IsReadOnlyAttribute"
+                || a.AttributeType.FullName == "System.Runtime.CompilerServices.RequiresLocationAttribute");
+        }
+
+        /// <summary>
         /// A value of the type has to be boxed to be stored as object (a generic parameter can be a value type).
         /// </summary>
         public static bool IsValueTypeOrGenericParameter(this TypeReference type)
