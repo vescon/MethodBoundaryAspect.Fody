@@ -76,7 +76,8 @@ namespace MethodBoundaryAspect.Fody.Ordering
                     throw new InvalidAspectConfigurationException(
                         string.Format("No order index provided for aspect '{0}'", aspectInfo.Name));
 
-                if (aspectInfos.Where(x => x != aspectInfo).Any(x => x.OrderIndex == aspectInfo.OrderIndex))
+                // an aspect applied twice (e.g. to the class and to the method) has the same index twice
+                if (aspectInfos.Where(x => x.Name != aspectInfo.Name).Any(x => x.OrderIndex == aspectInfo.OrderIndex))
                     throw new InvalidAspectConfigurationException(
                         string.Format("No unique order index provided for aspect '{0}'", aspectInfo.Name));
             }

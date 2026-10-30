@@ -6,7 +6,7 @@ using Xunit;
 namespace MethodBoundaryAspect.Fody.RuntimeTests
 {
     /// <summary>
-    /// [AspectOrderIndex(typeof(MyAspect&lt;int&gt;), 1)] was compared with the open generic type of the aspect and
+    /// The order index of generic aspects and of aspects applied twice. [AspectOrderIndex(typeof(MyAspect&lt;int&gt;), 1)] was compared with the open generic type of the aspect and
     /// never applied: weaving failed with "No order index provided".
     /// </summary>
     [Collection(nameof(GenericOrderLog))]
@@ -31,6 +31,16 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
             new GenericOrderMethods().TwoTypeArguments();
 
             GenericOrderLog.Calls.Should().Equal("Generic<String>", "Generic<Int32>");
+        }
+
+        [Fact]
+        public void TheSameAspectOnTheClassAndTheMethodShouldKeepTheOrderIndex()
+        {
+            new RepeatedOrderMethods().AspectOnClassAndMethod();
+            new RepeatedOrderMethods().ClassOnly();
+
+            // an application of an aspect which is applied twice is called once per application, the index is shared
+            GenericOrderLog.Calls.Should().Equal("Plain", "Plain", "Second", "Plain", "Second");
         }
 
         [Fact]

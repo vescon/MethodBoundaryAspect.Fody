@@ -20,6 +20,11 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
         public override void OnEntry(MethodExecutionArgs arg) => GenericOrderLog.Add("Generic<" + typeof(T).Name + ">");
     }
 
+    public class SecondOrderAttribute : OnMethodBoundaryAspect
+    {
+        public override void OnEntry(MethodExecutionArgs arg) => GenericOrderLog.Add("Second");
+    }
+
     public class PlainOrderAttribute : OnMethodBoundaryAspect
     {
         public override void OnEntry(MethodExecutionArgs arg) => GenericOrderLog.Add("Plain");
