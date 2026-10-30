@@ -5,6 +5,11 @@
   </PropertyGroup>
       
   <ItemGroup>
+    <!-- the configuration schema, FodyPackaging packs it from the output folder of the weaver -->
+    <None Include="MethodBoundaryAspect.Fody.xcf" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="FodyHelpers" Version="6.7.0" developmentDependency="true" />
   </ItemGroup>
 </Project>
