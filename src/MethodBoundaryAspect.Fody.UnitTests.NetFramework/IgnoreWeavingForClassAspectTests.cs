@@ -7,7 +7,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
     public class IgnoreWeavingForClassAspectTests : MethodBoundaryAspectNetFrameworkTestBase
     {
         [Fact]
-        public void IfStaticMethodIsCalled_ThenTheOnMethodBoundaryAspectShouldBeCalled()
+        public void IfTheClassIsExcluded_ThenNoMethodIsWeaved()
         {
             // Arrange
             var testClassType = typeof(MultipleAspectsWithIgnoredClass);
