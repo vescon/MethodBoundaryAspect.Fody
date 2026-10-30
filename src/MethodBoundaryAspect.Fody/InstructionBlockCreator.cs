@@ -44,15 +44,36 @@ namespace MethodBoundaryAspect.Fody
                 storeThisInstruction);
         }
 
+        // Array.Empty<T>() exists since .NET Framework 4.6 and .NET Standard 1.3, older target frameworks allocate
+        private MethodReference GetArrayEmpty(TypeReference objectTypeReference)
+        {
+            var arrayType = objectTypeReference.Resolve()?.Module.GetType("System.Array");
+            var empty = arrayType?.Methods.FirstOrDefault(m => m.Name == "Empty" && m.IsStatic && m.HasGenericParameters && !m.HasParameters);
+            if (empty == null)
+                return null;
+
+            var emptyOfObject = new GenericInstanceMethod(_method.Module.ImportReference(empty));
+            emptyOfObject.GenericArguments.Add(objectTypeReference);
+            return emptyOfObject;
+        }
+
         public InstructionBlock CreateObjectArrayWithMethodArguments(VariableDefinition objectArray,
             TypeReference objectTypeReference)
         {
-            var createArrayInstructions = new List<Instruction>
+            var createArrayInstructions = new List<Instruction>();
+            var arrayEmpty = _method.Parameters.Count == 0 ? GetArrayEmpty(objectTypeReference) : null;
+            if (arrayEmpty != null)
             {
-                _processor.Create(OpCodes.Ldc_I4, _method.Parameters.Count), //method.Parameters.Count
-                _processor.Create(OpCodes.Newarr, objectTypeReference), // new object[method.Parameters.Count]
-                _processor.Create(OpCodes.Stloc, objectArray) // var objArray = new object[method.Parameters.Count]
-            };
+                // no allocation for a method without parameters
+                createArrayInstructions.Add(_processor.Create(OpCodes.Call, arrayEmpty)); // Array.Empty<object>()
+                createArrayInstructions.Add(_processor.Create(OpCodes.Stloc, objectArray));
+            }
+            else
+            {
+                createArrayInstructions.Add(_processor.Create(OpCodes.Ldc_I4, _method.Parameters.Count)); //method.Parameters.Count
+                createArrayInstructions.Add(_processor.Create(OpCodes.Newarr, objectTypeReference)); // new object[method.Parameters.Count]
+                createArrayInstructions.Add(_processor.Create(OpCodes.Stloc, objectArray)); // var objArray = new object[method.Parameters.Count]
+            }
 
             foreach (var parameter in _method.Parameters)
             {
