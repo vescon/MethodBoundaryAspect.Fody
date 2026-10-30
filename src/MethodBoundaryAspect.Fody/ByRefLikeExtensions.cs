@@ -30,6 +30,11 @@ namespace MethodBoundaryAspect.Fody
             if (!type.IsValueType)
                 return false;
 
+            // .NET Framework does not mark them with the attribute
+            if (type.Namespace == "System"
+                && (type.Name == "TypedReference" || type.Name == "ArgIterator" || type.Name == "RuntimeArgumentHandle"))
+                return true;
+
             var typeDefinition = type.Resolve();
             return typeDefinition != null
                    && typeDefinition.CustomAttributes.Any(a => a.AttributeType.FullName == IsByRefLikeAttributeFullName);
