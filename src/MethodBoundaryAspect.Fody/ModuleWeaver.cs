@@ -179,6 +179,9 @@ namespace MethodBoundaryAspect.Fody
 
             var assemblyMethodBoundaryAspects = module.Assembly.CustomAttributes;
 
+            if (!IsUserFiltered(string.Empty, string.Empty))
+                WarnAboutIgnoredAspects(module.CustomAttributes, "the module");
+
             foreach (var type in module.Types.ToList())
                 WeaveTypeAndNestedTypes(module, type, assemblyMethodBoundaryAspects, new List<Collection<CustomAttribute>>());
 
@@ -356,6 +359,9 @@ namespace MethodBoundaryAspect.Fody
             if (IsMethodBoundaryAspect(type))
                 return;
 
+            if (!IsUserFiltered(type.FullName, string.Empty))
+                WarnAboutIgnoredAspects(type);
+
             WeaveType(module, type, assemblyMethodBoundaryAspects, enclosingTypeAttributes);
             if (type.HasNestedTypes)
             {
@@ -366,6 +372,37 @@ namespace MethodBoundaryAspect.Fody
                 };
                 foreach (var nestedType in type.NestedTypes)
                     WeaveTypeAndNestedTypes(module, nestedType, assemblyMethodBoundaryAspects, nestedEnclosingTypeAttributes);
+            }
+        }
+
+        // The attribute has no [AttributeUsage], so the compiler accepts an aspect everywhere, but the weaver only reads
+        // the aspects of assemblies, types, methods and properties (and their accessors).
+        private void WarnAboutIgnoredAspects(TypeDefinition type)
+        {
+            foreach (var field in type.Fields)
+                WarnAboutIgnoredAspects(field.CustomAttributes, $"the field '{field.FullName}'");
+
+            foreach (var eventDefinition in type.Events)
+                WarnAboutIgnoredAspects(eventDefinition.CustomAttributes, $"the event '{eventDefinition.FullName}'");
+
+            foreach (var method in type.Methods)
+            {
+                if (method.IsConstructor)
+                    WarnAboutIgnoredAspects(method.CustomAttributes, $"the constructor '{method.FullName}'");
+
+                WarnAboutIgnoredAspects(method.MethodReturnType.CustomAttributes, $"the return value of '{method.FullName}'");
+                foreach (var parameter in method.Parameters)
+                    WarnAboutIgnoredAspects(parameter.CustomAttributes, $"the parameter '{parameter.Name}' of '{method.FullName}'");
+            }
+        }
+
+        private void WarnAboutIgnoredAspects(Collection<CustomAttribute> attributes, string target)
+        {
+            foreach (var attribute in attributes.Where(IsMethodBoundaryAspect))
+            {
+                WriteWarning(
+                    $"Aspect '{attribute.AttributeType.FullName}' is applied to {target}, where it is ignored. " +
+                    "Aspects work on methods, properties, classes and assemblies. Remove it or move it to the method.");
             }
         }
 
