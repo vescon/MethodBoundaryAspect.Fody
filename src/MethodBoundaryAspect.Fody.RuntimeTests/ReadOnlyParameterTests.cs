@@ -39,6 +39,16 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         }
 
         [Fact]
+        public void ChangedRefArgumentWithInAttributeShouldBeWrittenBack()
+        {
+            var value = 10;
+
+            new ReadOnlyParameterMethods().Increment(ref value);
+
+            value.Should().Be(21);
+        }
+
+        [Fact]
         public void ReadonlyFieldPassedAsInArgumentShouldNotBeChanged()
         {
             var target = new ReadOnlyParameterMethods();

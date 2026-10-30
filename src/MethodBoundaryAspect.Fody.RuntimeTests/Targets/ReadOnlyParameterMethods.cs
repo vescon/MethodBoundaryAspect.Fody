@@ -1,4 +1,5 @@
 using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
+using System.Runtime.InteropServices;
 
 namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
 {
@@ -19,6 +20,10 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
         // the type of the in parameter is "int& modreq(InAttribute)"
         [NativeValueArgumentsAspect]
         public override int ReadInVirtual(in int value) => value;
+
+        // [In] on a ref parameter does not make it read only (an in parameter has the attribute IsReadOnly)
+        [NativeValueArgumentsAspect]
+        public void Increment([In] ref int value) => value++;
 
         // passes the address of the readonly field
         public int ReadField() => ReadIn(in _field);

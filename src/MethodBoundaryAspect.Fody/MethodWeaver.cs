@@ -529,13 +529,13 @@ namespace MethodBoundaryAspect.Fody
         }
 
         // in and ref readonly parameters: a changed argument is passed to the method, but not written back to the
-        // caller, whose variable (e.g. a readonly field) is read only for the method
+        // caller, whose variable (e.g. a readonly field) is read only for the method. The compilers mark them with
+        // an attribute, the [In] flag alone is no hint: it is also allowed on a ref parameter.
         private static bool IsReadOnly(ParameterDefinition parameter)
         {
-            return (parameter.IsIn && !parameter.IsOut)
-                   || parameter.CustomAttributes.Any(a =>
-                       a.AttributeType.FullName == "System.Runtime.CompilerServices.IsReadOnlyAttribute"
-                       || a.AttributeType.FullName == "System.Runtime.CompilerServices.RequiresLocationAttribute");
+            return parameter.CustomAttributes.Any(a =>
+                a.AttributeType.FullName == "System.Runtime.CompilerServices.IsReadOnlyAttribute"
+                || a.AttributeType.FullName == "System.Runtime.CompilerServices.RequiresLocationAttribute");
         }
 
         private void WeaveOnExit(bool hasReturnValue, NamedInstructionBlockChain returnValue)
