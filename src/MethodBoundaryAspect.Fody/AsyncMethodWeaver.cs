@@ -247,7 +247,7 @@ namespace MethodBoundaryAspect.Fody
             return _creator.ReadReturnValueIfOfType(ExecutionArgs, returnValue);
         }
 
-        protected override void WeaveOnException(IList<AspectData> allAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall, NamedInstructionBlockChain returnValue)
+        protected override void WeaveOnException(IList<AspectData> allAspects, Instruction instructionCallStart, Instruction instructionCallEnd, NamedInstructionBlockChain returnValue)
         {
             var handler = _moveNext.Body.ExceptionHandlers.FirstOrDefault(IsStateMachineCatchBlock);
             if (handler == null)

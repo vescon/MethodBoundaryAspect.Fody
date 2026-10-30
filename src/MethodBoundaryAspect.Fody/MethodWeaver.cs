@@ -79,12 +79,12 @@ namespace MethodBoundaryAspect.Fody
             
             HandleBody(arguments, returnValue?.Variable, out var instructionCallStart, out var instructionCallEnd);
 
-            var instructionAfterCall = WeaveOnExit(hasReturnValue, returnValue);
+            WeaveOnExit(hasReturnValue, returnValue);
 
             HandleReturnValue(hasReturnValue, returnValue);
 
             if (_aspects.Any(x => (x.AspectMethods & AspectMethods.OnException) != 0))
-                WeaveOnException(_aspects, instructionCallStart, instructionCallEnd, instructionAfterCall, returnValue);
+                WeaveOnException(_aspects, instructionCallStart, instructionCallEnd, returnValue);
 
             Optimize();
 
@@ -529,14 +529,13 @@ namespace MethodBoundaryAspect.Fody
                        || a.AttributeType.FullName == "System.Runtime.CompilerServices.RequiresLocationAttribute");
         }
 
-        private Instruction WeaveOnExit(bool hasReturnValue, NamedInstructionBlockChain returnValue)
+        private void WeaveOnExit(bool hasReturnValue, NamedInstructionBlockChain returnValue)
         {
             var onExitAspects = _aspects
                             .Where(x => x.AspectMethods.HasFlag(AspectMethods.OnExit))
                             .Reverse()
                             .ToList();
 
-            Instruction instructionAfterCall = null;
             // ref structs and pointers cannot be boxed, ReturnValue stays null
             if (hasReturnValue && onExitAspects.Any() && ProvidesReturnValue && !_method.ReturnType.CannotBeBoxed())
             {
@@ -546,8 +545,6 @@ namespace MethodBoundaryAspect.Fody
                     ExecutionArgs,
                     loadReturnValue);
                 AddToEnd(setMethodExecutionArgsReturnValue);
-
-                instructionAfterCall = setMethodExecutionArgsReturnValue.First;
             }
 
             foreach (var aspect in onExitAspects)
@@ -565,7 +562,6 @@ namespace MethodBoundaryAspect.Fody
             if (hasReturnValue && onExitAspects.Any() && ReadsBackReturnValue)
                 ReadReturnValueAfterOnExit(returnValue.Variable).Append(_ilProcessor);
 
-            return instructionAfterCall;
         }
 
         /// <summary>
@@ -597,9 +593,9 @@ namespace MethodBoundaryAspect.Fody
             AddToEnd(_creator.CreateReturn());
         }
 
-        protected virtual void WeaveOnException(IList<AspectData> allAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall, NamedInstructionBlockChain returnValue)
+        protected virtual void WeaveOnException(IList<AspectData> allAspects, Instruction instructionCallStart, Instruction instructionCallEnd, NamedInstructionBlockChain returnValue)
         {
-            var realInstructionAfterCall = instructionAfterCall ?? instructionCallEnd.Next;
+            var realInstructionAfterCall = instructionCallEnd.Next;
             var tryLeaveInstruction = Instruction.Create(OpCodes.Leave, realInstructionAfterCall);
             _ilProcessor.InsertAfter(instructionCallEnd, tryLeaveInstruction);
 

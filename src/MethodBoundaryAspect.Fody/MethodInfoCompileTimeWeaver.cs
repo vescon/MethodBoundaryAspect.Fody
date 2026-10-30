@@ -48,6 +48,9 @@ namespace MethodBoundaryAspect.Fody
         /// </summary>
         public void AddMethod(MethodDefinition method)
         {
+            if (_gettersCache.ContainsKey(method))
+                return;
+
             EnsureInit();
 
             var typeReferenceMethodBase = GetTypeReference(typeof(MethodBase));
