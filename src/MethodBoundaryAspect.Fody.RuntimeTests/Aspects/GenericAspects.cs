@@ -53,3 +53,20 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
     {
     }
 }
+
+namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
+{
+    /// <summary>
+    /// A generic aspect with a property of the type parameter, set where it is applied: [GenericValue&lt;int&gt;(Value = 5)].
+    /// </summary>
+    public class GenericValueAttribute<T> : OnMethodBoundaryAspect
+    {
+        public T Value { get; set; }
+
+        public T ValueField;
+
+        public override void OnEntry(MethodExecutionArgs arg) =>
+            GenericAspectLog.Add(string.Format(System.Globalization.CultureInfo.InvariantCulture,
+                "Value<{0}> {1} {2}", typeof(T).Name, Value, ValueField));
+    }
+}

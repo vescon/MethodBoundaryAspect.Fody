@@ -7,6 +7,7 @@ listed as well). The migration from version 2 is described in the
 
 ## Unreleased
 
+- **A property or field of the type parameter of a generic aspect can be set to a value type** (`[Validate<int>(Value = 5)]`). The woven code boxed the value before setting it, the method threw an `InvalidProgramException`.
 - **The same aspect on the class and on the method can have an `[AspectOrderIndex]`.** The build failed with "No unique order index" because both applications have the same index; only different aspects need different indices.
 - **`[AspectOrderIndex(typeof(MyAspect<int>), 1)]` works for generic aspects.** It was compared with the generic type definition and never applied, the build failed with "No order index provided". `typeof(MyAspect<>)` is still accepted.
 - **`FlowBehavior` is reset before `OnException`:** `FlowBehavior.Continue` set in `OnEntry` (where it has no effect) made the method swallow a later exception if an aspect had an `OnException`, even if it did not ask for it. The exception is rethrown now unless `OnException` sets `Continue` or `Return`.

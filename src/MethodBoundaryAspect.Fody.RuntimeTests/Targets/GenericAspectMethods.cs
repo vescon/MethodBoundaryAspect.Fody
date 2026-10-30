@@ -37,3 +37,29 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
         public TClass Method<TMethod>(TClass value, TMethod other) => value;
     }
 }
+
+namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
+{
+    public class GenericValueMethods
+    {
+        [GenericValue<int>(Value = 5)]
+        public void IntProperty()
+        {
+        }
+
+        [GenericValue<string>(Value = "text")]
+        public void StringProperty()
+        {
+        }
+
+        [GenericValue<double>(Value = 1.5, ValueField = 2.5)]
+        public void DoublePropertyAndField()
+        {
+        }
+
+        [GenericValue<DayOfWeek>(Value = DayOfWeek.Friday)]
+        public void EnumProperty()
+        {
+        }
+    }
+}

@@ -20,6 +20,23 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         }
 
         [Fact]
+        public void PropertyOfTheTypeParameterShouldBeSetForValueTypes()
+        {
+            var target = new GenericValueMethods();
+
+            target.IntProperty();
+            target.StringProperty();
+            target.DoublePropertyAndField();
+            target.EnumProperty();
+
+            GenericAspectLog.Calls.Should().Equal(
+                "Value<Int32> 5 0",
+                "Value<String> text ",
+                "Value<Double> 1.5 2.5",
+                "Value<DayOfWeek> Friday Sunday");
+        }
+
+        [Fact]
         public void GenericAspectShouldBeCalledWithItsConstructorArgumentPropertyAndField()
         {
             new GenericAspectMethods().Sync(5).Should().Be(5);

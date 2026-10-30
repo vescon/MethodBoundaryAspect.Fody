@@ -237,7 +237,7 @@ namespace MethodBoundaryAspect.Fody
             var parameterCount = 0;
             foreach (var argument in arguments)
             {
-                var parameterType = methodReference.Parameters[parameterCount].ParameterType.WithoutModifiers();
+                var parameterType = methodReference.Parameters[parameterCount].ParameterType.WithoutModifiers().ResolveGenericParameter(methodReference);
                 var paramIsByRef = parameterType.IsByReference;
 
                 loadArgumentsInstructions.AddRange(argument.Load(false, false).Instructions);

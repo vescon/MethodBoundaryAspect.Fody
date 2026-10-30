@@ -29,6 +29,28 @@ namespace MethodBoundaryAspect.Fody
             return type.IsValueType || type.IsGenericParameter;
         }
 
+        /// <summary>
+        /// The type argument a generic parameter of the method or of its declaring type stands for, e.g. int for
+        /// the parameter of Aspect&lt;int&gt;.set_Value(!0). Other types are returned unchanged.
+        /// </summary>
+        public static TypeReference ResolveGenericParameter(this TypeReference type, MethodReference method)
+        {
+            if (!(type is GenericParameter parameter))
+                return type;
+
+            if (parameter.Type == GenericParameterType.Type
+                && method.DeclaringType is GenericInstanceType declaringType
+                && parameter.Position < declaringType.GenericArguments.Count)
+                return declaringType.GenericArguments[parameter.Position];
+
+            if (parameter.Type == GenericParameterType.Method
+                && method is GenericInstanceMethod genericMethod
+                && parameter.Position < genericMethod.GenericArguments.Count)
+                return genericMethod.GenericArguments[parameter.Position];
+
+            return type;
+        }
+
         public static TypeReference CleanEnumsInTypeRef(this TypeReference type)
         {
             if (type.IsArray(out TypeReference elementType))
