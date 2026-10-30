@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using FluentAssertions;
+using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 using MethodBoundaryAspect.Fody.RuntimeTests.Targets;
 using Xunit;
 
@@ -11,22 +12,34 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
     /// MoveNext replaces the ReturnValue by the result of the swallowed exception: the caller got an
     /// InvalidCastException (or a default value) instead of its task.
     /// </summary>
+    [Collection(nameof(AsyncReturnValueRaceSignal))]
     public class AsyncReturnValueRaceTests
     {
+        public AsyncReturnValueRaceTests()
+        {
+            AsyncReturnValueRaceSignal.ExceptionHandled.Reset();
+            AsyncReturnValueRaceSignal.WaitedForException = false;
+        }
+
         [Fact]
         public async Task TaskShouldBeReturnedIfTheWorkFailsDuringOnExit()
         {
-            var task = new AsyncReturnValueRaceMethods().TaskOfInt();
+            // called on a thread pool thread: the continuation after Task.Yield() must not need the thread blocked in OnExit
+            Task<int> task = null;
+            await Task.Run(() => task = new AsyncReturnValueRaceMethods().TaskOfInt());
 
             (await task).Should().Be(-1);
+            AsyncReturnValueRaceSignal.WaitedForException.Should().BeTrue("the work has to fail while OnExit runs");
         }
 
         [Fact]
         public async Task ValueTaskShouldBeReturnedIfTheWorkFailsDuringOnExit()
         {
-            var task = new AsyncReturnValueRaceMethods().ValueTaskOfInt();
+            ValueTask<int> task = default;
+            await Task.Run(() => task = new AsyncReturnValueRaceMethods().ValueTaskOfInt());
 
             (await task).Should().Be(-1);
+            AsyncReturnValueRaceSignal.WaitedForException.Should().BeTrue("the work has to fail while OnExit runs");
         }
     }
 }
