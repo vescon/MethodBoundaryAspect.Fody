@@ -1,10 +1,12 @@
 ﻿<Weavers xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="FodyWeavers.xsd"
     GenerateXsd="true"
     VerifyAssembly="true"
-    VerifyIgnoreCodes="0x80131870,0x80131884,0x801318BD">
+    VerifyIgnoreCodes="0x80131870,0x80131884,0x801318BD,0x80131284,0x80131285,0x80131B18,0x801318F3">
   <!-- PEVerify cannot verify code the C# compiler emits (ModifierTypesTests, ExecutorMethodTests), also without weaving:
        0x80131870 a method returns a ref, 0x80131884 an init accessor or ref readonly return value accesses a readonly field,
        0x801318BD a method with locals has [SkipLocalsInit].
+       0x80131284, 0x80131285, 0x80131B18, 0x801318F3 a default interface method (IDefaultMethod in GeneratedAndUnwovenMethods.cs),
+       also without weaving: a method with a body and a private method in an interface, classes which do not implement it, the type can't be loaded.
        SuppressRefStructWarnings: RefStructMethods weaves ref struct methods on purpose, the warning itself is tested in
        UnitTests.NetCore (RefStructWarningTests) -->
   <ModuleWeaver SuppressRefStructWarnings="true">
