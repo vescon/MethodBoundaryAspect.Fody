@@ -270,6 +270,13 @@ namespace MethodBoundaryAspect.Fody
                 .OfType<AspectDataOnAsyncMethod>()
                 .ToList();
 
+            // a FlowBehavior set in OnEntry (where Continue has no effect) must not swallow the exception
+            if (onExceptionAspects.Count > 0)
+            {
+                var resetFlowBehavior = _creator.ResetMethodExecutionArgsFlowBehavior(onExceptionAspects[0].GetMoveNextExecutionArgs(ExecutionArgs));
+                exceptionHandlerCurrent = resetFlowBehavior.InsertAfter(exceptionHandlerCurrent, processor);
+            }
+
             // the result of the task if an aspect swallows the exception (FlowBehavior.Continue)
             VariableDefinition result = null;
             TypeReference returnedTaskType = null;

@@ -579,6 +579,8 @@ namespace MethodBoundaryAspect.Fody
             var setExceptionFromStack =
                 _creator.SetMethodExecutionArgsExceptionFromStack(ExecutionArgs);
             exceptionHandlerCurrent = setExceptionFromStack.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
+
+            exceptionHandlerCurrent = _creator.ResetMethodExecutionArgsFlowBehavior(ExecutionArgs).InsertAfter(exceptionHandlerCurrent, _ilProcessor);
             
             var returnsByRef = _method.ReturnType.WithoutModifiers().IsByReference;
             var returnAfterHandling = new InstructionBlockChain();

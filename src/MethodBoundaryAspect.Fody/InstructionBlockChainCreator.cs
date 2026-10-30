@@ -297,6 +297,22 @@ namespace MethodBoundaryAspect.Fody
         }
 
         /// <summary>
+        /// A FlowBehavior set before the exception (e.g. Continue in OnEntry, where it has no effect) must not swallow it.
+        /// </summary>
+        public InstructionBlockChain ResetMethodExecutionArgsFlowBehavior(ILoadable executionArgs)
+        {
+            var setFlowBehavior = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "set_FlowBehavior");
+
+            var instructions = executionArgs.Load(true, false).Instructions.ToList();
+            instructions.Add(Instruction.Create(OpCodes.Ldc_I4, FlowBehaviorValues.Default));
+            instructions.Add(Instruction.Create(OpCodes.Call, setFlowBehavior));
+
+            var chain = new InstructionBlockChain();
+            chain.Add(new InstructionBlock("Reset FlowBehavior", instructions));
+            return chain;
+        }
+
+        /// <summary>
         /// Sets the ReturnValue to null, if <paramref name="onlyIfInstanceOf"/> is given only if it is of this type.
         /// </summary>
         public InstructionBlockChain ClearMethodExecutionArgsReturnValue(ILoadable executionArgs, TypeReference onlyIfInstanceOf = null)
