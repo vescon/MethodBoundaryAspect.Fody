@@ -235,7 +235,12 @@ namespace MethodBoundaryAspect.Fody
                 AddToSetup(instance);
 
                 if (HasMultipleAspects)
+                {
                     aspect.EnsureTagStorage();
+                    var tagStorage = aspect.CreateTagStorage();
+                    if (tagStorage != null)
+                        AddToSetup(tagStorage);
+                }
             }
         }
 
@@ -548,6 +553,10 @@ namespace MethodBoundaryAspect.Fody
                     AddToEnd(_creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs, aspect.TagPersistable));
                 
                 AddToEnd(_creator.CallAspectOnExit(aspect, ExecutionArgs));
+
+                // the tag of an aspect of an async method is read again in OnException, which runs later
+                if (HasMultipleAspects && SavesTagAfterOnExit)
+                    AddToEnd(_creator.SaveMethodExecutionArgsTagToPersistable(ExecutionArgs, aspect.TagPersistable));
             }
 
             if (hasReturnValue && onExitAspects.Any() && ReadsBackReturnValue)
@@ -555,6 +564,11 @@ namespace MethodBoundaryAspect.Fody
 
             return instructionAfterCall;
         }
+
+        /// <summary>
+        /// OnException of async methods runs after OnExit, the tag set in OnExit has to be kept for it.
+        /// </summary>
+        protected virtual bool SavesTagAfterOnExit => false;
 
         /// <summary>
         /// Takes the ReturnValue an aspect set in OnExit as the value the method returns.

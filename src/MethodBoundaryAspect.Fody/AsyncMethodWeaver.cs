@@ -238,6 +238,8 @@ namespace MethodBoundaryAspect.Fody
             return ldarg_0;
         }
 
+        protected override bool SavesTagAfterOnExit => true;
+
         // the asynchronous work can fail on another thread while OnExit runs, the catch block of MoveNext replaces the
         // ReturnValue then: the method still returns its task
         protected override InstructionBlockChain ReadReturnValueAfterOnExit(VariableDefinition returnValue)

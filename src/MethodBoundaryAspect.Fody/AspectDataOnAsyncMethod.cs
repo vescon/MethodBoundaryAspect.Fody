@@ -11,6 +11,7 @@ namespace MethodBoundaryAspect.Fody
         MethodDefinition _moveNext;
         VariableDefinition _stateMachineLocal;
         FieldReference _tagField;
+        ArrayType _tagArrayType;
         FieldReference _aspectField;
 
         public AspectDataOnAsyncMethod(
@@ -27,12 +28,29 @@ namespace MethodBoundaryAspect.Fody
             _stateMachine = _stateMachineLocal.VariableType;
         }
 
+        // The tag lives in an array: the state machine is a struct which is copied into a box when the method awaits for
+        // the first time, so a field written after the start of the state machine (the tag set in OnExit) would be lost
+        // for the copy that runs MoveNext, which reads the tag in OnException.
         public override void EnsureTagStorage()
         {
             var systemObject = _referenceFinder.GetTypeReference(typeof(object));
-            _tagField = _module.ImportReference(_stateMachine.AddPublicInstanceField(systemObject));
+            _tagArrayType = new ArrayType(systemObject);
+            _tagField = _module.ImportReference(_stateMachine.AddPublicInstanceField(_tagArrayType));
 
-            TagPersistable = new FieldPersistable(new VariablePersistable(_stateMachineLocal), _tagField);
+            TagPersistable = new ArrayElementPersistable(
+                new FieldPersistable(new VariablePersistable(_stateMachineLocal), _tagField), 0, systemObject);
+        }
+
+        public override InstructionBlockChain CreateTagStorage()
+        {
+            var instructions = new VariablePersistable(_stateMachineLocal).Load(true, false).Instructions.ToList();
+            instructions.Add(Instruction.Create(OpCodes.Ldc_I4_1));
+            instructions.Add(Instruction.Create(OpCodes.Newarr, _referenceFinder.GetTypeReference(typeof(object))));
+            instructions.Add(Instruction.Create(OpCodes.Stfld, _tagField));
+
+            var chain = new InstructionBlockChain();
+            chain.Add(new InstructionBlock("Create the storage of the tag", instructions));
+            return chain;
         }
 
         public override InstructionBlockChain CreateAspectInstance()
@@ -83,7 +101,9 @@ namespace MethodBoundaryAspect.Fody
             var sm = StateMachineFromMoveNext;
 
             return _creator.CallVoidMethod(setMethod, GetMoveNextExecutionArgs(executionArgs),
-                new FieldPersistable(new ThisLoadable(sm), _tagField.AsDefinedOn(sm)));
+                new ArrayElementPersistable(
+                    new FieldPersistable(new ThisLoadable(sm), _tagField.AsDefinedOn(sm)), 0,
+                    _referenceFinder.GetTypeReference(typeof(object))));
         }
 
         public InstructionBlockChain CallOnExceptionInMoveNext(IPersistable executionArgs, VariableDefinition exceptionLocal)

@@ -43,6 +43,14 @@ namespace MethodBoundaryAspect.Fody
             TagPersistable = _creator.CreateObjectVariable();
         }
 
+        /// <summary>
+        /// The instructions which create the storage of the tag, in the setup of the method (null if the storage is a variable).
+        /// </summary>
+        public virtual InstructionBlockChain CreateTagStorage()
+        {
+            return null;
+        }
+
         public virtual InstructionBlockChain CreateAspectInstance()
         {
             var chain = CreateOrGetAspect();
