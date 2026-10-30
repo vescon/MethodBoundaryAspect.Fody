@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 using MethodBoundaryAspect.Fody.RuntimeTests.Targets;
 using System;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
     /// Weaving OnException into an async method produced an InvalidProgramException in Release builds
     /// when short form branches of MoveNext no longer reached their targets.
     /// </summary>
+    [Collection(EmptyMethodBoundaryAspect.CollectionName)]
     public class Issue135Tests
     {
         [Theory]
@@ -22,7 +24,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 
             Func<Task> action = () => target.PaddedBeforeAwait(flag);
 
-            await action.Should().NotThrowAsync();
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+                await action.Should().NotThrowAsync();
         }
 
         [Fact]
@@ -30,9 +33,12 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         {
             var target = new Issue135Methods();
 
-            var result = await target.PaddedInLoop(4);
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+            {
+                var result = await target.PaddedInLoop(4);
 
-            result.Should().Be(6);
+                result.Should().Be(6);
+            }
         }
 
         [Fact]
@@ -40,8 +46,11 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         {
             var target = new Issue135Methods();
 
-            (await target.EarlyReturnWithPadding(true)).Should().Be(1);
-            (await target.EarlyReturnWithPadding(false)).Should().Be(2);
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+            {
+                (await target.EarlyReturnWithPadding(true)).Should().Be(1);
+                (await target.EarlyReturnWithPadding(false)).Should().Be(2);
+            }
         }
 
         [Theory]
@@ -51,8 +60,11 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         {
             var target = new Issue135Methods();
 
-            await target.PaddedElseAfterAwait(flag);
-            await target.PaddedWithFinally(flag);
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+            {
+                await target.PaddedElseAfterAwait(flag);
+                await target.PaddedWithFinally(flag);
+            }
         }
 
         [Theory]
@@ -62,9 +74,12 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         {
             var target = new Issue135Methods();
 
-            await target.EarlyReturn125Bytes(flag);
-            await target.EarlyReturn126Bytes(flag);
-            await target.EarlyReturn127Bytes(flag);
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+            {
+                await target.EarlyReturn125Bytes(flag);
+                await target.EarlyReturn126Bytes(flag);
+                await target.EarlyReturn127Bytes(flag);
+            }
         }
     }
 }

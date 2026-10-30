@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,6 +12,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
     /// to be thrown at run-time. These should be woven in a way to not cause an exception at run time. Using the
     /// VerifyAssembly directive _does not_ catch these defects.
     /// </summary>
+    [Collection(EmptyMethodBoundaryAspect.CollectionName)]
     public class AsyncMethodCausesInvalidProgramExceptionTests
     {
         [Fact]
@@ -20,7 +22,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 
             Func<Task> ifAction = () => target.IfEmptyMethodBoundaryAspectMethod(false);
 
-            await ifAction.Should().NotThrowAsync();
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+                await ifAction.Should().NotThrowAsync();
         }
 
         [Fact]
@@ -30,7 +33,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 
             Func<Task> ifElseAction = () => target.IfElseEmptyMethodBoundaryAspectMethod(false);
 
-            await ifElseAction.Should().NotThrowAsync();
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+                await ifElseAction.Should().NotThrowAsync();
         }
 
         [Fact]
@@ -40,7 +44,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 
             Func<Task> tryCatchAction = () => target.TryCatchEmptyMethodBoundaryAspectMethod();
 
-            await tryCatchAction.Should().NotThrowAsync();
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+                await tryCatchAction.Should().NotThrowAsync();
         }
 
         [Fact]
@@ -50,7 +55,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 
             Func<Task> tryFinallyAction = () => target.TryFinallyEmptyMethodBoundaryAspectMethod();
 
-            await tryFinallyAction.Should().NotThrowAsync();
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+                await tryFinallyAction.Should().NotThrowAsync();
         }
 
         [Fact]
@@ -60,7 +66,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 
             Func<Task> tryCatchFinallyAction = () => target.TryCatchFinallyEmptyMethodBoundaryAspectMethod();
 
-            await tryCatchFinallyAction.Should().NotThrowAsync();
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+                await tryCatchFinallyAction.Should().NotThrowAsync();
         }
 
         [Fact]
@@ -70,7 +77,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 
             Func<Task<bool>> tryCatchFinallyFunction = () => target.TryCatchFinallyEmptyMethodBoundaryAspectMethodWResult();
 
-            await tryCatchFinallyFunction.Should().NotThrowAsync();
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+                await tryCatchFinallyFunction.Should().NotThrowAsync();
         }
 
         [Fact]
@@ -80,7 +88,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 
             Func<Task> foreachAction = () => target.ForeachEmptyMethodBoundaryAspectMethod(Enumerable.Empty<object>());
 
-            await foreachAction.Should().NotThrowAsync();
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+                await foreachAction.Should().NotThrowAsync();
         }
 
         [Fact]
@@ -90,7 +99,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 
             Func<Task> switchExprAction = () => target.SwitchExprMethodBoundaryAspectMethod(true);
 
-            await switchExprAction.Should().NotThrowAsync();
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+                await switchExprAction.Should().NotThrowAsync();
         }
 
         [Fact]
@@ -100,7 +110,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 
             Func<Task> usingAction = () => target.UsingMethodBoundaryAspectMethod();
 
-            await usingAction.Should().NotThrowAsync();
+            using (EmptyMethodBoundaryAspect.ExpectCalls())
+                await usingAction.Should().NotThrowAsync();
         }
     }
 }
