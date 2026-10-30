@@ -36,6 +36,34 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         }
 
         [Fact]
+        public void MethodNameFilterShouldWeaveOnlyTheMatchingMethods()
+        {
+            var target = new MethodNameFilterMethods();
+
+            target.WeaveThis();
+            target.SkipThis();
+            target.CallPrivate();
+            target.Weaved = 1;
+            target.Skipped = 1;
+            var weaved = target.Weaved;
+            var skipped = target.Skipped;
+
+            // CallPrivate is not woven, WeavePrivate is
+            NamespaceFilterRecordingAspect.Calls.Should().Equal("WeaveThis", "WeavePrivate", "set_Weaved", "get_Weaved");
+        }
+
+        [Fact]
+        public void MethodNameFilterIsNotAnchored()
+        {
+            var target = new MethodNameFilterNotAnchored();
+
+            target.HasPartInTheMiddle();
+            target.Other();
+
+            NamespaceFilterRecordingAspect.Calls.Should().Equal("HasPartInTheMiddle");
+        }
+
+        [Fact]
         public void TypeNameFilterShouldMatchTheNameOfAGenericTypeWithTheNumberOfTypeParameters()
         {
             new TypeNameFilterGeneric<int>().Matching();

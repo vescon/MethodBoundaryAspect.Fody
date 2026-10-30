@@ -41,6 +41,42 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
         }
     }
 
+    // the filter is a regular expression matched against the method name, accessors are named get_Name/set_Name
+    [NamespaceFilterRecordingAspect(MethodNameFilter = "^(Weave|get_Weaved|set_Weaved)")]
+    public class MethodNameFilterMethods
+    {
+        public void WeaveThis()
+        {
+        }
+
+        public void SkipThis()
+        {
+        }
+
+        private void WeavePrivate()
+        {
+        }
+
+        public int Weaved { get; set; }
+
+        public int Skipped { get; set; }
+
+        public void CallPrivate() => WeavePrivate();
+    }
+
+    // not anchored: the filter matches a part of the name
+    [NamespaceFilterRecordingAspect(MethodNameFilter = "Part")]
+    public class MethodNameFilterNotAnchored
+    {
+        public void HasPartInTheMiddle()
+        {
+        }
+
+        public void Other()
+        {
+        }
+    }
+
     [NamespaceFilterRecordingAspect(NamespaceFilter = "^Other$")]
     public class NamespaceFilterNotMatching
     {
