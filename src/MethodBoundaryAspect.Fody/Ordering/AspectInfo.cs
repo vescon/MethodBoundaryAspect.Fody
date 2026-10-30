@@ -178,9 +178,10 @@ namespace MethodBoundaryAspect.Fody.Ordering
 
         private void InternalInitOrderIndex(IEnumerable<CustomAttribute> aspectAttributes, string level)
         {
+            // typeof(Aspect<int>) names the aspect with its type arguments, typeof(Aspect<>) is the generic type definition
             var orderIndexAttributes = aspectAttributes
                     .Where(c => c.AttributeType.FullName == AttributeFullNames.AspectOrderIndexAttribute &&
-                                ((TypeReference)c.ConstructorArguments[0].Value).FullName == AspectTypeDefinition.FullName)
+                                IsAspectType(c.ConstructorArguments[0].Value as TypeReference))
                     .ToList();
 
             if (orderIndexAttributes.Count > 1)
@@ -188,6 +189,12 @@ namespace MethodBoundaryAspect.Fody.Ordering
 
             if (orderIndexAttributes.Count == 1)
                 OrderIndex = (int)orderIndexAttributes[0].ConstructorArguments[1].Value;
+        }
+
+        private bool IsAspectType(TypeReference type)
+        {
+            return type != null &&
+                   (type.FullName == Name || type.FullName == AspectTypeDefinition.FullName);
         }
 
         private void InitTargetMembers()
