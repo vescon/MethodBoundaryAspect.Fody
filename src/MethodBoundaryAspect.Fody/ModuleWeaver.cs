@@ -280,28 +280,49 @@ namespace MethodBoundaryAspect.Fody
         // the filters are the same for many methods, Regex.IsMatch only caches 15 expressions
         private readonly Dictionary<string, Regex> _filterRegexes = new Dictionary<string, Regex>();
 
-        private bool MatchesFilter(string value, string filter, AspectInfo aspectInfo, string filterName)
+        // The filters are checked one after the other for a method, so a method which fails the first filter never
+        // reaches the others. Every filter of an aspect is compiled before, an invalid expression fails the build.
+        private void CompileFilters(AspectInfo aspectInfo)
+        {
+            GetFilterRegex(aspectInfo.NamespaceFilter, aspectInfo, nameof(AspectInfo.NamespaceFilter));
+            GetFilterRegex(aspectInfo.TypeNameFilter, aspectInfo, nameof(AspectInfo.TypeNameFilter));
+            GetFilterRegex(aspectInfo.MethodNameFilter, aspectInfo, nameof(AspectInfo.MethodNameFilter));
+        }
+
+        private Regex GetFilterRegex(string filter, AspectInfo aspectInfo, string filterName)
         {
             if (string.IsNullOrEmpty(filter))
+                return null;
+
+            if (_filterRegexes.TryGetValue(filter, out var regex))
+                return regex;
+
+            try
+            {
+                regex = new Regex(filter, RegexOptions.None, RegexMatchTimeout);
+            }
+            catch (ArgumentException e)
+            {
+                throw new WeavingException($"Aspect '{aspectInfo.Name}' has an invalid regular expression in {filterName}: {e.Message}");
+            }
+
+            _filterRegexes[filter] = regex;
+            return regex;
+        }
+
+        private bool MatchesFilter(string value, string filter, AspectInfo aspectInfo, string filterName)
+        {
+            var regex = GetFilterRegex(filter, aspectInfo, filterName);
+            if (regex == null)
                 return true;
 
             try
             {
-                if (!_filterRegexes.TryGetValue(filter, out var regex))
-                {
-                    regex = new Regex(filter, RegexOptions.None, RegexMatchTimeout);
-                    _filterRegexes[filter] = regex;
-                }
-
                 return regex.IsMatch(value);
             }
             catch (RegexMatchTimeoutException)
             {
                 throw new WeavingException($"Aspect '{aspectInfo.Name}' needs too long to match the regular expression in {filterName} ('{filter}' against '{value}', limit {RegexMatchTimeout.TotalSeconds:0.###} seconds).");
-            }
-            catch (ArgumentException e)
-            {
-                throw new WeavingException($"Aspect '{aspectInfo.Name}' has an invalid regular expression in {filterName}: {e.Message}");
             }
         }
 
@@ -377,12 +398,16 @@ namespace MethodBoundaryAspect.Fody
 
                 var methodVisibility = GetMethodVisibility(method);
 
-                var aspectInfos = assemblyMethodBoundaryAspects
+                var candidateInfos = assemblyMethodBoundaryAspects
                     .Concat(enclosingTypeAttributes.SelectMany(attributes => attributes))
                     .Concat(classMethodBoundaryAspects)
                     .Concat(methodMethodBoundaryAspects)
                     .Where(IsMethodBoundaryAspect)
                     .Select(x => new AspectInfo(x))
+                    .ToList();
+                candidateInfos.ForEach(CompileFilters);
+
+                var aspectInfos = candidateInfos
                     .Where(info => info.HasTargetMemberAttribute(methodVisibility))
                     .Where(info => MatchesFilter(typeNamespace, info.NamespaceFilter, info, nameof(AspectInfo.NamespaceFilter)))
                     .Where(info => MatchesFilter(type.Name, info.TypeNameFilter, info, nameof(AspectInfo.TypeNameFilter)))

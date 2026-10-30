@@ -111,6 +111,23 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfAnInvalidFilterFollowsAFilterWhichDoesNotMatch_ThenWeavingFailsWithTheAspectAndFilter()
+        {
+            var weaver = CreateWeaver(typeof(InvalidFilterMethods));
+            var aspect = weaver.ModuleDefinition.GetType(typeof(InvalidFilterMethods).FullName).Methods
+                .Single(m => m.Name == nameof(InvalidFilterMethods.Filtered)).CustomAttributes.Single();
+            var filter = aspect.Properties.Single();
+            aspect.Properties[0] = new CustomAttributeNamedArgument(filter.Name, new CustomAttributeArgument(filter.Argument.Type, "(unclosed"));
+            // no method matches it, so the filter of the method name is never evaluated
+            aspect.Properties.Add(new CustomAttributeNamedArgument("NamespaceFilter", new CustomAttributeArgument(filter.Argument.Type, "^NoSuchNamespace$")));
+
+            Action weave = () => weaver.Execute();
+
+            weave.Should().Throw<WeavingException>()
+                .WithMessage("Aspect 'MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore.Aspects.OnlyOnEntryAspect' has an invalid regular expression in MethodNameFilter: *");
+        }
+
+        [Fact]
         public void IfTheConfigurationOfTheAspectsIsInvalid_ThenWeavingFailsWithTheMethod()
         {
             var weaver = CreateWeaver(typeof(MultipleAspectsMethods));
