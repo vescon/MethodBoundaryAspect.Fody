@@ -576,8 +576,18 @@ namespace MethodBoundaryAspect.Fody
 
             return !(method.IsAbstract // abstract or interface method
                      || method.IsConstructor
+                     || IsFinalizer(method)
                      || name.StartsWith("<") // anonymous
                      || method.IsPInvokeImpl); // extern
+        }
+
+        // the aspect would run on the finalizer thread, and an exception of an aspect ends the process
+        private static bool IsFinalizer(MethodDefinition method)
+        {
+            return method.Name == "Finalize"
+                   && method.IsVirtual
+                   && !method.HasParameters
+                   && method.ReturnType.MetadataType == MetadataType.Void;
         }
 
         private bool IsUserFiltered(string fullName, string name)
