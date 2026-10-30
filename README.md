@@ -396,7 +396,7 @@ public class Program
 | `OnException` | `FlowBehavior.Continue` or `FlowBehavior.Return` | the exception is swallowed, the method returns `args.ReturnValue` |
 | `OnException` | `FlowBehavior.Default` or `FlowBehavior.RethrowException` | the exception is rethrown (default) |
 
-If no aspect sets `args.ReturnValue`, the method returns the default value of its return type (a completed task for a method returning `Task` or `Task<T>`, not `null`). A method with a `ref` return has no default value to return: skipping its body or swallowing its exception throws a `NotSupportedException` (with the original exception as inner exception). Details:
+If no aspect sets `args.ReturnValue`, the method returns the default value of its return type (a completed task for a method returning `Task` or `Task<T>`, not `null`). A method with a `ref` return has no default value to return: skipping its body or swallowing its exception throws a `NotSupportedException` (with the original exception as inner exception). The `OnExit` of the aspects which ran `OnEntry` before the aspect that skips or swallows is called first in both cases. Details:
 
 - `FlowBehavior` is reset to `Default` before the first `OnException`, so a `Continue` set in `OnEntry` (where it has no effect) does not swallow a later exception. It has no effect in `OnExit`.
 - `FlowBehavior.Return` in `OnEntry` skips the method body and the `OnEntry` of the following aspects, and also their `OnExit`. The `OnExit` of the aspects ordered before the aspect that set it is still called.

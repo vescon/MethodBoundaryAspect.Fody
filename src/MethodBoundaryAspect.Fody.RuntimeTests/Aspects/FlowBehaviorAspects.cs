@@ -29,4 +29,24 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
     {
         public override void OnEntry(MethodExecutionArgs arg) => arg.FlowBehavior = FlowBehavior.Return;
     }
+
+    /// <summary>
+    /// Records its calls, e.g. to see if the OnExit of an aspect runs when a later aspect skips the method body.
+    /// </summary>
+    public class RecordFlowAttribute : OnMethodBoundaryAspect
+    {
+        public static readonly System.Collections.Generic.List<string> Calls = new System.Collections.Generic.List<string>();
+
+        public override void OnEntry(MethodExecutionArgs arg)
+        {
+            lock (Calls)
+                Calls.Add("OnEntry");
+        }
+
+        public override void OnExit(MethodExecutionArgs arg)
+        {
+            lock (Calls)
+                Calls.Add("OnExit");
+        }
+    }
 }

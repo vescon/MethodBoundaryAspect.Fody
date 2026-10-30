@@ -280,6 +280,19 @@ namespace MethodBoundaryAspect.Fody
                 var flowChain = new InstructionBlockChain();
                 var onExitChain = new InstructionBlockChain();
 
+                // the aspects which have run OnEntry get their OnExit also if the method with a ref return throws
+                // instead of returning, like they do if an exception is swallowed
+                for (var i = entry.index-1; i >= 0; --i)
+                {
+                    var onExitAspect = _aspects[i];
+                    if ((onExitAspect.AspectMethods & AspectMethods.OnExit) == 0) 
+                        continue;
+
+                    if (HandlesTags)
+                        onExitChain.Add(_creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs, onExitAspect.TagPersistable));
+                    onExitChain.Add(_creator.CallAspectOnExit(onExitAspect, ExecutionArgs));
+                }
+
                 if (_method.ReturnType.WithoutModifiers().IsByReference)
                 {
                     onExitChain.Add(CreateThrowNotSupported(
@@ -287,17 +300,6 @@ namespace MethodBoundaryAspect.Fody
                 }
                 else
                 {
-                    for (var i = entry.index-1; i >= 0; --i)
-                    {
-                        var onExitAspect = _aspects[i];
-                        if ((onExitAspect.AspectMethods & AspectMethods.OnExit) == 0) 
-                            continue;
-
-                        if (HandlesTags)
-                            onExitChain.Add(_creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs, onExitAspect.TagPersistable));
-                        onExitChain.Add(_creator.CallAspectOnExit(onExitAspect, ExecutionArgs));
-                    }
-
                     if (allowChangingInputArguments)
                     {
                         // method body is skipped: write ref/out values set by the aspect back to the caller

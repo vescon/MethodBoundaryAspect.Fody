@@ -1,4 +1,5 @@
 using FluentAssertions;
+using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 using MethodBoundaryAspect.Fody.RuntimeTests.Targets;
 using System;
 using Xunit;
@@ -30,6 +31,28 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
             Action call = () => _target.Skipped();
 
             call.Should().Throw<NotSupportedException>().Which.Message.Should().Contain("early return");
+        }
+
+        [Fact]
+        public void IfTheMethodBodyWithRefReturnIsSkipped_ThenTheEarlierAspectsGetOnExit()
+        {
+            RecordFlowAttribute.Calls.Clear();
+
+            Action call = () => _target.SkippedAfterRecording();
+
+            call.Should().Throw<NotSupportedException>();
+            RecordFlowAttribute.Calls.Should().Equal("OnEntry", "OnExit");
+        }
+
+        [Fact]
+        public void IfAnExceptionOfAMethodWithRefReturnIsSwallowed_ThenTheEarlierAspectsGetOnExit()
+        {
+            RecordFlowAttribute.Calls.Clear();
+
+            Action call = () => _target.SwallowedAfterRecording();
+
+            call.Should().Throw<NotSupportedException>();
+            RecordFlowAttribute.Calls.Should().Equal("OnEntry", "OnExit");
         }
 
         [Fact]
