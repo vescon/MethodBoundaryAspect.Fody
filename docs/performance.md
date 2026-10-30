@@ -24,9 +24,18 @@ The project targets `net8.0` and `net10.0`. The same benchmark on .NET 10 (defau
 
 | Aspect | Static method: time | Static method: allocated | Open generic method: time | Open generic method: allocated |
 |---|---:|---:|---:|---:|
-| uses no property | +2.8 ns | 72 B | +2.7 ns | 72 B |
+| uses no property | +1.9 ns | 72 B | +1.9 ns | 72 B |
 | uses no property, created for every call (`DisableAspectInstanceReuse`) | +0.0 ns | 0 B | - | - |
-| uses `args.Method` | +4.0 ns | 72 B | - | - |
-| all properties provided (`DisableExecutionArgsOptimization`) | +11.3 ns | 152 B | +8.3 ns | 128 B |
+| uses `args.Method` | +3.1 ns | 72 B | - | - |
+| all properties provided (`DisableExecutionArgsOptimization`) | +10.2 ns | 152 B | +7.5 ns | 128 B |
+
+Several aspects and async methods on .NET 10 (the call without an aspect: 20.9 ns, the async call without an aspect: 26.9 ns). The weaver only emits the code for `MethodExecutionTag` and `FlowBehavior` if an aspect uses them:
+
+| Case | Time | Allocated |
+|---|---:|---:|
+| two aspects without properties | +2.5 ns | 72 B |
+| method without parameters, `args.Arguments` read | +3.9 ns | 72 B |
+| async method, one aspect | +2.2 ns | 144 B |
+| async method, two aspects | +3.5 ns | 144 B |
 
 The .NET 10 JIT removes the allocation of an aspect that is created for every call when the aspect does nothing and doesn't leak (escape analysis), so the numbers of that row only apply to such empty aspects.
