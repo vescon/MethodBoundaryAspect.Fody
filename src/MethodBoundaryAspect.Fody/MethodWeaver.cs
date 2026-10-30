@@ -415,11 +415,21 @@ namespace MethodBoundaryAspect.Fody
                 // (except ref structs and pointers which cannot be passed via ExecutionArgs)
                 var instanceOffset = _method.IsStatic ? 0 : 1;
                 var byRefPassedViaArguments = GetByRefParametersPassedViaArguments().ToList();
+                // the elements are cast before the try block: an invalid value set by an aspect is not an exception of the method
                 args = _method.Parameters
-                    .Select((x, i) => x.ParameterType.CannotBeBoxed()
-                        ? (ILoadable)new ArgumentLoadable(i + instanceOffset, x, _method.Body.GetILProcessor())
-                        : new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator,
-                            passOriginalReference: byRefPassedViaArguments.Contains(x)))
+                    .Select((x, i) =>
+                    {
+                        if (x.ParameterType.CannotBeBoxed())
+                            return (ILoadable)new ArgumentLoadable(i + instanceOffset, x, _method.Body.GetILProcessor());
+
+                        var element = new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator,
+                            passOriginalReference: byRefPassedViaArguments.Contains(x));
+                        var prepared = element.Prepare();
+                        var prepareChain = new InstructionBlockChain();
+                        prepareChain.Add(prepared.Prepare);
+                        prepareChain.Append(_ilProcessor);
+                        return prepared.Loadable;
+                    })
                     .ToArray();
 
                 callSourceMethod = _creator.CallMethodWithReturn(

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -29,6 +30,36 @@ namespace MethodBoundaryAspect.Fody
         }
 
         public TypeReference PersistedType => _parameter.ParameterType;
+
+        /// <summary>
+        /// The cast of the element can fail (an aspect set a value of the wrong type). The first block does the cast
+        /// and keeps the result, the loadable pushes it: the first block can be placed before the try block of the
+        /// call, so the exception is not seen as an exception of the called method.
+        /// </summary>
+        public (InstructionBlock Prepare, ILoadable Loadable) Prepare()
+        {
+            var parameterType = _parameter.ParameterType.WithoutModifiers();
+            var valueType = parameterType.IsByReference ? ((ByReferenceType)parameterType).ElementType : parameterType;
+
+            if (parameterType.IsByReference && _passOriginalReference)
+            {
+                var writeToCaller = Load(false, false).Instructions.ToList();
+                // Load ends with the load of the argument, which is what the call needs
+                var prepare = writeToCaller.Take(writeToCaller.Count - 1).ToList();
+                return (new InstructionBlock($"Prepare {_index}", prepare),
+                    new InstructionLoadable(_parameter.ParameterType, () => new[] { _processor.Create(OpCodes.Ldarg, _parameter) }));
+            }
+
+            var variable = _creator.CreateVariable(valueType).Variable;
+            var instructions = Load(false, true).Instructions.ToList();
+            instructions.Add(_processor.Create(OpCodes.Stloc, variable));
+
+            return (new InstructionBlock($"Prepare {_index}", instructions),
+                new InstructionLoadable(_parameter.ParameterType, () => new[]
+                {
+                    _processor.Create(parameterType.IsByReference ? OpCodes.Ldloca : OpCodes.Ldloc, variable)
+                }));
+        }
 
         public InstructionBlock Load(bool forDereferencing, bool onlyValue)
         {
