@@ -78,6 +78,15 @@ jobs:
     - name: Run tests - Runtime (net462, net48, net481, net8.0, net9.0, net10.0, net11.0)
       run: dotnet test src\MethodBoundaryAspect.Fody.RuntimeTests --configuration Release --no-build
 
+    # In Debug builds the compiler generates classes instead of structs for the state machines of async methods, the
+    # weaver handles both. Release builds (the tests above) only cover the structs. The weaver is not referenced by the
+    # test project, so it has to be built in Debug as well.
+    - name: Run tests - Runtime (Debug build, state machines are classes)
+      run: |
+        dotnet build --configuration Debug src\MethodBoundaryAspect.Fody\MethodBoundaryAspect.Fody.csproj
+        dotnet build --configuration Debug src\MethodBoundaryAspect.Fody.RuntimeTests -f net10.0
+        dotnet test src\MethodBoundaryAspect.Fody.RuntimeTests --configuration Debug --no-build -f net10.0
+
     - name: Create the nuget package
       run: dotnet pack --configuration Release --no-build src\MethodBoundaryAspect\MethodBoundaryAspect.csproj -o Artifacts/Packages
     
