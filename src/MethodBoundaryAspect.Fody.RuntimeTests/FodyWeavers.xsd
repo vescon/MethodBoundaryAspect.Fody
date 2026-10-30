@@ -4,7 +4,51 @@
   <xs:element name="Weavers">
     <xs:complexType>
       <xs:all>
-        <xs:element name="ModuleWeaver" minOccurs="0" maxOccurs="1" type="xs:anyType" />
+        <xs:element name="ModuleWeaver" minOccurs="0" maxOccurs="1">
+          <xs:complexType>
+            <xs:choice minOccurs="0" maxOccurs="unbounded">
+              <xs:element name="DisableExecutionArgsOptimization">
+                <xs:annotation>
+                  <xs:documentation>Always provide all MethodExecutionArgs properties for this aspect.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                  <xs:attribute name="Aspect" type="xs:string" use="required">
+                    <xs:annotation>
+                      <xs:documentation>The full type name of the aspect, nested types as Namespace.Outer+Inner, generic aspects as Namespace.Aspect`1.</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="DisableAspectInstanceReuse">
+                <xs:annotation>
+                  <xs:documentation>Create this aspect for every call instead of sharing one instance.</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                  <xs:attribute name="Aspect" type="xs:string" use="required">
+                    <xs:annotation>
+                      <xs:documentation>The full type name of the aspect, nested types as Namespace.Outer+Inner, generic aspects as Namespace.Aspect`1.</xs:documentation>
+                    </xs:annotation>
+                  </xs:attribute>
+                </xs:complexType>
+              </xs:element>
+            </xs:choice>
+            <xs:attribute name="SuppressRefStructWarnings" type="xs:boolean">
+              <xs:annotation>
+                <xs:documentation>Do not write build warnings for woven methods using ref structs.</xs:documentation>
+              </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="DisableExecutionArgsOptimization" type="xs:boolean">
+              <xs:annotation>
+                <xs:documentation>Always provide all MethodExecutionArgs properties for all aspects.</xs:documentation>
+              </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="DisableAspectInstanceReuse" type="xs:boolean">
+              <xs:annotation>
+                <xs:documentation>Create every aspect for every call instead of sharing instances.</xs:documentation>
+              </xs:annotation>
+            </xs:attribute>
+          </xs:complexType>
+        </xs:element>
       </xs:all>
       <xs:attribute name="VerifyAssembly" type="xs:boolean">
         <xs:annotation>
