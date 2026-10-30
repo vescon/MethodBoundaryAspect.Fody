@@ -14,10 +14,12 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
             var testClassType = typeof(NonStandardProperties);
 
             // Act
-            Action call = () => WeaveAssemblyClassAndLoad(testClassType);
+            Action call = () => WeaveAssemblyPropertyAndLoad(testClassType, nameof(NonStandardProperties.Property_WithDouble_Underscore));
 
             // Assert
             call.Should().NotThrow();
+            // the accessors are woven (without an aspect the assembly is valid as well)
+            Weaver.TotalWeavedProperties.Should().Be(2);
         }
     }
 }
