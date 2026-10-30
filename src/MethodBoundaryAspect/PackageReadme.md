@@ -72,7 +72,7 @@ All three aspect methods get a `MethodExecutionArgs` with the information of the
 
 - **Select the methods** with `[DisableWeaving]`, regular expression filters for namespace, type and method name, and the visibility of the methods (`AttributeTargetMemberAttributes`).
 - **Combine aspects** on one method and order them with `[AspectOrderIndex]`.
-- **Async methods** are supported: `OnException` is called when the asynchronous work fails.
+- **Async methods** are supported: `OnEntry` runs when the method is called, `OnExit` when it returns its `Task` (`args.ReturnValue` is that task, the work may not be finished), `OnException` when the asynchronous work fails.
 - **Low overhead:** the weaver only provides the `MethodExecutionArgs` properties your aspects use, and creates aspects without state once instead of for every call.
 
 ## Documentation

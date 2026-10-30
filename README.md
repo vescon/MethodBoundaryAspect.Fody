@@ -136,8 +136,8 @@ public int Add(int a, int b)
 Consequences worth knowing:
 
 - The aspect's constructor arguments and properties from the attribute (e.g. `[Log(Level = "Debug")]`) are applied to the new instance on every call, unless the aspect holds no state and one instance is shared (see [Aspect instances](#aspect-instances)). Instance fields of an aspect are **not** shared between calls; use `args.MethodExecutionTag` to pass data from `OnEntry` to `OnExit`/`OnException`.
-- The original body runs in the private method `$_executor_<Name>`, which shows up in stack traces next to the original method, and `MethodBase.GetCurrentMethod()` called in the method body returns the executor, not the original method. `[SkipLocalsInit]` and `MethodImplOptions.NoOptimization`/`AggressiveOptimization` of the method apply to the executor, the other `MethodImpl` flags (e.g. `NoInlining`) stay on the original method.
-- Only the method body is guarded by `OnException`: an exception thrown by `OnEntry` or `OnExit` itself does not call `OnException` and is thrown to the caller.
+- The original body runs in the private method `$_executor_<Name>`, which shows up in stack traces next to the original method (the JIT may inline it, then it is missing), and `MethodBase.GetCurrentMethod()` called in the method body returns the executor, not the original method. Code in the body that looks at its caller (`Assembly.GetCallingAssembly()`) sees the woven method instead of the real caller. `[SkipLocalsInit]` and `MethodImplOptions.NoOptimization`/`AggressiveOptimization` of the method apply to the executor, the other `MethodImpl` flags (e.g. `NoInlining`) stay on the original method.
+- Only the method body is guarded by `OnException`: an exception thrown by `OnEntry` or `OnExit` itself does not call `OnException` and is thrown to the caller (also for async methods, where it is thrown synchronously and not stored in the returned task).
 - Only overridden aspect methods are called, and only the `MethodExecutionArgs` properties the aspects actually use are filled (see [Performance](#performance)).
 - Async methods are woven differently, see [Async methods](#async-methods).
 
@@ -204,7 +204,7 @@ public class Repository
 }
 ```
 
-Each aspect has its own `MethodExecutionTag`, even if several aspects are applied to the same method.
+Each aspect has its own `MethodExecutionTag`, even if several aspects are applied to the same method: an aspect that did not set the tag sees `null`. For [async methods](#async-methods) read the note on the tag there, `OnException` can run at the same time as `OnExit`.
 
 ## Applying aspects
 
@@ -230,9 +230,9 @@ public class OrderService
 }
 ```
 
-Class and assembly aspects also hit property getters and setters. To exclude them, annotate the aspect class with `[AspectSkipProperties(true)]`. Like `[AllowChangingInputArguments]`, it is inherited by aspects derived from the annotated aspect class.
+The members the compiler generates for records (`Equals`, `PrintMembers`, ...) and default interface methods are woven like other methods. Class and assembly aspects also hit property getters and setters. To exclude them, annotate the aspect class with `[AspectSkipProperties(true)]`; it also applies when the aspect is put directly on a property. Like `[AllowChangingInputArguments]`, it is inherited by aspects derived from the annotated aspect class.
 
-Not woven: aspects applied directly to an event (class and assembly aspects do hit the `add`/`remove` accessors; weaving aspects of an event is planned for 4.0), constructors, abstract and interface methods, `extern` methods, methods with a variable argument list (`__arglist`, with a build warning), compiler-generated methods and types (lambdas, local functions, the state machines of async and iterator methods) and aspect classes: classes derived from `OnMethodBoundaryAspect` (also base aspect classes) and their nested classes, so an assembly aspect doesn't call itself ([#70](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/70)).
+Not woven: aspects applied directly to an event (class and assembly aspects do hit the `add`/`remove` accessors; weaving aspects of an event is planned for 4.0), constructors, abstract and interface methods, `extern` methods, methods with a variable argument list (`__arglist`, with a build warning), types marked `[CompilerGenerated]` (closures, the state machines of async and iterator methods, anonymous types), methods whose name starts with `<` (lambdas, local functions) and aspect classes: classes derived from `OnMethodBoundaryAspect` (also base aspect classes) and their nested classes, so an assembly aspect doesn't call itself ([#70](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/70)).
 
 Aspects can be generic (generic attributes need C# 11): `[Validate<int>]` weaves the aspect with the type argument `int`.
 
@@ -242,7 +242,7 @@ Aspects can be generic (generic attributes need C# 11): `[Validate<int>]` weaves
 
 ### Filtering by name and visibility
 
-Aspects applied to a class or assembly can be narrowed down with regular expressions, which are matched against the namespace, the type name and the method name (property accessors are named `get_Name`/`set_Name`). Nested classes have the namespace of their outermost class, their type name is the name of the nested class itself (e.g. `Inner` for `Outer.Inner`). Generic types have their metadata name with the number of type parameters, e.g. ``Repository`1`` for `Repository<T>`:
+Aspects can be narrowed down with regular expressions (also an aspect applied directly to a method), which are matched against the namespace, the type name and the method name (property accessors are named `get_Name`/`set_Name`). Nested classes have the namespace of their outermost class, their type name is the name of the nested class itself (e.g. `Inner` for `Outer.Inner`). Generic types have their metadata name with the number of type parameters, e.g. ``Repository`1`` for `Repository<T>`:
 
 ```csharp
 [assembly: Log(NamespaceFilter = @"^MyApp\.Services", TypeNameFilter = "Service$", MethodNameFilter = "^(?!get_|set_)")]
@@ -260,7 +260,18 @@ or only public and internal methods:
 [assembly: Log(AttributeTargetMemberAttributes = MulticastAttributes.Public | MulticastAttributes.Internal)]
 ```
 
-The filter is applied to the visibility of the method itself, so a public method of an internal class is public as well.
+The filter is applied to the visibility of the method itself, so a public method of an internal class is public as well. The values map to the C# keywords like this:
+
+| `MulticastAttributes` | C# |
+|---|---|
+| `Private` | `private` |
+| `Protected` | `protected` |
+| `Internal` | `internal` |
+| `InternalAndProtected` | `private protected` |
+| `InternalOrProtected` | `protected internal` |
+| `Public` | `public` |
+
+The regular expressions are not anchored and case sensitive: `"Service"` also matches `OrderServiceFactory`, use `^Service$` for the exact name. A filter that takes longer than 30 seconds to match fails the build.
 
 `NamespaceFilter`, `TypeNameFilter`, `MethodNameFilter` and `AttributeTargetMemberAttributes` are read **where the aspect is applied** (as named arguments of the attribute). The weaver does not run the code of your aspects, so a value set in the constructor of the aspect, or by overriding the property, is ignored. A build warning is written for each aspect which does that.
 
@@ -316,7 +327,7 @@ public sealed class IndentAttribute : OnMethodBoundaryAspect
 {
     public override void OnExit(MethodExecutionArgs args)
     {
-        args.ReturnValue = string.Concat(args.ReturnValue.ToString().Split('\n').Select(line => "  " + line));
+        args.ReturnValue = string.Join("\n", args.ReturnValue.ToString().Split('\n').Select(line => "  " + line));
     }
 }
 
@@ -336,7 +347,7 @@ For async methods, `args.ReturnValue` is the returned `Task` and can be replaced
 
 ### Changing input arguments
 
-Change the elements of `args.Arguments` in `OnEntry`. The aspect class has to be annotated with `[AllowChangingInputArguments]`, because the weaver has to generate additional code to pass the changed values to the method (unnecessary and slower for aspects which don't change them). Aspects derived from an annotated aspect class inherit it. `ref` and `out` values are written back to the caller. An element of a value type set to `null` passes the default value of the type. A changed `in` (or `ref readonly`) argument is passed to the method, but not written back, because the variable of the caller is read only for the method. Works for async methods as well: the changed values are passed to the method when it starts.
+Change the elements of `args.Arguments` in `OnEntry` (assigning a new array to `args.Arguments` is ignored, only the elements of the array count). The aspect class has to be annotated with `[AllowChangingInputArguments]`, because the weaver has to generate additional code to pass the changed values to the method (unnecessary and slower for aspects which don't change them). Aspects derived from an annotated aspect class inherit it. `ref` and `out` values are written back to the caller. An element of a value type set to `null` passes the default value of the type. A changed `in` (or `ref readonly`) argument is passed to the method, but not written back, because the variable of the caller is read only for the method. Works for async methods as well: the changed values are passed to the method when it starts.
 
 ```csharp
 using System;
@@ -385,7 +396,13 @@ public class Program
 | `OnException` | `FlowBehavior.Continue` or `FlowBehavior.Return` | the exception is swallowed, the method returns `args.ReturnValue` |
 | `OnException` | `FlowBehavior.Default` or `FlowBehavior.RethrowException` | the exception is rethrown (default) |
 
-If no aspect sets `args.ReturnValue`, the method returns the default value of its return type (a completed task for a method returning `Task` or `Task<T>`, not `null`). A method with a `ref` return has no default value to return: skipping its body or swallowing its exception throws a `NotSupportedException` (with the original exception as inner exception). With several aspects, the `OnExit` of the aspects ordered before the aspect that set `FlowBehavior` is still called. For async methods see [below](#flowbehavior-in-async-methods).
+If no aspect sets `args.ReturnValue`, the method returns the default value of its return type (a completed task for a method returning `Task` or `Task<T>`, not `null`). A method with a `ref` return has no default value to return: skipping its body or swallowing its exception throws a `NotSupportedException` (with the original exception as inner exception). Details:
+
+- `FlowBehavior` is reset to `Default` before the first `OnException`, so a `Continue` set in `OnEntry` (where it has no effect) does not swallow a later exception. It has no effect in `OnExit`.
+- `FlowBehavior.Return` in `OnEntry` skips the method body and the `OnEntry` of the following aspects, and also their `OnExit`. The `OnExit` of the aspects ordered before the aspect that set it is still called.
+- If an aspect swallows an exception in `OnException`, the aspects ordered before it get a call of `OnExit` (not of `OnException`).
+
+For async methods see [below](#flowbehavior-in-async-methods).
 
 ```csharp
 using System.Collections.Concurrent;
@@ -432,7 +449,9 @@ public async Task MethodAsync()
 - "Exiting original method" is written after the task of `DoSomeOtherWorkAsync` has completed, possibly on another thread.
 - `OnException` runs if the awaited work fails (a faulted task, an exception, or awaiting `null`), on the thread on which the exception occurred, possibly long after `OnExit`.
 
-So, unlike for synchronous methods, `OnExit` is called whether or not `OnException` is called. If `OnException` should only handle exceptions thrown before the method returned, track it with the `MethodExecutionTag`:
+So, unlike for synchronous methods, `OnExit` is called whether or not `OnException` is called. `OnException` can even run **before** `OnExit`: if the method throws before its first `await` that does not complete synchronously, the exception is handled while the method is still running. An exception thrown by `OnEntry` or `OnExit` itself is thrown synchronously to the caller, it is not stored in the returned task.
+
+If `OnException` should only handle exceptions thrown after the method returned, track it with the `MethodExecutionTag`:
 
 ```csharp
 public sealed class LogAttribute : OnMethodBoundaryAspect
@@ -458,6 +477,8 @@ public sealed class LogAttribute : OnMethodBoundaryAspect
     }
 }
 ```
+
+With several aspects each aspect has its own tag, the value set in `OnExit` is seen in `OnException`. Known issue: `OnExit` runs on the calling thread while the method returns its task, `OnException` runs in the state machine, possibly on another thread. If the work fails at that moment both run at the same time on the same `MethodExecutionArgs`, so the tag, `ReturnValue` and `Exception` are not safe to use in both. This only happens for a failure right around the first `await`.
 
 The aspect is called once per call of the async method, also if it is applied to the class or assembly: the compiler-generated state machine (its `MoveNext` method runs each time the method resumes after an `await`) is not woven, so `args.Method` is always the async method itself ([#66](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/66)).
 
@@ -498,12 +519,12 @@ public static async Task<string> Process()
 
 ### Task-like types with their own async method builder
 
-`OnException` is woven into the catch block of the compiler-generated state machine, which completes the async method builder of the compiler (`AsyncTaskMethodBuilder`, `AsyncValueTaskMethodBuilder`, `AsyncVoidMethodBuilder`, ...). Methods returning a task-like type with its own builder (e.g. `UniTask`) can only be woven if their aspects use `OnEntry` and `OnExit` only. A method which also has an aspect with `OnException` is not changed at all, and a build warning is written ("... is not weaved"). Exclude the method from weaving with `[DisableWeaving]` to remove the warning.
+`OnException` is woven into the catch block of the compiler-generated state machine, which completes the async method builder of the compiler (`AsyncTaskMethodBuilder`, `AsyncValueTaskMethodBuilder`, `AsyncVoidMethodBuilder`, ...). Methods returning a task-like type with its own builder (e.g. `UniTask`) can only be woven if their aspects use `OnEntry` and `OnExit` only. A task-like type implemented as a class has no default value other than `null`: if an aspect skips the method body or swallows an exception without setting `args.ReturnValue`, the method returns `null`. A method which also has an aspect with `OnException` is not changed at all, and a build warning is written ("... is not weaved"). Exclude the method from weaving with `[DisableWeaving]` to remove the warning.
 
 ### FlowBehavior in async methods
 
 - `FlowBehavior.Return` in `OnEntry`: `args.ReturnValue` is what the method returns, so it has to be a task, e.g. `args.ReturnValue = Task.FromResult(42);`. If no aspect sets it, the method returns a completed task (with the default value as result for `Task<T>`).
-- `FlowBehavior.Continue` in `OnException`: the returned task completes successfully with `args.ReturnValue` as its result (the value, not a task), e.g. `args.ReturnValue = 0;` for a `Task<int>`. If no aspect sets it, the result is the default value. `args.ReturnValue` is set to `null` before `OnException` is called, the task returned to the caller (provided to `OnExit`) is never the result.
+- `FlowBehavior.Continue` in `OnException`: the returned task completes successfully with `args.ReturnValue` as its result (the value, not a task), e.g. `args.ReturnValue = 0;` for a `Task<int>`. If no aspect sets it, the result is the default value. For `Task<T>` and `ValueTask<T>`, `args.ReturnValue` is set to `null` before `OnException` is called, the task returned to the caller (provided to `OnExit`) is never the result. For `Task`, `ValueTask` and `void` methods `args.ReturnValue` is not changed and still holds the returned task (or `null` if the method had not returned it yet).
 - An exception thrown in `OnException` (e.g. to wrap the original exception) faults the returned task with that exception, like it is thrown to the caller of a synchronous method. The `OnException` of the remaining aspects is not called.
 
 ## Ref structs (`Span<T>`, `ReadOnlySpan<T>`, ...)
@@ -596,7 +617,7 @@ The analysis runs when the project using the aspect is woven. If that project is
 
 ### Method info of `args.Method`
 
-`args.Method` is not resolved by reflection on every call. The weaver generates the internal static class `OnMethodBoundaryAspectCompile.MethodInfos` with a field and a getter for each woven method. The getter loads the `MethodBase` the first time it is called (from the metadata token of the method, with the declaring type for methods of generic types and for generic methods) and returns it from the field afterwards. Each method has its own getter, so a method whose `MethodBase` cannot be loaded does not affect the others.
+`args.Method` is not resolved by reflection on every call. The weaver generates the internal static class `OnMethodBoundaryAspectCompile.MethodInfos` with a field and a getter for each woven method. The getter loads the `MethodBase` the first time it is called (from the metadata token of the method, with the declaring type for methods of generic types and for generic methods) and returns it from the field afterwards. Each method has its own getter, so a method whose `MethodBase` cannot be loaded does not affect the others. For generic methods and methods of generic types `args.Method` is the open definition (`typeof(T)` is not substituted), the type arguments of the call are not part of it.
 
 ### Aspect instances
 
@@ -605,11 +626,12 @@ An aspect that holds no state is created once and shared by all calls, instead o
 - the instance fields are primitives, enums, `string` or `Type` (no collections, arrays or other objects), and only the constructor writes them
 - the constructors only store their arguments and constants in fields (no counting of instances, no reading of a configuration, ...), and the property setters only store the value
 - no method of the aspect calls a setter, takes the address of a field, captures `this` in a lambda or hands `this` to other code (calling its own methods and `GetType()` is fine)
-- no finalizer, and the aspect and its constructors are accessible from the generated code (a `private` nested aspect is created for every call)
+- no finalizer, and the aspect and its constructors are accessible from the generated code (a `private` nested aspect, a non-public aspect of another assembly, or a generic aspect with a private type argument is created for every call)
+- the aspect is no open generic type. Every use of the attribute has its own shared instance: `[Log]` on two methods shares one instance per use, not one for the whole assembly
 
 Other aspects behave as before, a new instance for every call. Use `args.MethodExecutionTag` for data of a call, as the instance is shared between concurrent calls.
 
-The weaver decides when the project is woven, like for the [`MethodExecutionArgs` optimization](#performance). If the assembly of the aspect is replaced by a version holding state and the project using it is not rebuilt, the new version is still shared. Rebuild the projects using the aspect after changing it. Sharing is disabled in the [configuration](#configuration-reference) for all aspects, or for one aspect if it causes problems.
+The weaver decides when the project is woven, like for the [`MethodExecutionArgs` optimization](#providing-only-what-is-used). If the assembly of the aspect is replaced by a version holding state and the project using it is not rebuilt, the new version is still shared. Rebuild the projects using the aspect after changing it. Sharing is disabled in the [configuration](#configuration-reference) for all aspects, or for one aspect if it causes problems.
 
 ### Measured overhead
 
@@ -644,6 +666,8 @@ All settings are optional and go into the `MethodBoundaryAspect` element of `Fod
 | `DisableExecutionArgsOptimization="true"` | the same for all aspects |
 | `<DisableAspectInstanceReuse Aspect="..." />` | create this aspect for every call instead of sharing one instance, see [Aspect instances](#aspect-instances) (full type name, nested types as `Namespace.Outer+Inner`). A build warning is written if the aspect is not applied to any woven method |
 | `DisableAspectInstanceReuse="true"` | the same for all aspects |
+
+Errors in the configuration fail the build with a message: a value other than `true` or `false` for a boolean setting, and an element without the `Aspect` attribute. `Aspect` matches the exact type name only, a generic aspect is written with the number of its type parameters: ``Ns.Validate`1``.
 
 ## Build warnings and errors
 

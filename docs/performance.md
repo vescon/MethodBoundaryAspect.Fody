@@ -20,7 +20,7 @@ cd src/MethodBoundaryAspect.Fody.Benchmark
 dotnet run -c Release -f net10.0 -- --filter "*" --job short
 ```
 
-The project targets `net8.0` and `net10.0`. The same benchmark on .NET 10 (default BenchmarkDotNet job, baseline 20.9 ns, the generic call without an aspect allocates nothing there):
+The project targets `net8.0` and `net10.0`. The same benchmark on .NET 10 (default BenchmarkDotNet job, a longer and more exact run than the short job above, so the two tables are not comparable with each other; baseline 20.9 ns, the generic call without an aspect allocates nothing there):
 
 | Aspect | Static method: time | Static method: allocated | Open generic method: time | Open generic method: allocated |
 |---|---:|---:|---:|---:|
