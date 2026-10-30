@@ -77,6 +77,25 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfAFilterTakesTooLongToMatch_ThenWeavingFailsWithTheAspectAndFilter()
+        {
+            var weaver = CreateWeaver(typeof(InvalidFilterMethods));
+            weaver.RegexMatchTimeout = TimeSpan.FromMilliseconds(100);
+            var method = weaver.ModuleDefinition.GetType(typeof(InvalidFilterMethods).FullName).Methods
+                .Single(m => m.Name == nameof(InvalidFilterMethods.Filtered));
+            var aspect = method.CustomAttributes.Single();
+            var filter = aspect.Properties.Single();
+            // catastrophic backtracking: the name does not match, but the expression tries an exponential number of splits
+            aspect.Properties[0] = new CustomAttributeNamedArgument(filter.Name, new CustomAttributeArgument(filter.Argument.Type, "^(a+)+$"));
+            method.Name = new string('a', 60) + "!";
+
+            Action weave = () => weaver.Execute();
+
+            weave.Should().Throw<WeavingException>()
+                .WithMessage("Aspect 'MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore.Aspects.OnlyOnEntryAspect' needs too long to match the regular expression in MethodNameFilter*");
+        }
+
+        [Fact]
         public void IfAFilterIsNoValidRegularExpression_ThenWeavingFailsWithTheAspectAndFilter()
         {
             var weaver = CreateWeaver(typeof(InvalidFilterMethods));

@@ -271,14 +271,33 @@ namespace MethodBoundaryAspect.Fody
             return name.EndsWith("Attribute") ? name.Substring(0, name.Length - "Attribute".Length) : name;
         }
 
-        private static bool MatchesFilter(string value, string filter, AspectInfo aspectInfo, string filterName)
+        /// <summary>
+        /// The time a regular expression of a filter may take to match a name. A pattern with catastrophic backtracking
+        /// would hang the build otherwise.
+        /// </summary>
+        public TimeSpan RegexMatchTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
+        // the filters are the same for many methods, Regex.IsMatch only caches 15 expressions
+        private readonly Dictionary<string, Regex> _filterRegexes = new Dictionary<string, Regex>();
+
+        private bool MatchesFilter(string value, string filter, AspectInfo aspectInfo, string filterName)
         {
             if (string.IsNullOrEmpty(filter))
                 return true;
 
             try
             {
-                return Regex.IsMatch(value, filter);
+                if (!_filterRegexes.TryGetValue(filter, out var regex))
+                {
+                    regex = new Regex(filter, RegexOptions.None, RegexMatchTimeout);
+                    _filterRegexes[filter] = regex;
+                }
+
+                return regex.IsMatch(value);
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                throw new WeavingException($"Aspect '{aspectInfo.Name}' needs too long to match the regular expression in {filterName} ('{filter}' against '{value}', limit {RegexMatchTimeout.TotalSeconds:0.###} seconds).");
             }
             catch (ArgumentException e)
             {

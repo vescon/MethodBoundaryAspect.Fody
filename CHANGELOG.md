@@ -7,6 +7,7 @@ listed as well). The migration from version 2 is described in the
 
 ## Unreleased
 
+- **The regular expressions of the aspect filters (`NamespaceFilter`, `TypeNameFilter`, `MethodNameFilter`) are cached and have a timeout of 30 seconds.** A pattern with catastrophic backtracking hung the build; it fails with a message naming the aspect and the filter now.
 - **A build warning for a setting in `FodyWeavers.xml` the weaver does not know** (e.g. `SupressRefStructWarnings`). Typos were ignored silently.
 - **`TypedReference`, `ArgIterator` and `RuntimeArgumentHandle` parameters work on .NET Framework.** The compiler does not mark them as ref structs there, so the weaver boxed them: the build failed in PEVerify or the method was an invalid program. They are passed as `null` like other ref structs.
 - **A generic aspect with a private type as type argument** (`[Cached<Outer.PrivateKey>]`) **is created for every call instead of failing with a `MethodAccessException`.** The shared instance is created in a generated class, which cannot access the type.
