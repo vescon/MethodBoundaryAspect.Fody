@@ -557,7 +557,7 @@ Unmanaged pointers (`int*`, `void*`, function pointers) cannot be boxed either a
 What MethodBoundaryAspect.Fody does not do, collected from the sections of this document:
 
 - **Method boundaries only.** An aspect runs before the method body, after it, and when it throws. It cannot change code inside the method, add members or interfaces, or validate how it is used at build time.
-- **Not every method is woven:** constructors, finalizers, abstract, interface and `extern` methods, methods with a variable argument list (`__arglist`), compiler-generated methods and the aspect classes themselves, see [Applying aspects](#methods-classes-properties-and-assemblies).
+- **Not every method is woven:** constructors, finalizers, abstract, interface and `extern` methods, methods with a variable argument list (`__arglist`), methods compiled with runtime-async (.NET 11), compiler-generated methods and the aspect classes themselves, see [Applying aspects](#methods-classes-properties-and-assemblies).
 - **The code of the aspect does not run at build time.** The weaver only reads the values written where the aspect is applied: a filter set in the constructor of an aspect is ignored (with a warning), `CompileTimeValidate` is never called.
 - **The aspect instance is not kept between calls:** a new one is created for every call, or one shared instance for an aspect without state, see [Aspect instances](#aspect-instances).
 - **Async and iterator methods have a different timing:** `OnExit` runs when the method returns its task or enumerable, see [Async methods](#async-methods) and [When the aspect methods are called](#when-the-aspect-methods-are-called). Task-like types with an own builder (e.g. `UniTask`) cannot use `OnException`.
@@ -675,7 +675,7 @@ The weaver writes a build warning instead of failing if it leaves something as i
 
 | Warning | Cause | What to do |
 |---|---|---|
-| `Method '...' is not weaved: ...` | the method can't be woven: an async method of a task-like type with its own builder and an `OnException` aspect, a method with a variable argument list (`__arglist`) | [`[DisableWeaving]`](#excluding-methods-disableweaving) on the method removes the warning |
+| `Method '...' is not weaved: ...` | the method can't be woven: an async method of a task-like type with its own builder and an `OnException` aspect, a method with a variable argument list (`__arglist`), a method compiled with runtime-async (.NET 11, `<Features>runtime-async=on</Features>`) | [`[DisableWeaving]`](#excluding-methods-disableweaving) on the method removes the warning |
 | `Method '...' uses ref struct values ...` | the method has `Span<T>` or other [ref structs](#ref-structs-spant-readonlyspant-) in its signature | `SuppressRefStructWarnings="true"` or `[DisableWeaving]` |
 | `Aspect '...' sets NamespaceFilter ...` | a filter is set in the constructor of the aspect or by overriding the property, the weaver ignores it | set it [where the aspect is applied](#filtering-by-name-and-visibility) |
 | `Aspect '...' uses [ProvideAspectRole] or [AspectRoleDependency] ...` | the obsolete roles are used | use [`[AspectOrderIndex]`](#several-aspects-on-one-method) |

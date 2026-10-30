@@ -8,6 +8,9 @@ namespace MethodBoundaryAspect.Fody
 {
     public static class MethodWeaverFactory
     {
+        // MethodImplAttributes.Async of .NET 11: the runtime, not a state machine, makes the method asynchronous
+        private const MethodImplAttributes RuntimeAsyncFlag = (MethodImplAttributes)0x2000;
+
         public static MethodWeaver MakeWeaver(ModuleDefinition module,
             MethodDefinition method,
             IEnumerable<AspectInfo> aspects,
@@ -28,6 +31,13 @@ namespace MethodBoundaryAspect.Fody
             if (filteredAspects.Count > 0 && method.CallingConvention == MethodCallingConvention.VarArg)
             {
                 unsupportedReason = "methods with a variable argument list (__arglist) are not supported";
+                return null;
+            }
+
+            // the executor method gets the body, the flag stays at the original method which has no await now
+            if (filteredAspects.Count > 0 && (method.ImplAttributes & RuntimeAsyncFlag) != 0)
+            {
+                unsupportedReason = "methods compiled with runtime-async (MethodImplAttributes.Async) are not supported";
                 return null;
             }
 
