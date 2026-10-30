@@ -297,6 +297,36 @@ namespace MethodBoundaryAspect.Fody
         }
 
         /// <summary>
+        /// Like <see cref="ReadReturnValue"/>, but the value of the variable is kept if the ReturnValue is not an
+        /// instance of its type. For the task of an async method: the asynchronous work can fail on another thread while
+        /// OnExit runs and replace the ReturnValue (the catch block of MoveNext sets the result of a swallowed exception).
+        /// </summary>
+        public InstructionBlockChain ReadReturnValueIfOfType(IPersistable executionArgs, VariableDefinition returnValue)
+        {
+            if (InstructionBlockCreator.IsVoid(_method.ReturnType) || _method.ReturnType.CannotBeBoxed())
+                return new InstructionBlockChain();
+
+            var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "get_ReturnValue");
+            var value = _creator.CreateVariable(_method.Module.TypeSystem.Object);
+            var end = Instruction.Create(OpCodes.Nop);
+
+            var instructions = executionArgs.Load(true, false).Instructions.ToList();
+            instructions.Add(Instruction.Create(OpCodes.Call, getReturnValue));
+            instructions.Add(Instruction.Create(OpCodes.Stloc, value));
+            instructions.Add(Instruction.Create(OpCodes.Ldloc, value));
+            instructions.Add(Instruction.Create(OpCodes.Isinst, returnValue.VariableType));
+            instructions.Add(Instruction.Create(OpCodes.Brfalse, end));
+            instructions.Add(Instruction.Create(OpCodes.Ldloc, value));
+            instructions.Add(Instruction.Create(OpCodes.Unbox_Any, returnValue.VariableType));
+            instructions.Add(Instruction.Create(OpCodes.Stloc, returnValue));
+
+            var chain = new InstructionBlockChain();
+            chain.Add(new InstructionBlock("Read ReturnValue if it is of the type", instructions));
+            chain.Add(new InstructionBlock("End", end));
+            return chain;
+        }
+
+        /// <summary>
         /// A FlowBehavior set before the exception (e.g. Continue in OnEntry, where it has no effect) must not swallow it.
         /// </summary>
         public InstructionBlockChain ResetMethodExecutionArgsFlowBehavior(ILoadable executionArgs)

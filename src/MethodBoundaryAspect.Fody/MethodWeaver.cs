@@ -551,9 +551,17 @@ namespace MethodBoundaryAspect.Fody
             }
 
             if (hasReturnValue && onExitAspects.Any() && ReadsBackReturnValue)
-                _creator.ReadReturnValue(ExecutionArgs, returnValue.Variable).Append(_ilProcessor);
+                ReadReturnValueAfterOnExit(returnValue.Variable).Append(_ilProcessor);
 
             return instructionAfterCall;
+        }
+
+        /// <summary>
+        /// Takes the ReturnValue an aspect set in OnExit as the value the method returns.
+        /// </summary>
+        protected virtual InstructionBlockChain ReadReturnValueAfterOnExit(VariableDefinition returnValue)
+        {
+            return _creator.ReadReturnValue(ExecutionArgs, returnValue);
         }
 
         private void HandleReturnValue(bool hasReturnValue, NamedInstructionBlockChain returnValue)

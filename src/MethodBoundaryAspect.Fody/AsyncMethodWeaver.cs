@@ -238,6 +238,13 @@ namespace MethodBoundaryAspect.Fody
             return ldarg_0;
         }
 
+        // the asynchronous work can fail on another thread while OnExit runs, the catch block of MoveNext replaces the
+        // ReturnValue then: the method still returns its task
+        protected override InstructionBlockChain ReadReturnValueAfterOnExit(VariableDefinition returnValue)
+        {
+            return _creator.ReadReturnValueIfOfType(ExecutionArgs, returnValue);
+        }
+
         protected override void WeaveOnException(IList<AspectData> allAspects, Instruction instructionCallStart, Instruction instructionCallEnd, Instruction instructionAfterCall, NamedInstructionBlockChain returnValue)
         {
             var handler = _moveNext.Body.ExceptionHandlers.FirstOrDefault(IsStateMachineCatchBlock);

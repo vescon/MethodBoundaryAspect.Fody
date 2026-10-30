@@ -7,6 +7,7 @@ listed as well). The migration from version 2 is described in the
 
 ## Unreleased
 
+- **An async method returns its task even if the asynchronous work fails while `OnExit` runs.** The woven code read the `ReturnValue` back after `OnExit`, where the catch block of `MoveNext` (another thread) had replaced it by the result of the swallowed exception: the caller got a `NullReferenceException`/`InvalidCastException` or, for `ValueTask<T>`, a default value instead of its task. Rare, it needs a failure on another thread before the method returns.
 - **A constructor parameter of the type parameter of a generic aspect** (`[Validate<int>(5)]`, constructor `Validate(T value)`) no longer fails the build with "Parametertype: T".
 - **A property or field of the type parameter of a generic aspect can be set to a value type** (`[Validate<int>(Value = 5)]`). The woven code boxed the value before setting it, the method threw an `InvalidProgramException`.
 - **The same aspect on the class and on the method can have an `[AspectOrderIndex]`.** The build failed with "No unique order index" because both applications have the same index; only different aspects need different indices.
