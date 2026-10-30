@@ -2,6 +2,7 @@ using FluentAssertions;
 using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 using MethodBoundaryAspect.Fody.RuntimeTests.Targets;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -27,7 +28,9 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
             Func<Task> action = async () => await target.Throw();
 
             await action.Should().ThrowAsync<InvalidOperationException>().WithMessage("An exception");
-            ValueTaskRecordingAspect.Calls.Should().Equal(
+            // OnExit runs on the calling thread, OnException possibly on another one: the order is not fixed
+            ValueTaskRecordingAspect.Calls.First().Should().Be("OnEntry Throw");
+            ValueTaskRecordingAspect.Calls.Should().BeEquivalentTo(
                 "OnEntry Throw",
                 "OnExit Throw",
                 "OnException Throw An exception");
@@ -41,7 +44,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
             Func<Task> action = async () => await target.ThrowWithResult();
 
             await action.Should().ThrowAsync<InvalidOperationException>().WithMessage("An exception");
-            ValueTaskRecordingAspect.Calls.Should().Equal(
+            ValueTaskRecordingAspect.Calls.First().Should().Be("OnEntry ThrowWithResult");
+            ValueTaskRecordingAspect.Calls.Should().BeEquivalentTo(
                 "OnEntry ThrowWithResult",
                 "OnExit ThrowWithResult",
                 "OnException ThrowWithResult An exception");

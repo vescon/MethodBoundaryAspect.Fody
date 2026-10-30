@@ -42,7 +42,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         [Fact]
         public void EveryUseOfAnAttributeShouldHaveItsOwnInstance()
         {
-            // the values of the attribute differ: Sync, Async, Throwing, ThrowingAsync, Two (2) and TwoAsync (2)
+            // Sync, Async, Throwing, ThrowingAsync, Two (2 attributes) and TwoAsync (2 attributes)
             SharedAspectFields<SharedAspectAttribute>().Should().HaveCount(8);
         }
 
@@ -124,13 +124,6 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         }
 
         [Fact]
-        public void EachOfTheTwoAttributesOfTheSameTypeShouldHaveItsOwnField()
-        {
-            // "first" and "second" of Two/TwoAsync are separate attributes, so the instances differ
-            SharedAspectFields<SharedAspectAttribute>().Should().HaveCount(8);
-        }
-
-        [Fact]
         public void AspectWithStateShouldBeCreatedForEveryCall()
         {
             _target.PerCall();
@@ -162,11 +155,11 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         private static FieldInfo[] SharedAspectFields<TAspect>()
         {
             var aspectsClass = typeof(InstanceReuseMethods).Assembly.GetType("OnMethodBoundaryAspectCompile.Aspects");
-            return aspectsClass == null
-                ? new FieldInfo[0]
-                : aspectsClass.GetFields(BindingFlags.NonPublic | BindingFlags.Static)
-                    .Where(f => f.FieldType == typeof(TAspect))
-                    .ToArray();
+            // without the class every "is not shared" assertion would pass
+            aspectsClass.Should().NotBeNull("the assembly has shared aspects");
+            return aspectsClass.GetFields(BindingFlags.NonPublic | BindingFlags.Static)
+                .Where(f => f.FieldType == typeof(TAspect))
+                .ToArray();
         }
     }
 }
