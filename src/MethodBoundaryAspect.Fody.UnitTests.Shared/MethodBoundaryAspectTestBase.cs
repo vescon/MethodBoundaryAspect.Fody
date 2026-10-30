@@ -21,6 +21,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
         protected static string WeavedAssemblyPath { get; private set; }
         protected Type WeavedType { get; private set; }
         protected ModuleWeaver Weaver { get; set; }
+
+        /// <summary>Set it before weaving in a test which expects that the filter does not match any method.</summary>
+        protected bool AllowNothingWeaved { get; set; }
         
         public virtual void Dispose()
         {
@@ -86,6 +89,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
             }
 
             WeaveAssembly(type, Weaver);
+            if (!AllowNothingWeaved)
+                (Weaver.TotalWeavedMethods + Weaver.TotalWeavedProperties).Should().BeGreaterThan(0, "a filter which matches no method makes the test pass without weaving");
             RunPeVerify(type);
         }
 

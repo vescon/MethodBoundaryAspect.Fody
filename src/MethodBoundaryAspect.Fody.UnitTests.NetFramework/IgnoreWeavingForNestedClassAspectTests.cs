@@ -15,6 +15,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
         {
             // Arrange
             var testClassType = typeof(MultipleAspectsWithIgnoredNestedClass);
+            AllowNothingWeaved = true;
 
             // Act
             WeaveAssemblyClassWithNestedTypesAndLoad(testClassType);

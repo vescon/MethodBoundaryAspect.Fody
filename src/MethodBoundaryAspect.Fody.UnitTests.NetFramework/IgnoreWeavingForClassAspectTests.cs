@@ -10,6 +10,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
         public void IfTheClassIsExcluded_ThenNoMethodIsWeaved()
         {
             // Arrange
+            AllowNothingWeaved = true;
             var testClassType = typeof(MultipleAspectsWithIgnoredClass);
 
             // Act

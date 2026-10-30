@@ -11,6 +11,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
         public void IfClassWithDelegateIsWeaved_ThenThereShouldBeNoException()
         {
             // Arrange
+            AllowNothingWeaved = true; // the methods of a delegate have no body
             var type = typeof(ClassWithDelegate);
 
             // Act
