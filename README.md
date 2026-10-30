@@ -230,9 +230,9 @@ public class OrderService
 }
 ```
 
-The members the compiler generates for records (`Equals`, `PrintMembers`, ...) and default interface methods are woven like other methods. Class and assembly aspects also hit property getters and setters. To exclude them, annotate the aspect class with `[AspectSkipProperties(true)]`; it also applies when the aspect is put directly on a property. Like `[AllowChangingInputArguments]`, it is inherited by aspects derived from the annotated aspect class.
+The members the compiler generates for records (`Equals`, `PrintMembers`, ...), the accessors of auto-properties and field-like events and default interface methods are woven like other methods. Class and assembly aspects also hit property getters and setters. To exclude them, annotate the aspect class with `[AspectSkipProperties(true)]`; it also applies when the aspect is put directly on a property. Like `[AllowChangingInputArguments]`, it is inherited by aspects derived from the annotated aspect class.
 
-Not woven: aspects applied directly to an event (class and assembly aspects do hit the `add`/`remove` accessors; weaving aspects of an event is planned for 4.0), constructors, finalizers (they run on the finalizer thread, where an exception of an aspect ends the process), abstract and interface methods, `extern` methods, methods with a variable argument list (`__arglist`, with a build warning), types marked `[CompilerGenerated]` (closures, the state machines of async and iterator methods, anonymous types), methods whose name starts with `<` (lambdas, local functions) and aspect classes: classes derived from `OnMethodBoundaryAspect` (also base aspect classes) and their nested classes, so an assembly aspect doesn't call itself ([#70](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/70)).
+Not woven: aspects applied directly to an event (class and assembly aspects do hit the `add`/`remove` accessors; weaving aspects of an event is planned for 4.0), constructors, finalizers (they run on the finalizer thread, where an exception of an aspect ends the process), abstract and interface methods, `extern` methods, methods with a variable argument list (`__arglist`, with a build warning), types marked `[CompilerGenerated]` (closures, the state machines of async and iterator methods, anonymous types), methods whose name starts with `<` (lambdas, local functions, the `<Main>$` entry point of top-level statements, `<Clone>$` of records) and aspect classes: classes derived from `OnMethodBoundaryAspect` (also base aspect classes) and their nested classes, so an assembly aspect doesn't call itself ([#70](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/70)).
 
 Aspects can be generic (generic attributes need C# 11): `[Validate<int>]` weaves the aspect with the type argument `int`.
 
@@ -271,6 +271,8 @@ The filter is applied to the visibility of the method itself, so a public method
 | `InternalOrProtected` | `protected internal` |
 | `Public` | `public` |
 
+The filters see the names as they are in the compiled assembly. An explicit interface implementation (`void IDisposable.Dispose()`) is a `private` method named `System.IDisposable.Dispose`: `AttributeTargetMemberAttributes = MulticastAttributes.Public` excludes it, `^Dispose$` does not match it, and the example above, `^(?!get_|set_)`, does not exclude the accessors of an explicit implementation (`System.IFoo.get_Name`). Operators are named `op_Addition`, `op_Equality`, ..., and the accessors of an indexer `get_Item`/`set_Item`.
+
 The regular expressions are not anchored and case sensitive: `"Service"` also matches `OrderServiceFactory`, use `^Service$` for the exact name. A filter that takes longer than 30 seconds to match fails the build.
 
 `NamespaceFilter`, `TypeNameFilter`, `MethodNameFilter` and `AttributeTargetMemberAttributes` are read **where the aspect is applied** (as named arguments of the attribute). The weaver does not run the code of your aspects, so a value set in the constructor of the aspect, or by overriding the property, is ignored. A build warning is written for each aspect which does that.
@@ -295,6 +297,8 @@ The symbol has to be defined in the project where the aspect is applied (it work
 ### Several aspects on one method
 
 Without further configuration the aspects are called in the order assembly → class → method, and in declaration order on the same level. `OnExit` and `OnException` are called in reverse order.
+
+Aspects are **not inherited**. An aspect on a class applies to the methods declared in that class only, not to those of a derived class; an aspect on a virtual method does not apply to its overrides, and an aspect on an interface (or on an interface method) does not apply to the classes that implement it. The aspect attribute is inheritable, so reflection (`GetCustomAttributes`) reports it on an override, but the weaver reads the attributes of the method itself. Apply the aspect to the derived class or the override as well. The same aspect can be applied twice to one member (e.g. with different arguments) only if the aspect class has `[AttributeUsage(AllowMultiple = true)]`; the compiler rejects it otherwise.
 
 An aspect applied on several levels runs once per application: with `[Log]` on the class and on one of its methods, that method calls `Log` twice. Remove the attribute from the method to call it once.
 
@@ -557,7 +561,7 @@ Unmanaged pointers (`int*`, `void*`, function pointers) cannot be boxed either a
 What MethodBoundaryAspect.Fody does not do, collected from the sections of this document:
 
 - **Method boundaries only.** An aspect runs before the method body, after it, and when it throws. It cannot change code inside the method, add members or interfaces, or validate how it is used at build time.
-- **Not every method is woven:** constructors, finalizers, abstract, interface and `extern` methods, methods with a variable argument list (`__arglist`), methods compiled with runtime-async (.NET 11), compiler-generated methods and the aspect classes themselves, see [Applying aspects](#methods-classes-properties-and-assemblies).
+- **Not every method is woven:** constructors, finalizers, abstract, interface and `extern` methods, methods with a variable argument list (`__arglist`), methods compiled with runtime-async (.NET 11), methods of `[CompilerGenerated]` types and methods named with `<` (lambdas, local functions, the entry point of top-level statements) and the aspect classes themselves, see [Applying aspects](#methods-classes-properties-and-assemblies).
 - **The code of the aspect does not run at build time.** The weaver only reads the values written where the aspect is applied: a filter set in the constructor of an aspect is ignored (with a warning), `CompileTimeValidate` is never called.
 - **The aspect instance is not kept between calls:** a new one is created for every call, or one shared instance for an aspect without state, see [Aspect instances](#aspect-instances).
 - **Async and iterator methods have a different timing:** `OnExit` runs when the method returns its task or enumerable, see [Async methods](#async-methods) and [When the aspect methods are called](#when-the-aspect-methods-are-called). Task-like types with an own builder (e.g. `UniTask`) cannot use `OnException`.
