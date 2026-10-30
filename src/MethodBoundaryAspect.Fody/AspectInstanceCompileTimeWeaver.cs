@@ -100,7 +100,10 @@ namespace MethodBoundaryAspect.Fody
 
             var getter = new MethodDefinition($"GetAspect_{identifier}",
                 MethodAttributes.Assembly | MethodAttributes.Static | MethodAttributes.HideBySig,
-                aspectType);
+                aspectType)
+            {
+                AggressiveInlining = true
+            };
             // PEVerify wants initlocals for a method with a local variable
             getter.Body.InitLocals = true;
             _aspectsClass.Methods.Add(getter);
