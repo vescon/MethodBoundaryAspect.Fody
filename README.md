@@ -221,6 +221,12 @@ public class OrderService
 
     [Log]                         // getter and setter
     public string Name { get; set; }
+
+    public int Count
+    {
+        [Log] get;                    // the getter only
+        set;
+    }
 }
 ```
 

@@ -322,12 +322,13 @@ namespace MethodBoundaryAspect.Fody
                 if (!IsWeavableMethod(method))
                     return false;
 
-                Collection<CustomAttribute> methodMethodBoundaryAspects;
+                // the aspects of a property and of its accessor (int X { [Aspect] get; }) are both on method level
+                IEnumerable<CustomAttribute> methodMethodBoundaryAspects;
 
                 if (method.IsGetter)
-                    methodMethodBoundaryAspects = propertyGetters[method].CustomAttributes;
+                    methodMethodBoundaryAspects = propertyGetters[method].CustomAttributes.Concat(method.CustomAttributes).ToList();
                 else if (method.IsSetter)
-                    methodMethodBoundaryAspects = propertySetters[method].CustomAttributes;
+                    methodMethodBoundaryAspects = propertySetters[method].CustomAttributes.Concat(method.CustomAttributes).ToList();
                 else
                     methodMethodBoundaryAspects = method.CustomAttributes;
 
