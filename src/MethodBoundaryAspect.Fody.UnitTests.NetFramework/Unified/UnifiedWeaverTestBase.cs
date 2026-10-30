@@ -28,6 +28,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified
 
         protected void AssertRunPeVerify(ModuleWeaver weaver)
         {
+            // the filter of the tests is the full name of a method: a typo weaves nothing and PEVerify has nothing to find
+            weaver.TotalWeavedMethods.Should().Be(1, "the method of the filter has to be woven");
+
             Action action = () => PeVerifier.Verify(Weave.DllPath);
             action.Should().NotThrow();
         }

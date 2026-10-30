@@ -12,7 +12,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.MultipleAspects.FailT
         private readonly Type _testType = typeof (TestFailMethods);
 
         [Fact]
-        public void IfVoidEmptyMethodMethodIsWeaved_ThenPeVerifyShouldBeOk()
+        public void IfVoidEmptyMethodIsWeaved_ThenTheWeavingFailsBecauseOfTheRole()
         {
             // Arrange
             var weaver = new ModuleWeaver();
