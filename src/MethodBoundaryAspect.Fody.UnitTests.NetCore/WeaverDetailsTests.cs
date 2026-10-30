@@ -221,6 +221,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         [Theory]
         [InlineData("SuppressRefStructWarnings")]
         [InlineData("DisableExecutionArgsOptimization")]
+        [InlineData("DisableAspectInstanceReuse")]
         public void IfABooleanConfigValueIsInvalid_ThenWeavingFails(string attributeName)
         {
             var weaver = CreateWeaver(typeof(LastMethodNotWovenMethods));

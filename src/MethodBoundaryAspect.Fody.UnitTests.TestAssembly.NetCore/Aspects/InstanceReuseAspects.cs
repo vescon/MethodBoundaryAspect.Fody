@@ -188,4 +188,35 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore.Aspects
         {
         }
     }
+
+    public class InterlockedCounterAspect : OnMethodBoundaryAspect
+    {
+        private int _count;
+
+        public override void OnEntry(MethodExecutionArgs arg)
+        {
+            System.Threading.Interlocked.Increment(ref _count);
+        }
+    }
+
+    public abstract class CountingBaseAspect : OnMethodBoundaryAspect
+    {
+        protected int Count;
+    }
+
+    public class BaseFieldStateAspect : CountingBaseAspect
+    {
+        public override void OnEntry(MethodExecutionArgs arg)
+        {
+            Count++;
+        }
+    }
+
+    public class SynchronizedReuseAspect : OnMethodBoundaryAspect
+    {
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)]
+        public override void OnEntry(MethodExecutionArgs arg)
+        {
+        }
+    }
 }

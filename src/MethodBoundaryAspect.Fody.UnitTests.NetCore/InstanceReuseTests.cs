@@ -48,6 +48,9 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         [InlineData(typeof(ThisLeakAspect), "hands out this")]
         [InlineData(typeof(LambdaThisAspect), "captures this")]
         [InlineData(typeof(FinalizerAspect), "has a finalizer")]
+        [InlineData(typeof(InterlockedCounterAspect), "takes the address of a field")]
+        [InlineData(typeof(BaseFieldStateAspect), "writes a field of the base class")]
+        [InlineData(typeof(SynchronizedReuseAspect), "has a synchronized method")]
         public void IfAspectCouldHoldState_ThenItIsCreatedForEveryCall(Type aspectType, string reason)
         {
             new AspectInstanceReuseAnalyzer(false, Enumerable.Empty<string>()).CanReuse(ResolveType(aspectType))
