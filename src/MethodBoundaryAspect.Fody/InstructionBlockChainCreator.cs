@@ -219,6 +219,22 @@ namespace MethodBoundaryAspect.Fody
             return chain;
         }
 
+        /// <summary>
+        /// Each aspect has its own MethodExecutionTag: the tag of the aspect before it must not be visible.
+        /// </summary>
+        public InstructionBlockChain ClearMethodExecutionArgsTag(ILoadable executionArgs)
+        {
+            var setMethod = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "set_MethodExecutionTag");
+
+            var instructions = executionArgs.Load(true, false).Instructions.ToList();
+            instructions.Add(Instruction.Create(OpCodes.Ldnull));
+            instructions.Add(Instruction.Create(OpCodes.Call, setMethod));
+
+            var chain = new InstructionBlockChain();
+            chain.Add(new InstructionBlock("Clear MethodExecutionTag", instructions));
+            return chain;
+        }
+
         public InstructionBlockChain LoadMethodExecutionArgsTagFromPersistable(
             IPersistable createMethodExecutionArgsInstance,
             IPersistable tag)

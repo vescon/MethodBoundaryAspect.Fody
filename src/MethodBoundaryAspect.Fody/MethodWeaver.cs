@@ -250,6 +250,10 @@ namespace MethodBoundaryAspect.Fody
             foreach (var entry in aspectsWithOnEntry)
             {
                 var aspect = entry.aspect;
+
+                if (HasMultipleAspects)
+                    AddToSetup(_creator.ClearMethodExecutionArgsTag(ExecutionArgs));
+
                 var call = _creator.CallAspectOnEntry(aspect, ExecutionArgs);
                 AddToSetup(call);
 
