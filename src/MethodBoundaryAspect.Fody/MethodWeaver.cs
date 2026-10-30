@@ -560,6 +560,14 @@ namespace MethodBoundaryAspect.Fody
 
         /// <summary>
         /// OnException of async methods runs after OnExit, the tag set in OnExit has to be kept for it.
+        /// <para>
+        /// Known issue: OnExit runs in the start of the method (on the thread of the caller, when the task is returned)
+        /// and OnException in MoveNext (another thread, while the method is running). They are not synchronized and
+        /// share one MethodExecutionArgs, so with several aspects a failure on another thread while OnExit runs can
+        /// swap the MethodExecutionTag (and Exception, ReturnValue) under the aspect which is called. The aspect
+        /// methods are not the cause (they are synchronous), the two phases of an async method overlap. Fixing it
+        /// needs a lock around every swap and call, with a try/finally on every exit of the start of the method.
+        /// </para>
         /// </summary>
         protected virtual bool SavesTagAfterOnExit => false;
 

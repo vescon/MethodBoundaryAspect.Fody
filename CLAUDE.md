@@ -18,6 +18,7 @@ dotnet test src/MethodBoundaryAspect.Fody.RuntimeTests --configuration Release -
 ```
 
 - **.NET 11:** RuntimeTests targets `net11.0`, so building the solution needs a .NET 11 SDK (the release candidate until GA, installed in CI by a separate `setup-dotnet` step with `dotnet-quality: preview`). When 11.0.x is released: move `11.0.x` into the version list of the normal step in `.github/workflows/main.yaml`, delete the RC step, and drop this note. Nothing in the repo pins the RC version.
+- The CI also runs the RuntimeTests as Debug build on net10.0: the compiler generates classes instead of structs for async state machines there (`dotnet build -c Debug` the weaver, then RuntimeTests `-f net10.0`).
 - Single test: `dotnet test <project> -c Release --no-build --filter "FullyQualifiedName~ClassName.MethodName"`; RuntimeTests on one runtime: add `-f net8.0`.
 - Build with `-m:1 -nodeReuse:false`: a parallel build can fail with a locked `TestAssembly.NetFramework.dll` (it is built by two projects), and a reused MSBuild node may still hold a weaver DLL from another checkout ("Assembly with same name is already loaded").
 - RuntimeTests uses the weaver DLL from `src/MethodBoundaryAspect.Fody/bin/<Configuration>` (no project reference), so building only RuntimeTests does not rebuild the weaver, and an incremental build does not re-weave. After changing the weaver, build `src/MethodBoundaryAspect.Fody` (or the solution) first, then RuntimeTests with `--no-incremental`.
