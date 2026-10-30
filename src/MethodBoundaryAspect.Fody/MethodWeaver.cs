@@ -447,7 +447,7 @@ namespace MethodBoundaryAspect.Fody
                     returnValue == null ? null : new VariablePersistable(returnValue));
             }
             
-            if (allowChangingInputArguments)
+            if (arguments != null)
             {
                 // the called method has written ref/out values into the variables of the caller (it got their addresses),
                 // update ExecutionArgs.Arguments with them so OnExit sees them
