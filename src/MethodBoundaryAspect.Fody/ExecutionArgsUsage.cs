@@ -26,6 +26,12 @@ namespace MethodBoundaryAspect.Fody
         /// <summary>get_Instance: the instance has to be provided</summary>
         Instance = 16,
 
-        All = Arguments | ReadReturnValue | WriteReturnValue | Method | Instance
+        /// <summary>get_/set_MethodExecutionTag: the tag of each aspect has to be saved and restored if there are several aspects</summary>
+        Tag = 32,
+
+        /// <summary>set_FlowBehavior: the FlowBehavior has to be checked after OnEntry and in the catch block</summary>
+        WritesFlowBehavior = 64,
+
+        All = Arguments | ReadReturnValue | WriteReturnValue | Method | Instance | Tag | WritesFlowBehavior
     }
 }

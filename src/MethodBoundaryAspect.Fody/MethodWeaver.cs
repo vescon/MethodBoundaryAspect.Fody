@@ -20,6 +20,12 @@ namespace MethodBoundaryAspect.Fody
         protected readonly ExecutionArgsUsage _executionArgsUsage;
 
         protected bool HasMultipleAspects => _aspects.Count > 1;
+
+        // the tag of each aspect is saved and restored, but only if an aspect uses a tag at all
+        protected bool HandlesTags => HasMultipleAspects && (_executionArgsUsage & ExecutionArgsUsage.Tag) != 0;
+
+        // the FlowBehavior is only checked if an aspect can change it
+        protected bool WritesFlowBehavior => (_executionArgsUsage & ExecutionArgsUsage.WritesFlowBehavior) != 0;
         protected bool AllowChangingInputArguments => _aspects.Any(x => x.Info.AllowChangingInputArguments);
 
         // a return value not used by any aspect doesn't have to be boxed into MethodExecutionArgs.
@@ -234,7 +240,7 @@ namespace MethodBoundaryAspect.Fody
                 var instance = aspect.CreateAspectInstance();
                 AddToSetup(instance);
 
-                if (HasMultipleAspects)
+                if (HandlesTags)
                 {
                     aspect.EnsureTagStorage();
                     var tagStorage = aspect.CreateTagStorage();
@@ -256,15 +262,18 @@ namespace MethodBoundaryAspect.Fody
             {
                 var aspect = entry.aspect;
 
-                if (HasMultipleAspects)
+                if (HandlesTags)
                     AddToSetup(_creator.ClearMethodExecutionArgsTag(ExecutionArgs));
 
                 var call = _creator.CallAspectOnEntry(aspect, ExecutionArgs);
                 AddToSetup(call);
 
-                if (HasMultipleAspects)
+                if (HandlesTags)
                     AddToSetup(_creator.SaveMethodExecutionArgsTagToPersistable(ExecutionArgs, aspect.TagPersistable));
-                
+
+                if (!WritesFlowBehavior)
+                    continue;
+
                 var nopChain = new InstructionBlockChain();
                 nopChain.Add(new InstructionBlock(null, Instruction.Create(OpCodes.Nop)));
 
@@ -284,7 +293,7 @@ namespace MethodBoundaryAspect.Fody
                         if ((onExitAspect.AspectMethods & AspectMethods.OnExit) == 0) 
                             continue;
 
-                        if (HasMultipleAspects)
+                        if (HandlesTags)
                             onExitChain.Add(_creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs, onExitAspect.TagPersistable));
                         onExitChain.Add(_creator.CallAspectOnExit(onExitAspect, ExecutionArgs));
                     }
@@ -549,13 +558,13 @@ namespace MethodBoundaryAspect.Fody
 
             foreach (var aspect in onExitAspects)
             {
-                if (HasMultipleAspects)
+                if (HandlesTags)
                     AddToEnd(_creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs, aspect.TagPersistable));
                 
                 AddToEnd(_creator.CallAspectOnExit(aspect, ExecutionArgs));
 
                 // the tag of an aspect of an async method is read again in OnException, which runs later
-                if (HasMultipleAspects && SavesTagAfterOnExit)
+                if (HandlesTags && SavesTagAfterOnExit)
                     AddToEnd(_creator.SaveMethodExecutionArgsTagToPersistable(ExecutionArgs, aspect.TagPersistable));
             }
 
@@ -609,7 +618,8 @@ namespace MethodBoundaryAspect.Fody
                 _creator.SetMethodExecutionArgsExceptionFromStack(ExecutionArgs);
             exceptionHandlerCurrent = setExceptionFromStack.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
 
-            exceptionHandlerCurrent = _creator.ResetMethodExecutionArgsFlowBehavior(ExecutionArgs).InsertAfter(exceptionHandlerCurrent, _ilProcessor);
+            if (WritesFlowBehavior)
+                exceptionHandlerCurrent = _creator.ResetMethodExecutionArgsFlowBehavior(ExecutionArgs).InsertAfter(exceptionHandlerCurrent, _ilProcessor);
             
             var returnsByRef = _method.ReturnType.WithoutModifiers().IsByReference;
             var returnAfterHandling = new InstructionBlockChain();
@@ -635,7 +645,7 @@ namespace MethodBoundaryAspect.Fody
             foreach (var index in indices)
             {
                 var onExceptionAspect = allAspects[index];
-                if (HasMultipleAspects)
+                if (HandlesTags)
                 {
                     var load = _creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs,
                         onExceptionAspect.TagPersistable);
@@ -644,6 +654,15 @@ namespace MethodBoundaryAspect.Fody
 
                 var callAspectOnException =
                     _creator.CallAspectOnException(onExceptionAspect, ExecutionArgs);
+
+                // without a FlowBehavior set by an aspect the exception is always rethrown
+                if (!WritesFlowBehavior)
+                {
+                    callAspectOnException.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
+                    exceptionHandlerCurrent = callAspectOnException.Last;
+                    continue;
+                }
+
                 var nop = new InstructionBlock("Nop", Instruction.Create(OpCodes.Nop));
 
                 var callOnExitsAndReturn = new InstructionBlockChain();
@@ -652,7 +671,7 @@ namespace MethodBoundaryAspect.Fody
                     var jthAspect = allAspects[i];
                     if ((jthAspect.AspectMethods & AspectMethods.OnExit) == 0) 
                         continue;
-                    if (HasMultipleAspects)
+                    if (HandlesTags)
                         callOnExitsAndReturn.Add(_creator.LoadMethodExecutionArgsTagFromPersistable(ExecutionArgs, jthAspect.TagPersistable));
                     callOnExitsAndReturn.Add(_creator.CallAspectOnExit(jthAspect, ExecutionArgs));
                 }
@@ -679,7 +698,8 @@ namespace MethodBoundaryAspect.Fody
             flowBehaviorHandler.Add(new InstructionBlock("throw", Instruction.Create(OpCodes.Rethrow)));
             flowBehaviorHandler.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
 
-            returnAfterHandling.InsertAfter(flowBehaviorHandler.Last, _ilProcessor);
+            if (WritesFlowBehavior)
+                returnAfterHandling.InsertAfter(flowBehaviorHandler.Last, _ilProcessor);
 
             _method.Body.ExceptionHandlers.Add(new ExceptionHandler(ExceptionHandlerType.Catch)
             {

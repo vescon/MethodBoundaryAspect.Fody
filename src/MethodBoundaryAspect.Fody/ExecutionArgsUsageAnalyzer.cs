@@ -149,15 +149,17 @@ namespace MethodBoundaryAspect.Fody
                     return ExecutionArgsUsage.Method;
                 case "get_Instance":
                     return ExecutionArgsUsage.Instance;
+                case "get_MethodExecutionTag":
+                case "set_MethodExecutionTag":
+                    return ExecutionArgsUsage.Tag;
+                case "set_FlowBehavior":
+                    return ExecutionArgsUsage.WritesFlowBehavior;
                 case "set_Arguments":
                 case "set_Method":
                 case "set_Instance":
                 case "get_Exception":
                 case "set_Exception":
                 case "get_FlowBehavior":
-                case "set_FlowBehavior":
-                case "get_MethodExecutionTag":
-                case "set_MethodExecutionTag":
                     return ExecutionArgsUsage.None;
                 default:
                     return null; // unknown method, e.g. ToString()

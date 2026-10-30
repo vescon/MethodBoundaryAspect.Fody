@@ -31,13 +31,13 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         public static IEnumerable<object[]> AspectUsages => new[]
         {
             new object[] { typeof(NoUsageAspect), ExecutionArgsUsage.None },
-            new object[] { typeof(FlowBehaviorUsageAspect), ExecutionArgsUsage.None },
-            new object[] { typeof(MethodUsageAspect), ExecutionArgsUsage.Method },
+            new object[] { typeof(FlowBehaviorUsageAspect), ExecutionArgsUsage.WritesFlowBehavior },
+            new object[] { typeof(MethodUsageAspect), ExecutionArgsUsage.Method | ExecutionArgsUsage.Tag },
             new object[] { typeof(ArgumentsUsageAspect), ExecutionArgsUsage.Arguments },
             new object[] { typeof(ReadReturnValueUsageAspect), ExecutionArgsUsage.ReadReturnValue },
             new object[] { typeof(WriteReturnValueUsageAspect), ExecutionArgsUsage.WriteReturnValue },
             new object[] { typeof(InstanceUsageAspect), ExecutionArgsUsage.Instance },
-            new object[] { typeof(BaseCallUsageAspect), ExecutionArgsUsage.Method | ExecutionArgsUsage.Arguments },
+            new object[] { typeof(BaseCallUsageAspect), ExecutionArgsUsage.Method | ExecutionArgsUsage.Arguments | ExecutionArgsUsage.Tag },
             new object[] { typeof(HelperUsageAspect), ExecutionArgsUsage.Method | ExecutionArgsUsage.Instance },
             new object[] { typeof(RecursiveHelperUsageAspect), ExecutionArgsUsage.Arguments },
             new object[] { typeof(NullConditionalUsageAspect), ExecutionArgsUsage.Method },
@@ -127,6 +127,23 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 
             accessors.Should().BeEquivalentTo(expectedAccessors);
             HasArgumentsArray(weavedModule, methodName).Should().Be(expectedAccessors.Contains("set_Arguments"));
+        }
+
+        [Fact]
+        public void IfNoAspectChangesTheFlowBehavior_ThenItIsNotChecked()
+        {
+            var weavedModule = Weave(OptOutConfig(), out _);
+
+            CallsFlowBehavior(weavedModule, nameof(ExecutionArgsUsageMethods.NoUsage)).Should().BeFalse();
+            CallsFlowBehavior(weavedModule, nameof(ExecutionArgsUsageMethods.EscapingUsage)).Should().BeTrue();
+        }
+
+        private static bool CallsFlowBehavior(ModuleDefinition module, string methodName)
+        {
+            return GetWeavedMethod(module, methodName).Body.Instructions
+                .Select(i => i.Operand)
+                .OfType<MethodReference>()
+                .Any(m => m.DeclaringType.Name == "MethodExecutionArgs" && m.Name == "get_FlowBehavior");
         }
 
         [Fact]

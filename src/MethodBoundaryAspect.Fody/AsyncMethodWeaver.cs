@@ -280,7 +280,7 @@ namespace MethodBoundaryAspect.Fody
                 .ToList();
 
             // a FlowBehavior set in OnEntry (where Continue has no effect) must not swallow the exception
-            if (onExceptionAspects.Count > 0)
+            if (onExceptionAspects.Count > 0 && WritesFlowBehavior)
             {
                 var resetFlowBehavior = _creator.ResetMethodExecutionArgsFlowBehavior(onExceptionAspects[0].GetMoveNextExecutionArgs(ExecutionArgs));
                 exceptionHandlerCurrent = resetFlowBehavior.InsertAfter(exceptionHandlerCurrent, processor);
@@ -303,13 +303,21 @@ namespace MethodBoundaryAspect.Fody
 
             foreach (var onExceptionAspect in onExceptionAspects)
             {
-                if (HasMultipleAspects)
+                if (HandlesTags)
                 {
                     var load = onExceptionAspect.LoadTagInMoveNext(ExecutionArgs);
                     exceptionHandlerCurrent = load.InsertAfter(exceptionHandlerCurrent, processor);
                 }
 
                 var callAspectOnException = onExceptionAspect.CallOnExceptionInMoveNext(ExecutionArgs, exceptionLocal);
+
+                // without a FlowBehavior set by an aspect the exception is always set on the task
+                if (!WritesFlowBehavior)
+                {
+                    callAspectOnException.InsertAfter(exceptionHandlerCurrent, processor);
+                    exceptionHandlerCurrent = callAspectOnException.Last;
+                    continue;
+                }
 
                 var thenBody = new InstructionBlockChain();
                 if (result != null)

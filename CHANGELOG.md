@@ -7,6 +7,7 @@ listed as well). The migration from version 2 is described in the
 
 ## Unreleased
 
+- **Faster calls of woven methods: the getter of a shared aspect is inlined, and the weaver emits the code for `MethodExecutionTag` and `FlowBehavior` only if an aspect uses it.** Measured on .NET 10: the overhead of two aspects on a method drops from 6.0 ns to 2.2 ns, of two aspects on an async method from 17 ns and 208 B to 9 ns and 144 B. Aspects which are not analyzed (`DisableExecutionArgsOptimization`, the aspect passes `args` on) keep the full code.
 - **The regular expressions of the aspect filters (`NamespaceFilter`, `TypeNameFilter`, `MethodNameFilter`) are cached and have a timeout of 30 seconds.** A pattern with catastrophic backtracking hung the build; it fails with a message naming the aspect and the filter now.
 - **A build warning for a setting in `FodyWeavers.xml` the weaver does not know** (e.g. `SupressRefStructWarnings`). Typos were ignored silently.
 - **`TypedReference`, `ArgIterator` and `RuntimeArgumentHandle` parameters work on .NET Framework.** The compiler does not mark them as ref structs there, so the weaver boxed them: the build failed in PEVerify or the method was an invalid program. They are passed as `null` like other ref structs.
