@@ -7,6 +7,7 @@ listed as well). The migration from version 2 is described in the
 
 ## Unreleased
 
+- **A build warning for a setting in `FodyWeavers.xml` the weaver does not know** (e.g. `SupressRefStructWarnings`). Typos were ignored silently.
 - **`TypedReference`, `ArgIterator` and `RuntimeArgumentHandle` parameters work on .NET Framework.** The compiler does not mark them as ref structs there, so the weaver boxed them: the build failed in PEVerify or the method was an invalid program. They are passed as `null` like other ref structs.
 - **A generic aspect with a private type as type argument** (`[Cached<Outer.PrivateKey>]`) **is created for every call instead of failing with a `MethodAccessException`.** The shared instance is created in a generated class, which cannot access the type.
 - **An aspect with a `[MethodImpl(MethodImplOptions.Synchronized)]` method is no longer shared between the calls.** The shared instance was locked by every call, so the calls of the whole process waited for each other (and a deadlock was possible). The aspect is created for every call.

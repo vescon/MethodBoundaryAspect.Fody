@@ -656,6 +656,7 @@ The weaver writes a build warning instead of failing if it leaves something as i
 | `Aspect '...' sets NamespaceFilter ...` | a filter is set in the constructor of the aspect or by overriding the property, the weaver ignores it | set it [where the aspect is applied](#filtering-by-name-and-visibility) |
 | `Aspect '...' uses [ProvideAspectRole] or [AspectRoleDependency] ...` | the obsolete roles are used | use [`[AspectOrderIndex]`](#several-aspects-on-one-method) |
 | `Aspect '...' configured in DisableExecutionArgsOptimization/DisableAspectInstanceReuse ... was not found` | the aspect named in `FodyWeavers.xml` is not applied to any woven method | use the full type name, or remove the entry |
+| `Unknown setting '...' in FodyWeavers.xml is ignored` | a typo in the `MethodBoundaryAspect` element (e.g. `SupressRefStructWarnings`) | see the [Configuration reference](#configuration-reference) |
 
 An invalid setup of an aspect (e.g. an invalid regular expression in a filter, two aspects of a method with the same order index) fails the build with a message that names the aspect or the method, e.g. `Aspect '...' has an invalid regular expression in ...` or `Method '...' could not be weaved: ...`.
 

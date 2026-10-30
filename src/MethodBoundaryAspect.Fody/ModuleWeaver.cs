@@ -161,6 +161,7 @@ namespace MethodBoundaryAspect.Fody
             if (suppressRefStructWarnings != null)
                 SuppressRefStructWarnings = ParseBool(suppressRefStructWarnings);
 
+            WarnAboutUnknownSettings();
             ReadExecutionArgsOptimizationConfig();
             ReadAspectInstanceReuseConfig();
 
@@ -189,6 +190,29 @@ namespace MethodBoundaryAspect.Fody
                 nameof(DisableAspectInstanceReuse),
                 DisableAspectInstanceReuseAspects,
                 _aspectInstanceReuseAnalyzer.MatchedDisabledAspects);
+        }
+
+        private static readonly string[] KnownAttributes =
+        {
+            nameof(SuppressRefStructWarnings), nameof(DisableExecutionArgsOptimization), nameof(DisableAspectInstanceReuse)
+        };
+
+        private static readonly string[] KnownElements =
+        {
+            nameof(DisableExecutionArgsOptimization), nameof(DisableAspectInstanceReuse)
+        };
+
+        // a typo would be ignored silently, e.g. SupressRefStructWarnings
+        private void WarnAboutUnknownSettings()
+        {
+            if (Config == null)
+                return;
+
+            foreach (var attribute in Config.Attributes().Where(a => !KnownAttributes.Contains(a.Name.LocalName)))
+                WriteWarning($"Unknown setting '{attribute.Name.LocalName}' in FodyWeavers.xml is ignored. Known attributes: {string.Join(", ", KnownAttributes)}.");
+
+            foreach (var element in Config.Elements().Where(e => !KnownElements.Contains(e.Name.LocalName)))
+                WriteWarning($"Unknown setting '{element.Name.LocalName}' in FodyWeavers.xml is ignored. Known elements: {string.Join(", ", KnownElements)}.");
         }
 
         private void WarnAboutUnmatchedAspects(string settingName, IEnumerable<string> configuredAspects, ISet<string> matchedAspects)
