@@ -26,16 +26,29 @@ listed as well). The migration from version 2 is described in the
 - **`FlowBehavior` is reset before `OnException`:** `FlowBehavior.Continue` set in `OnEntry` (where it has no effect) made the method swallow a later exception if an aspect had an `OnException`, even if it did not ask for it. The exception is rethrown now unless `OnException` sets `Continue` or `Return`.
 - **An aspect on the `get` or `set` accessor of a property** (`int X { [Log] get; }`) is woven into that accessor. It was ignored, only aspects on the property itself were read.
 - **Each aspect has its own `MethodExecutionTag`:** with several aspects on a method, an aspect which did not set the tag saw the tag of the aspect before it in `OnEntry`, `OnExit` and `OnException`. It sees `null` now, as documented.
+- **The configuration in `FodyWeavers.xml` has a schema** (`MethodBoundaryAspect.Fody.xcf`): IntelliSense and validation for `SuppressRefStructWarnings`, `DisableExecutionArgsOptimization` and `DisableAspectInstanceReuse`.
 - The NuGet package contains a README (shown on nuget.org); no change for users of the library.
 
 ## 3.6.0
 
-- The runtime tests also run on .NET 11 (release candidate) and .NET Framework 4.8.1; no change for users.
+The same code as 3.5.3, the version was named after the release of the changes listed under 3.5.2. No change for users.
+
+## 3.5.3
+
+- The runtime tests also run on .NET 11 (release candidate); no change for users.
+
+## 3.5.2
+
+- The runtime tests also run on .NET Framework 4.8.1; no change for users.
 - **`[AllowChangingInputArguments]` and `[AspectSkipProperties]` are inherited** by aspects derived from the aspect class that has the attribute. The weaver only read them from the aspect class itself, so a derived aspect silently could not change arguments or skip properties.
 - **An invalid order of aspect roles fails the build with a message** naming the aspect (`InvalidAspectConfigurationException`), not with an empty `InvalidOperationException`.
 - **A type that cannot be resolved** (missing in its assembly) no longer fails the weaver with a `NullReferenceException` where values of that type are passed to the aspect.
 - `OnMethodBoundaryAspect.CompileTimeValidate` (obsolete) throws a `NotSupportedException` with an explanation instead of `NotImplementedException("TODO!")`.
 - The XML documentation tells which `MethodExecutionArgs` values are `null`.
+
+## 3.5.1
+
+- Publishing to nuget.org uses trusted publishing; no change for users.
 
 ## 3.5.0
 
