@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Xml.Linq;
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.Shared;
@@ -208,6 +209,72 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             weave.Should().Throw<Exception>().WithMessage("*DisableAspectInstanceReuse*requires the full type name*");
         }
 
+        [Fact]
+        public void IfAspectsAreShared_ThenTheWeavedMethodsRunWithTheSharedInstance()
+        {
+            using (var woven = WeaveAndLoad(new XElement("MethodBoundaryAspect")))
+            {
+                woven.Invoke(typeof(InstanceReuseMethods), nameof(InstanceReuseMethods.Stateless));
+                woven.Invoke(typeof(InstanceReuseMethods), nameof(InstanceReuseMethods.Stateless));
+
+                woven.GetStaticField(typeof(StatelessReuseAspect), nameof(StatelessReuseAspect.Calls)).Should().Be(2);
+                SharedInstance(woven, typeof(StatelessReuseAspect)).Should().NotBeNull();
+            }
+        }
+
+        [Fact]
+        public void IfReuseIsDisabledInTheConfiguration_ThenTheWeavedMethodsRunWithoutSharedInstances()
+        {
+            using (var woven = WeaveAndLoad(new XElement("MethodBoundaryAspect", new XAttribute("DisableAspectInstanceReuse", "true"))))
+            {
+                woven.Invoke(typeof(InstanceReuseMethods), nameof(InstanceReuseMethods.Stateless));
+                woven.Invoke(typeof(InstanceReuseMethods), nameof(InstanceReuseMethods.Stateless));
+
+                woven.GetStaticField(typeof(StatelessReuseAspect), nameof(StatelessReuseAspect.Calls)).Should().Be(2);
+                woven.Assembly.GetType(AspectsClass).Should().BeNull();
+            }
+        }
+
+        [Fact]
+        public void IfReuseIsDisabledForAnAspect_ThenOnlyThisAspectIsNotSharedAtRuntime()
+        {
+            var config = new XElement("MethodBoundaryAspect",
+                new XElement("DisableAspectInstanceReuse", new XAttribute("Aspect", typeof(OptOutReuseAspect).FullName)));
+
+            using (var woven = WeaveAndLoad(config))
+            {
+                woven.Invoke(typeof(InstanceReuseMethods), nameof(InstanceReuseMethods.OptOut));
+                woven.Invoke(typeof(InstanceReuseMethods), nameof(InstanceReuseMethods.Stateless));
+
+                SharedInstance(woven, typeof(OptOutReuseAspect)).Should().BeNull();
+                SharedInstance(woven, typeof(StatelessReuseAspect)).Should().NotBeNull();
+            }
+        }
+
+        [Fact]
+        public void IfTheOptimizationOfTheArgumentsIsDisabled_ThenTheWeavedMethodsStillRun()
+        {
+            var config = new XElement("MethodBoundaryAspect", new XAttribute("DisableExecutionArgsOptimization", "true"));
+
+            using (var woven = WeaveAndLoad(config))
+            {
+                woven.Invoke(typeof(InstanceReuseMethods), nameof(InstanceReuseMethods.Stateless));
+
+                woven.GetStaticField(typeof(StatelessReuseAspect), nameof(StatelessReuseAspect.Calls)).Should().Be(1);
+            }
+        }
+
+        // the value of the field holding the shared instance of the aspect, null if it is not (yet) created or has no field
+        private static object SharedInstance(WeavedAssembly woven, Type aspectType)
+        {
+            var aspectsClass = woven.Assembly.GetType(AspectsClass);
+            aspectsClass.Should().NotBeNull("some aspects are shared");
+            return aspectsClass.GetFields(BindingFlags.NonPublic | BindingFlags.Static)
+                .Where(f => f.FieldType.FullName == aspectType.FullName)
+                .Select(f => f.GetValue(null))
+                .FirstOrDefault(v => v != null);
+        }
+
         private static IEnumerable<string> CreatedTypes(IEnumerable<Instruction> instructions) =>
             instructions.Where(i => i.OpCode == OpCodes.Newobj)
                 .Select(i => ((MethodReference)i.Operand).DeclaringType.FullName);
@@ -224,6 +291,12 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         {
             var method = module.GetType((type ?? typeof(InstanceReuseMethods)).FullName).Methods.Single(m => m.Name == methodName);
             return method.Body.Instructions;
+        }
+
+        private WeavedAssembly WeaveAndLoad(XElement config)
+        {
+            Weave(config);
+            return WeavedAssembly.Load(_weavedAssemblyPaths.Last());
         }
 
         private ModuleDefinition Weave(XElement config, List<string> warnings = null)
