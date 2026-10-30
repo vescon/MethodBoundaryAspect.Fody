@@ -414,10 +414,12 @@ namespace MethodBoundaryAspect.Fody
                 // get arguments from ExecutionArgs because they could have been changed in aspect code
                 // (except ref structs and pointers which cannot be passed via ExecutionArgs)
                 var instanceOffset = _method.IsStatic ? 0 : 1;
+                var byRefPassedViaArguments = GetByRefParametersPassedViaArguments().ToList();
                 args = _method.Parameters
                     .Select((x, i) => x.ParameterType.CannotBeBoxed()
                         ? (ILoadable)new ArgumentLoadable(i + instanceOffset, x, _method.Body.GetILProcessor())
-                        : new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator))
+                        : new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator,
+                            passOriginalReference: byRefPassedViaArguments.Contains(x)))
                     .ToArray();
 
                 callSourceMethod = _creator.CallMethodWithReturn(
@@ -437,18 +439,9 @@ namespace MethodBoundaryAspect.Fody
             
             if (allowChangingInputArguments)
             {
-                // write byref variables back for origin source method:
-                // the called method has written ref/out values into the local variables passed by address
-                var copyBackBlock = CreateCopyBackByRefArguments(parameter =>
-                {
-                    var byRefVariable = ((ArrayElementLoadable)args[parameter.Index]).ByRefVariable;
-                    return new[] { _ilProcessor.Create(OpCodes.Ldloc, byRefVariable) };
-                });
-                if (copyBackBlock != null)
-                    callSourceMethod.Add(copyBackBlock);
-
-                // update ExecutionArgs.Arguments with the ref/out values so OnExit sees them
-                var updateArgumentsBlock = CreateUpdateArgumentsArrayFromByRefVariables(arguments, args);
+                // the called method has written ref/out values into the variables of the caller (it got their addresses),
+                // update ExecutionArgs.Arguments with them so OnExit sees them
+                var updateArgumentsBlock = CreateUpdateArgumentsArrayFromByRefParameters(arguments);
                 if (updateArgumentsBlock != null)
                     callSourceMethod.Add(updateArgumentsBlock);
             }
@@ -458,17 +451,17 @@ namespace MethodBoundaryAspect.Fody
             instructionCallEnd = callSourceMethod.Last;
         }
 
-        private InstructionBlock CreateUpdateArgumentsArrayFromByRefVariables(NamedInstructionBlockChain arguments, ILoadable[] args)
+        private InstructionBlock CreateUpdateArgumentsArrayFromByRefParameters(NamedInstructionBlockChain arguments)
         {
             var instructions = new List<Instruction>();
             foreach (var parameter in GetByRefParametersPassedViaArguments())
             {
-                var byRefVariable = ((ArrayElementLoadable)args[parameter.Index]).ByRefVariable;
                 instructions.Add(_ilProcessor.Create(OpCodes.Ldloc, arguments.Variable));
                 instructions.Add(_ilProcessor.Create(OpCodes.Ldc_I4, parameter.Index));
-                instructions.Add(_ilProcessor.Create(OpCodes.Ldloc, byRefVariable));
 
                 var elementType = ((ByReferenceType)parameter.ParameterType.WithoutModifiers()).ElementType;
+                instructions.Add(_ilProcessor.Create(OpCodes.Ldarg, parameter));
+                instructions.Add(_ilProcessor.Create(OpCodes.Ldobj, elementType));
                 // Resolve() returns the element type of an array
                 if (elementType.IsValueTypeOrGenericParameter() || (!elementType.IsArray && elementType.Resolve()?.IsValueType == true))
                     instructions.Add(_ilProcessor.Create(OpCodes.Box, elementType));

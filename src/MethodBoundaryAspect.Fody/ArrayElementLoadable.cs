@@ -11,13 +11,16 @@ namespace MethodBoundaryAspect.Fody
         private readonly ParameterDefinition _parameter;
         private readonly ILProcessor _processor;
         private readonly InstructionBlockChainCreator _creator;
+        private readonly bool _passOriginalReference;
 
         public ArrayElementLoadable(
             VariableDefinition arrayVariableDefinition,
             int index,
             ParameterDefinition parameterDefinition,
-            ILProcessor methodProcessor, InstructionBlockChainCreator creator)
+            ILProcessor methodProcessor, InstructionBlockChainCreator creator,
+            bool passOriginalReference = false)
         {
+            _passOriginalReference = passOriginalReference;
             _arrayVariableDefinition = arrayVariableDefinition;
             _index = index;
             _parameter = parameterDefinition;
@@ -26,11 +29,6 @@ namespace MethodBoundaryAspect.Fody
         }
 
         public TypeReference PersistedType => _parameter.ParameterType;
-
-        /// <summary>
-        /// Local variable whose address was passed for a ref/out parameter by the last <see cref="Load"/> call.
-        /// </summary>
-        public VariableDefinition ByRefVariable { get; private set; }
 
         public InstructionBlock Load(bool forDereferencing, bool onlyValue)
         {
@@ -58,10 +56,21 @@ namespace MethodBoundaryAspect.Fody
 
             if (!onlyValue && parameterType.IsByReference) // support for ref-Arguments
             {
-                var variable = _creator.CreateVariable(castToType).Variable;
-                instructions.Add(_processor.Create(OpCodes.Stloc, variable));
-                instructions.Add(_processor.Create(OpCodes.Ldloca, variable));
-                ByRefVariable = variable;
+                if (_passOriginalReference)
+                {
+                    // the value is written into the variable of the caller, which the called method gets: the method works
+                    // on the variable itself (a returned reference points to it, a value assigned before an exception stays)
+                    instructions.Insert(0, _processor.Create(OpCodes.Ldarg, _parameter));
+                    instructions.Add(castToType.GetStIndInstruction());
+                    instructions.Add(_processor.Create(OpCodes.Ldarg, _parameter));
+                }
+                else
+                {
+                    // a read only parameter (in): the called method gets the address of a copy
+                    var variable = _creator.CreateVariable(castToType).Variable;
+                    instructions.Add(_processor.Create(OpCodes.Stloc, variable));
+                    instructions.Add(_processor.Create(OpCodes.Ldloca, variable));
+                }
             }
 
             return new InstructionBlock($"Load {_index}", instructions);
