@@ -70,6 +70,9 @@ namespace MethodBoundaryAspect.Fody
             {
                 arguments = _creator.CreateMethodArgumentsArray();
                 AddToSetup(arguments);
+
+                if (AllowChangingInputArguments)
+                    RememberOriginalArgumentElements(arguments);
             }
 
             WeaveMethodExecutionArgs(arguments);
@@ -105,6 +108,9 @@ namespace MethodBoundaryAspect.Fody
             _method.DeclaringType.Methods.Add(_clonedMethod);
             ClearMethod(_method);
         }
+
+        private readonly Dictionary<ParameterDefinition, VariableDefinition> _originalArgumentElements =
+            new Dictionary<ParameterDefinition, VariableDefinition>();
 
         private static readonly HashSet<string> ExecutorAttributeTypes = new HashSet<string>
         {
@@ -463,8 +469,9 @@ namespace MethodBoundaryAspect.Fody
                         if (x.ParameterType.CannotBeBoxed())
                             return (ILoadable)new ArgumentLoadable(i + instanceOffset, x, _method.Body.GetILProcessor());
 
+                        _originalArgumentElements.TryGetValue(x, out var originalElement);
                         var element = new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator,
-                            passOriginalReference: byRefPassedViaArguments.Contains(x));
+                            passOriginalReference: byRefPassedViaArguments.Contains(x), originalElement: originalElement);
                         var prepared = element.Prepare();
                         var prepareChain = new InstructionBlockChain();
                         prepareChain.Add(prepared.Prepare);
@@ -500,6 +507,27 @@ namespace MethodBoundaryAspect.Fody
             callSourceMethod.Append(_ilProcessor);
             instructionCallStart = callSourceMethod.First;
             instructionCallEnd = callSourceMethod.Last;
+        }
+
+        // the boxes which were created for the arguments: an element which is still the same box was not changed by an aspect
+        private void RememberOriginalArgumentElements(NamedInstructionBlockChain arguments)
+        {
+            var chain = new InstructionBlockChain();
+            foreach (var parameter in GetByRefParametersPassedViaArguments())
+            {
+                var original = _creator.CreateVariable(_method.Module.TypeSystem.Object).Variable;
+                _originalArgumentElements.Add(parameter, original);
+                chain.Add(new InstructionBlock("Remember the original argument " + parameter.Index, new List<Instruction>
+                {
+                    _ilProcessor.Create(OpCodes.Ldloc, arguments.Variable),
+                    _ilProcessor.Create(OpCodes.Ldc_I4, parameter.Index),
+                    _ilProcessor.Create(OpCodes.Ldelem_Ref),
+                    _ilProcessor.Create(OpCodes.Stloc, original)
+                }));
+            }
+
+            if (chain.InstructionBlocks.Count > 0)
+                AddToSetup(chain);
         }
 
         private InstructionBlock CreateUpdateArgumentsArrayFromByRefParameters(NamedInstructionBlockChain arguments)

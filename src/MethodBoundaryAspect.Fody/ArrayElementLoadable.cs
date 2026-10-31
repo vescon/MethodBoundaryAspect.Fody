@@ -13,15 +13,18 @@ namespace MethodBoundaryAspect.Fody
         private readonly ILProcessor _processor;
         private readonly InstructionBlockChainCreator _creator;
         private readonly bool _passOriginalReference;
+        private readonly VariableDefinition _originalElement;
 
         public ArrayElementLoadable(
             VariableDefinition arrayVariableDefinition,
             int index,
             ParameterDefinition parameterDefinition,
             ILProcessor methodProcessor, InstructionBlockChainCreator creator,
-            bool passOriginalReference = false)
+            bool passOriginalReference = false,
+            VariableDefinition originalElement = null)
         {
             _passOriginalReference = passOriginalReference;
+            _originalElement = originalElement;
             _arrayVariableDefinition = arrayVariableDefinition;
             _index = index;
             _parameter = parameterDefinition;
@@ -93,6 +96,23 @@ namespace MethodBoundaryAspect.Fody
                     // on the variable itself (a returned reference points to it, a value assigned before an exception stays)
                     instructions.Insert(0, _processor.Create(OpCodes.Ldarg, _parameter));
                     instructions.Add(castToType.GetStIndInstruction());
+
+                    if (_originalElement != null)
+                    {
+                        // only an element which an aspect replaced is written: the variable of the caller could have been
+                        // changed by another thread meanwhile (Interlocked.Add(ref shared, 1)), the old value must not win
+                        var unchanged = _processor.Create(OpCodes.Nop);
+                        instructions.InsertRange(0, new[]
+                        {
+                            _processor.Create(OpCodes.Ldloc, _arrayVariableDefinition),
+                            _processor.Create(OpCodes.Ldc_I4, _index),
+                            _processor.Create(OpCodes.Ldelem_Ref),
+                            _processor.Create(OpCodes.Ldloc, _originalElement),
+                            _processor.Create(OpCodes.Beq, unchanged)
+                        });
+                        instructions.Add(unchanged);
+                    }
+
                     instructions.Add(_processor.Create(OpCodes.Ldarg, _parameter));
                 }
                 else
