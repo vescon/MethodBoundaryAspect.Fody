@@ -16,7 +16,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
         }
     }
 
-    public class ExceptionInEntryAndExit
+    public class ExceptionInExit
     {
         public static readonly System.Collections.Generic.List<string> Calls = new System.Collections.Generic.List<string>();
 
@@ -26,14 +26,14 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
 
     public class ThrowingBoundaryAspectAttribute : Attributes.OnMethodBoundaryAspect
     {
-        public override void OnEntry(Attributes.MethodExecutionArgs arg) => ExceptionInEntryAndExit.Calls.Add("OnEntry");
+        public override void OnEntry(Attributes.MethodExecutionArgs arg) => ExceptionInExit.Calls.Add("OnEntry");
 
         public override void OnExit(Attributes.MethodExecutionArgs arg)
         {
-            ExceptionInEntryAndExit.Calls.Add("OnExit");
+            ExceptionInExit.Calls.Add("OnExit");
             throw new InvalidOperationException("from OnExit");
         }
 
-        public override void OnException(Attributes.MethodExecutionArgs arg) => ExceptionInEntryAndExit.Calls.Add("OnException");
+        public override void OnException(Attributes.MethodExecutionArgs arg) => ExceptionInExit.Calls.Add("OnException");
     }
 }

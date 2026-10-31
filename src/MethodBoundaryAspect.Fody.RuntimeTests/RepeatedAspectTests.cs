@@ -15,7 +15,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         public RepeatedAspectTests()
         {
             NameRecordingAspect.Calls.Clear();
-            ExceptionInEntryAndExit.Calls.Clear();
+            ExceptionInExit.Calls.Clear();
         }
 
         [Fact]
@@ -32,10 +32,10 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         [Fact]
         public void AnExceptionInOnExitDoesNotCallOnException()
         {
-            Action call = () => new ExceptionInEntryAndExit().Method();
+            Action call = () => new ExceptionInExit().Method();
 
             call.Should().Throw<InvalidOperationException>().WithMessage("from OnExit");
-            ExceptionInEntryAndExit.Calls.Should().Equal("OnEntry", "body", "OnExit");
+            ExceptionInExit.Calls.Should().Equal("OnEntry", "body", "OnExit");
         }
     }
 }

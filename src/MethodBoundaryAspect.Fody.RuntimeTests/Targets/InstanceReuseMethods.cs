@@ -14,6 +14,9 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
 
     public class InstanceReuseMethods
     {
+        [SharedOverlappingAspect]
+        public int Overlapping(int value) => value;
+
         [SharedAspect("method")]
         public int Sync(int value) => value;
 

@@ -4,6 +4,7 @@ using MethodBoundaryAspect.Fody.RuntimeTests.Targets;
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
@@ -97,6 +98,23 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 
             InstanceReuseAspects.MixedUpTags.Should().Be(0);
             InstanceReuseAspects.Calls.Count(c => c.StartsWith("async2:exit")).Should().Be(200);
+        }
+
+        [Fact]
+        public async Task OverlappingCallsShouldNotMixUpTheTagsOfTheCalls()
+        {
+            const int calls = 8;
+            using (InstanceReuseAspects.OverlapBarrier = new Barrier(calls))
+            {
+                // the barrier in OnEntry lets a call return only when all calls are between OnEntry and OnExit
+                var tasks = Enumerable.Range(0, calls)
+                    .Select(i => Task.Factory.StartNew(() => _target.Overlapping(i), TaskCreationOptions.LongRunning))
+                    .ToArray();
+
+                (await Task.WhenAll(tasks)).Should().BeEquivalentTo(Enumerable.Range(0, calls));
+            }
+
+            InstanceReuseAspects.MixedUpTags.Should().Be(0);
         }
 
         [Fact]

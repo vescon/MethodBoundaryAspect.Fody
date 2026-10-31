@@ -82,8 +82,29 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
         }
     }
 
+    /// <summary>
+    /// Holds no state and is shared. Every call waits in OnEntry for the other calls, so all calls are between
+    /// OnEntry and OnExit at the same time.
+    /// </summary>
+    public class SharedOverlappingAspectAttribute : OnMethodBoundaryAspect
+    {
+        public override void OnEntry(MethodExecutionArgs arg)
+        {
+            arg.MethodExecutionTag = arg.Arguments[0];
+            InstanceReuseAspects.OverlapBarrier.SignalAndWait();
+        }
+
+        public override void OnExit(MethodExecutionArgs arg)
+        {
+            if (!Equals(arg.MethodExecutionTag, arg.Arguments[0]))
+                Interlocked.Increment(ref InstanceReuseAspects.MixedUpTags);
+        }
+    }
+
     public static class InstanceReuseAspects
     {
+        public static Barrier OverlapBarrier;
+
         public static readonly List<string> Calls = new List<string>();
 
         public static int MixedUpTags;
