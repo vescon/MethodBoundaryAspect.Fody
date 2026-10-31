@@ -1,4 +1,3 @@
-#if NETCOREAPP
 using FluentAssertions;
 using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 using MethodBoundaryAspect.Fody.RuntimeTests.Targets;
@@ -22,4 +21,3 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         }
     }
 }
-#endif

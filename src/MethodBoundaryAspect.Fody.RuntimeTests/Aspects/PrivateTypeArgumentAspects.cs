@@ -13,7 +13,6 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
         public override void OnEntry(MethodExecutionArgs arg) => ArgumentCount = arg.Arguments.Length;
     }
 
-#if NETCOREAPP
     /// <summary>
     /// Holds no state, so one instance would be shared; applied with a type argument which is private.
     /// </summary>
@@ -21,5 +20,4 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
     {
         public override void OnEntry(MethodExecutionArgs arg) => ReadArgumentsAttribute.LastType = typeof(T).Name;
     }
-#endif
 }
