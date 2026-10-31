@@ -106,6 +106,19 @@ namespace MethodBoundaryAspect.Fody
             ClearMethod(_method);
         }
 
+        private static readonly HashSet<string> ExecutorAttributeTypes = new HashSet<string>
+        {
+            "System.Diagnostics.DebuggerHiddenAttribute",
+            "System.Diagnostics.DebuggerStepThroughAttribute",
+            "System.Diagnostics.DebuggerNonUserCodeAttribute",
+            "System.Diagnostics.StackTraceHiddenAttribute",
+            "System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptionsAttribute",
+            "System.Security.SecurityCriticalAttribute",
+            "System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessageAttribute",
+            "System.Diagnostics.CodeAnalysis.RequiresUnreferencedCodeAttribute",
+            "System.Diagnostics.CodeAnalysis.RequiresDynamicCodeAttribute"
+        };
+
         private static MethodDefinition CloneMethod(MethodDefinition method)
         {
             var targetMethodName = "$_executor_" + method.Name;
@@ -127,6 +140,23 @@ namespace MethodBoundaryAspect.Fody
             clonedMethod.Body.InitLocals = method.Body.InitLocals;
             clonedMethod.ImplAttributes |= method.ImplAttributes
                                            & (MethodImplAttributes.NoOptimization | MethodImplAttributes.AggressiveOptimization);
+
+            // the executor runs the code of the original method, so it needs the attributes which change how that code is
+            // debugged, trimmed or run (the original keeps them as well, it is the wrapper then)
+            foreach (var attribute in method.CustomAttributes)
+            {
+                if (!ExecutorAttributeTypes.Contains(attribute.AttributeType.FullName))
+                    continue;
+
+                var clonedAttribute = new CustomAttribute(attribute.Constructor);
+                foreach (var argument in attribute.ConstructorArguments)
+                    clonedAttribute.ConstructorArguments.Add(argument);
+                foreach (var property in attribute.Properties)
+                    clonedAttribute.Properties.Add(property);
+                foreach (var field in attribute.Fields)
+                    clonedAttribute.Fields.Add(field);
+                clonedMethod.CustomAttributes.Add(clonedAttribute);
+            }
 
             foreach (var parameter in method.Parameters)
                 clonedMethod.Parameters.Add(parameter);
