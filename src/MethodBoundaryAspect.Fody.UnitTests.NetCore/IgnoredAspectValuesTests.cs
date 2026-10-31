@@ -38,6 +38,14 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfAGenericAspectSetsValuesInItsCode_ThenTheWarningSuggestsThePlainTypeName()
+        {
+            var warnings = Weave(typeof(IgnoredGenericValueMethods));
+
+            warnings.Should().ContainSingle(w => w.Contains("[GenericConstructorFilterAspect(NamespaceFilter = ...)]"));
+        }
+
+        [Fact]
         public void IfValuesAreSetWhereTheAspectIsApplied_ThenNoWarningIsWritten()
         {
             var warnings = Weave(typeof(RefStructWarningMethods));

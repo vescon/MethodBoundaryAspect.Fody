@@ -36,4 +36,19 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore.Aspects
         {
         }
     }
+
+    /// <summary>
+    /// Generic aspect: the name in the warning must be the plain type name.
+    /// </summary>
+    public class GenericConstructorFilterAspect<T> : OnMethodBoundaryAspect
+    {
+        public GenericConstructorFilterAspect()
+        {
+            NamespaceFilter = "^Somewhere";
+        }
+
+        public override void OnEntry(MethodExecutionArgs arg)
+        {
+        }
+    }
 }

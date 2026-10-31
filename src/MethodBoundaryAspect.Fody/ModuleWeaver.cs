@@ -271,6 +271,9 @@ namespace MethodBoundaryAspect.Fody
         private static string ShortName(string fullName)
         {
             var name = fullName.Substring(fullName.LastIndexOfAny(new[] { '.', '/' }) + 1);
+            var genericMarker = name.IndexOf('`');
+            if (genericMarker >= 0)
+                name = name.Substring(0, genericMarker);
             return name.EndsWith("Attribute") ? name.Substring(0, name.Length - "Attribute".Length) : name;
         }
 
@@ -474,7 +477,7 @@ namespace MethodBoundaryAspect.Fody
                         WriteWarning(
                             $"Aspect '{aspectInfo.Name}' sets {string.Join(", ", ignoredValues)} in its code (in a constructor or by overriding the property). " +
                             "The weaver does not run the code of aspects, the value is ignored. " +
-                            $"Set it where the aspect is applied instead, e.g. [{ShortName(aspectInfo.Name)}({ignoredValues[0]} = ...)].");
+                            $"Set it where the aspect is applied instead, e.g. [{ShortName(aspectInfo.AspectTypeDefinition.Name)}({ignoredValues[0]} = ...)].");
                     }
                 }
 

@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net8</TargetFramework>
+    <LangVersion>11.0</LangVersion>
     <DisableFody>true</DisableFody>
   </PropertyGroup>
 

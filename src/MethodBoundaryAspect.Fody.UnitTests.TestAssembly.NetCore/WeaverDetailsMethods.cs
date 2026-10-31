@@ -108,6 +108,14 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
         }
     }
 
+    public class IgnoredGenericValueMethods
+    {
+        [GenericConstructorFilterAspect<int>]
+        public void Generic()
+        {
+        }
+    }
+
     public class IgnoredValueMethods
     {
         [ConstructorFilterAspect]
