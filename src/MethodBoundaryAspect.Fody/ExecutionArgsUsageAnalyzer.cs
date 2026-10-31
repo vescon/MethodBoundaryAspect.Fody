@@ -55,6 +55,10 @@ namespace MethodBoundaryAspect.Fody
             var methods = new Dictionary<string, MethodDefinition>();
             foreach (var type in hierarchy)
             {
+                // the methods of the base class are empty
+                if (type.FullName == AttributeFullNames.OnMethodBoundaryAspect)
+                    continue;
+
                 foreach (var method in type.Methods.Where(AspectMethodCriteria.MatchesSignature))
                 {
                     if (!methods.ContainsKey(method.Name))
