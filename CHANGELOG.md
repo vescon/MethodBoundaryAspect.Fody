@@ -5,9 +5,9 @@ listed as well). The migration from version 2 is described in the
 [README](README.md#upgrading-to-version-3). Versions are created from the Git tags, see the
 [releases on GitHub](https://github.com/vescon/MethodBoundaryAspect.Fody/releases).
 
-## Unreleased
+## 3.7.0 (not released yet)
 
-### Risk overview of the unreleased changes
+### Risk overview of the changes in 3.7.0
 
 Which entries below can change existing code. The rating is an estimate: how likely a project is affected and how bad it is then.
 
