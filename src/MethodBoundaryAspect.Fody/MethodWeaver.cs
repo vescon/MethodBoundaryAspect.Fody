@@ -105,12 +105,18 @@ namespace MethodBoundaryAspect.Fody
 
         protected virtual void Setup()
         {
+            _hasDebugScope = _method.DebugInformation.Scope != null;
+            _importOfDebugScope = _method.DebugInformation.Scope?.Import;
             _clonedMethod = CloneMethod(_method);
             _method.DeclaringType.Methods.Add(_clonedMethod);
             ClearMethod(_method);
         }
 
         private NamedInstructionBlockChain _argumentsArray;
+
+        // the executor takes over the scope of the method, the method gets a new one with the same imports
+        private bool _hasDebugScope;
+        private ImportDebugInformation _importOfDebugScope;
 
         private readonly Dictionary<ParameterDefinition, VariableDefinition> _originalArgumentElements =
             new Dictionary<ParameterDefinition, VariableDefinition>();
@@ -218,22 +224,14 @@ namespace MethodBoundaryAspect.Fody
                     clonedMethod.DebugInformation.SequencePoints.Add(sequencePoint);
             }
 
-            clonedMethod.DebugInformation.Scope = new ScopeDebugInformation(method.Body.Instructions.First(), method.Body.Instructions.Last());
-
-            if (method.DebugInformation?.Scope?.Variables != null)
+            // the executor takes over the scopes with the variable names, the imports (namespaces of the watch window)
+            // and the constants; the scope covers the whole body, also its last instruction
+            var scope = method.DebugInformation.Scope;
+            if (scope != null)
             {
-                foreach (var variableDebugInformation in method.DebugInformation.Scope.Variables)
-                {
-                    clonedMethod.DebugInformation.Scope.Variables.Add(variableDebugInformation);
-                }
-            }
-
-            if (method.DebugInformation?.Scope?.Scopes != null)
-            {
-                foreach (var scopeDebugInformation in method.DebugInformation.Scope.Scopes)
-                {
-                    clonedMethod.DebugInformation.Scope.Scopes.Add(scopeDebugInformation);
-                }
+                clonedMethod.DebugInformation.Scope = scope;
+                scope.Start = new InstructionOffset(method.Body.Instructions.First());
+                scope.End = new InstructionOffset();
             }
 
             return clonedMethod;
@@ -246,8 +244,9 @@ namespace MethodBoundaryAspect.Fody
             body.Instructions.Clear();
             body.ExceptionHandlers.Clear();
 
-            // the instructions moved to the executor method, which got the sequence points
+            // the instructions moved to the executor method, which got the sequence points and the scopes
             method.DebugInformation.SequencePoints.Clear();
+            method.DebugInformation.Scope = null;
         }
 
         protected virtual void AddToSetup(InstructionBlockChain chain)
@@ -799,6 +798,14 @@ namespace MethodBoundaryAspect.Fody
 
             _method.Body.InitLocals = true;
             _method.Body.Optimize();
+            if (_hasDebugScope)
+            {
+                _method.DebugInformation.Scope = new ScopeDebugInformation(_method.Body.Instructions.First(), _method.Body.Instructions.Last())
+                {
+                    Import = _importOfDebugScope
+                };
+            }
+
             Catel.Fody.CecilExtensions.UpdateDebugInfo(_method);
         }
 

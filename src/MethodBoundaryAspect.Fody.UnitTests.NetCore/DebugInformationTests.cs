@@ -19,6 +19,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         private readonly ModuleWeaver _weaver;
         private readonly TypeDefinition _type;
         private readonly Dictionary<string, List<int>> _originalLines = new Dictionary<string, List<int>>();
+        private readonly ImportDebugInformation _originalImport;
 
         public DebugInformationTests()
         {
@@ -46,6 +47,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 
             foreach (var method in _type.Methods.Where(m => m.HasBody && m.DebugInformation.HasSequencePoints))
                 _originalLines.Add(method.Name, GetLines(method));
+            _originalImport = _type.Methods.Single(m => m.Name == nameof(DebugInformationMethods.Sync)).DebugInformation.Scope.Import;
             _originalLines.Add("MoveNext of Async", GetLines(GetMoveNext(nameof(DebugInformationMethods.Async))));
 
             _weaver = new ModuleWeaver { ModuleDefinition = module };
@@ -70,6 +72,30 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 
             weavedMethod.DebugInformation.HasSequencePoints.Should().BeFalse(
                 "the instructions of the sequence points moved to the executor");
+        }
+
+        [Fact]
+        public void IfASyncMethodIsWeaved_ThenTheExecutorKeepsTheScopeOfTheOriginalMethod()
+        {
+            var executor = _type.Methods.Single(m => m.Name == "$_executor_" + nameof(DebugInformationMethods.Sync));
+
+            var scope = executor.DebugInformation.Scope;
+            scope.Variables.Select(v => v.Name).Should().Contain("sum");
+            _originalImport.Should().NotBeNull();
+            scope.Import.Should().BeSameAs(_originalImport);
+            scope.End.IsEndOfMethod.Should().BeTrue("the scope covers the last instruction as well");
+        }
+
+        [Fact]
+        public void IfASyncMethodIsWeaved_ThenTheWeavedMethodGetsAScopeWithoutTheOldVariables()
+        {
+            var weavedMethod = _type.Methods.Single(m => m.Name == nameof(DebugInformationMethods.Sync));
+
+            var scope = weavedMethod.DebugInformation.Scope;
+            scope.Variables.Select(v => v.Name).Should().NotContain("sum", "the variable of the original body is in the executor");
+            scope.Variables.Select(v => v.Index).Should().OnlyContain(index => index < weavedMethod.Body.Variables.Count);
+            scope.Scopes.Should().BeEmpty();
+            scope.Import.Should().BeSameAs(_originalImport);
         }
 
         [Theory]
