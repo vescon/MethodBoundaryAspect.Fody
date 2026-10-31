@@ -3,6 +3,7 @@ using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 using MethodBoundaryAspect.Fody.RuntimeTests.Targets;
 using System;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -82,6 +83,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         public async Task IfSeveralThreadsCallAWeavedMethodForTheFirstTime_ThenAllGetTheSameMethodInfo()
         {
             const int threads = 16;
+            var cache = MethodInfoCacheField(nameof(CoverageMethods.FirstCallOfASharedAspect));
+            cache.GetValue(null).Should().BeNull("the method info is loaded by the first call");
             using (var barrier = new Barrier(threads))
             {
                 var tasks = Enumerable.Range(0, threads).Select(i => Task.Factory.StartNew(() =>
@@ -96,6 +99,16 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
             CoverageLog.Methods.Should().HaveCount(threads);
             CoverageLog.Methods.Select(m => m.Name).Distinct().Should().Equal(nameof(CoverageMethods.FirstCallOfASharedAspect));
             CoverageLog.Methods.Distinct().Should().HaveCount(1, "the method info is created once");
+            // the runtime caches GetMethodFromHandle as well, so the generated field is what shows the weaver's cache
+            cache.GetValue(null).Should().BeSameAs(CoverageLog.Methods.First());
+        }
+
+        private static FieldInfo MethodInfoCacheField(string methodName)
+        {
+            var cacheClass = typeof(CoverageMethods).Assembly.GetType("OnMethodBoundaryAspectCompile.MethodInfos");
+            cacheClass.Should().NotBeNull("the assembly has woven methods");
+            return cacheClass.GetFields(BindingFlags.NonPublic | BindingFlags.Static)
+                .Single(f => f.Name.StartsWith("_methodInfo_") && f.Name.EndsWith("_" + methodName));
         }
     }
 }
