@@ -36,6 +36,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
+    <ProjectReference Include="..\MethodBoundaryAspect.Fody.RuntimeTests.Aspects\MethodBoundaryAspect.Fody.RuntimeTests.Aspects.csproj" />
     <WeaverFiles Include="..\MethodBoundaryAspect.Fody\bin\$(Configuration)\netstandard2.0\MethodBoundaryAspect.Fody.dll" WeaverClassNames="ModuleWeaver" />
   </ItemGroup>
 

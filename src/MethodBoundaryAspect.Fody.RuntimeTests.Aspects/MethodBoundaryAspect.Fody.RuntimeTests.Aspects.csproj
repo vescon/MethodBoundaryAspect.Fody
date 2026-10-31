@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- aspects in a library of their own, used by the RuntimeTests on every runtime (README: "Aspects in a separate library") -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <DisableFody>true</DisableFody>
+    <!-- generic attributes -->
+    <LangVersion>11.0</LangVersion>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MethodBoundaryAspect\MethodBoundaryAspect.csproj" />
+  </ItemGroup>
+
+</Project>
