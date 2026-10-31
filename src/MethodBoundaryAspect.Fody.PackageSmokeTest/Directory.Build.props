@@ -1,0 +1,3 @@
+<Project>
+  <!-- the smoke test is built like a user project: nothing of the settings of src\Directory.Build.props applies -->
+</Project>

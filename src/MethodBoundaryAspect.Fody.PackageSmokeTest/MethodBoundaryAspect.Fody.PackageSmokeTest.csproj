@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Uses the nuget package built by "dotnet pack" like a user does, see run.ps1. Not part of the solution. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net8.0;net48</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MethodBoundaryAspect.Fody" Version="$(MbaVersion)" />
+    <PackageReference Include="Fody" Version="6.7.0" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

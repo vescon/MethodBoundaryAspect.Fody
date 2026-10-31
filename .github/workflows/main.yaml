@@ -91,6 +91,11 @@ jobs:
     - name: Create the nuget package
       run: dotnet pack --configuration Release --no-build src\MethodBoundaryAspect\MethodBoundaryAspect.csproj -o Artifacts/Packages
     
+    # Builds a small project with the package from the previous step like a user does (weaver and xcf from the package,
+    # <MethodBoundaryAspect /> in FodyWeavers.xml) and runs it on net8.0 and net48.
+    - name: Test the nuget package
+      run: src\MethodBoundaryAspect.Fody.PackageSmokeTest\run.ps1
+
     - name: Upload Artifact
       uses: actions/upload-artifact@v7
       with:
