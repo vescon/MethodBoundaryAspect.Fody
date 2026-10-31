@@ -465,22 +465,25 @@ namespace MethodBoundaryAspect.Fody
                 var instanceOffset = _method.IsStatic ? 0 : 1;
                 var byRefPassedViaArguments = GetByRefParametersPassedViaArguments().ToList();
                 // the elements are cast before the try block: an invalid value set by an aspect is not an exception of the method
-                args = _method.Parameters
-                    .Select((x, i) =>
+                args = new ILoadable[_method.Parameters.Count];
+                for (var i = 0; i < args.Length; i++)
+                {
+                    var parameter = _method.Parameters[i];
+                    if (parameter.ParameterType.CannotBeBoxed())
                     {
-                        if (x.ParameterType.CannotBeBoxed())
-                            return (ILoadable)new ArgumentLoadable(i + instanceOffset, x, _method.Body.GetILProcessor());
+                        args[i] = new ArgumentLoadable(i + instanceOffset, parameter, _method.Body.GetILProcessor());
+                        continue;
+                    }
 
-                        _originalArgumentElements.TryGetValue(x, out var originalElement);
-                        var element = new ArrayElementLoadable(arguments.Variable, i, x, _method.Body.GetILProcessor(), _creator,
-                            passOriginalReference: byRefPassedViaArguments.Contains(x), originalElement: originalElement);
-                        var prepared = element.Prepare();
-                        var prepareChain = new InstructionBlockChain();
-                        prepareChain.Add(prepared.Prepare);
-                        prepareChain.Append(_ilProcessor);
-                        return prepared.Loadable;
-                    })
-                    .ToArray();
+                    _originalArgumentElements.TryGetValue(parameter, out var originalElement);
+                    var element = new ArrayElementLoadable(arguments.Variable, i, parameter, _method.Body.GetILProcessor(), _creator,
+                        passOriginalReference: byRefPassedViaArguments.Contains(parameter), originalElement: originalElement);
+                    var prepared = element.Prepare();
+                    var prepareChain = new InstructionBlockChain();
+                    prepareChain.Add(prepared.Prepare);
+                    prepareChain.Append(_ilProcessor);
+                    args[i] = prepared.Loadable;
+                }
 
                 callSourceMethod = _creator.CallMethodWithReturn(
                     _clonedMethod,

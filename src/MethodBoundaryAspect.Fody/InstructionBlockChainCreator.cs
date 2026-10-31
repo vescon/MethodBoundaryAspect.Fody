@@ -542,6 +542,8 @@ namespace MethodBoundaryAspect.Fody
             return typeReference.MakeGenericType(genericParameters);
         }
 
+        // Returns a new reference for a MethodDefinition, but changes the declaring type of any other reference in place:
+        // the caller must not use the passed reference for something else afterwards.
         private static MethodReference FixMethodReference(TypeReference declaringType, MethodReference targetMethod)
         {
             // Taken and adapted from
