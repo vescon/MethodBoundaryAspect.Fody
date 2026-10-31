@@ -133,6 +133,14 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfAspectHasAnInaccessibleConstructorWhichTheAttributeDoesNotCall_ThenItIsReused()
+        {
+            var module = Weave(config: null);
+
+            CalledAspectGetters(GetInstructions(module, nameof(InstanceReuseMethods.ExtraPrivateConstructor))).Should().ContainSingle();
+        }
+
+        [Fact]
         public void IfAspectIsAppliedToAClass_ThenAllMethodsShareOneInstance()
         {
             var module = Weave(config: null);

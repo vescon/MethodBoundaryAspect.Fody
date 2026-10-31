@@ -16,6 +16,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
         {
         }
 
+        [ExtraPrivateConstructorReuseAspect]
+        public void ExtraPrivateConstructor()
+        {
+        }
+
         [DerivedReuseAspect]
         public void Derived()
         {

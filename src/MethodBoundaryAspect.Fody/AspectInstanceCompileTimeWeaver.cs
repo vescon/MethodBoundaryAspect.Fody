@@ -43,7 +43,8 @@ namespace MethodBoundaryAspect.Fody
             if (!_analyzer.CanReuse(aspect.AspectTypeDefinition)
                 || attribute.AttributeType.ContainsGenericParameter
                 || !IsAccessible(aspect.AspectTypeDefinition)
-                || !IsAccessible(attribute.AttributeType))
+                || !IsAccessible(attribute.AttributeType)
+                || !IsAccessible(attribute.Constructor))
                 return null;
 
             return AddGetter(attribute);
@@ -79,12 +80,18 @@ namespace MethodBoundaryAspect.Fody
 
         private bool IsAccessible(TypeDefinition aspectType)
         {
-            if (!IsAccessible((TypeReference)aspectType))
+            return IsAccessible((TypeReference)aspectType);
+        }
+
+        // only the constructor which the attribute calls is needed, the aspect can have private ones as well
+        private bool IsAccessible(MethodReference constructor)
+        {
+            var definition = constructor.Resolve();
+            if (definition == null)
                 return false;
 
-            return aspectType.Methods
-                .Where(m => m.IsConstructor && !m.IsStatic)
-                .All(m => m.IsPublic || (aspectType.Module == _module && (m.IsAssembly || m.IsFamilyOrAssembly)));
+            return definition.IsPublic
+                   || (definition.Module == _module && (definition.IsAssembly || definition.IsFamilyOrAssembly));
         }
 
         private MethodDefinition AddGetter(CustomAttribute attribute)

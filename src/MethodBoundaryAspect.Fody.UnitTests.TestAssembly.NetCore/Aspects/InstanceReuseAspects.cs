@@ -6,6 +6,24 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore.Aspects
 {
     // Aspects for the analysis if one instance can be shared by all calls, see AspectInstanceReuseAnalyzer
 
+    /// <summary>
+    /// Has a private constructor besides the public one which the attribute calls.
+    /// </summary>
+    public class ExtraPrivateConstructorReuseAspect : OnMethodBoundaryAspect
+    {
+        public ExtraPrivateConstructorReuseAspect()
+        {
+        }
+
+        private ExtraPrivateConstructorReuseAspect(int unused)
+        {
+        }
+
+        public override void OnEntry(MethodExecutionArgs arg)
+        {
+        }
+    }
+
     public class StatelessReuseAspect : OnMethodBoundaryAspect
     {
         public static int Calls;
