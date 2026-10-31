@@ -54,23 +54,30 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
 
         private static string GetPeVerifyPath()
         {
-            var folderPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
-            var possiblePeVerifyPaths = new[]
-            {
-                $@"{folderPath}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.8 Tools\peverify.exe",
-                $@"{folderPath}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.7.2 Tools\peverify.exe",
-                $@"{folderPath}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.7.1 Tools\peverify.exe",
-                $@"{folderPath}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.7 Tools\peverify.exe",
-                $@"{folderPath}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.1 Tools\peverify.exe",
-                $@"{folderPath}\Microsoft SDKs\Windows\v10.0A\bin\NETFX 4.6.2 Tools\peverify.exe",
-                $@"{folderPath}\Microsoft SDKs\Windows\v8.1A\bin\NETFX 4.5.1 Tools\peverify.exe"
-            };
-
-            var peVerifyPath = possiblePeVerifyPaths.FirstOrDefault(File.Exists);
+            // <ProgramFiles (x86)>/Microsoft SDKs/Windows/<sdk>/bin/NETFX <version> Tools/peverify.exe, the newest one
+            var sdksPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft SDKs", "Windows");
+            var peVerifyPath = !Directory.Exists(sdksPath)
+                ? null
+                : Directory.EnumerateDirectories(sdksPath)
+                    .Select(sdk => Path.Combine(sdk, "bin"))
+                    .Where(Directory.Exists)
+                    .SelectMany(bin => Directory.EnumerateDirectories(bin, "NETFX * Tools"))
+                    .Select(tools => new { Path = Path.Combine(tools, "peverify.exe"), Version = ParseNetFxVersion(tools) })
+                    .Where(x => File.Exists(x.Path))
+                    .OrderByDescending(x => x.Version)
+                    .Select(x => x.Path)
+                    .FirstOrDefault();
             if (peVerifyPath == null)
                 throw new InvalidOperationException("PeVerify.exe could not be found. Please install it with the Windows SDK.");
 
             return peVerifyPath;
+        }
+
+        // "NETFX 4.8.1 Tools" -> 4.8.1
+        private static Version ParseNetFxVersion(string toolsFolder)
+        {
+            var name = Path.GetFileName(toolsFolder).Split(' ');
+            return name.Length > 1 && Version.TryParse(name[1], out var version) ? version : new Version(0, 0);
         }
     }
 }

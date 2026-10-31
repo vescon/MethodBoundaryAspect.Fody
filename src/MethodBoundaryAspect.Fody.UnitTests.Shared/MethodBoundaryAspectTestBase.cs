@@ -12,10 +12,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests.Shared
     {
         protected MethodBoundaryAspectTestBase()
         {
-            var url = Path.GetDirectoryName(GetType().Assembly.CodeBase);
-            var path = url.Substring(@"file:\\".Length - 1);
-
-            Environment.CurrentDirectory = path;
+            // process wide state, only safe because the tests of this project don't run in parallel
+            Environment.CurrentDirectory = Path.GetDirectoryName(new Uri(GetType().Assembly.CodeBase).LocalPath);
         }
         
         protected static string WeavedAssemblyPath { get; private set; }

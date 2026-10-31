@@ -62,16 +62,18 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework.Unified
 
             public static AssemblyPaths OfExecutingAssembly()
             {
-                var dllPath = Assembly.GetExecutingAssembly().CodeBase.Replace(@"file:///", string.Empty);
-                var pdbPath = dllPath.Replace(@".DLL", ".Pdb");
+                var dllPath = new Uri(Assembly.GetExecutingAssembly().CodeBase).LocalPath;
+                var pdbPath = Path.ChangeExtension(dllPath, ".pdb");
 
                 return new AssemblyPaths(dllPath, pdbPath);
             }
 
             public static AssemblyPaths ForWeavedAssembly(AssemblyPaths unweavedAssemblyPaths)
             {
-                var dllPath = unweavedAssemblyPaths.DllPath.Replace(".DLL", ".Weaved.dll");
-                var pdbPath = unweavedAssemblyPaths.PdbPath.Replace(".Pdb", ".Weaved.Pdb");
+                // not a string replacement: it would not find a differently written extension and then return the path of
+                // the running test assembly, which the cleanup deletes
+                var dllPath = Path.ChangeExtension(unweavedAssemblyPaths.DllPath, ".Weaved.dll");
+                var pdbPath = Path.ChangeExtension(unweavedAssemblyPaths.PdbPath, ".Weaved.pdb");
 
                 return new AssemblyPaths(dllPath, pdbPath);
             }
