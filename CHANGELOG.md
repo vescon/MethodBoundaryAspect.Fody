@@ -7,6 +7,30 @@ listed as well). The migration from version 2 is described in the
 
 ## Unreleased
 
+### Risk overview of the unreleased changes
+
+Which entries below can change existing code. The rating is an estimate: how likely a project is affected and how bad it is then.
+
+| Risk | Change | Who is affected | What happens | What to do |
+|---|---|---|---|---|
+| Medium | Each aspect has its own `MethodExecutionTag` | Aspects which relied on the tag of the aspect before | The tag is `null` | Set the tag in the aspect, pass data in another way |
+| Medium | New build warnings (unknown setting in `FodyWeavers.xml`, aspect applied where it is ignored, runtime-async method, "sets X in its code") | Projects with `TreatWarningsAsErrors` or `WarningsAsErrors` | The build fails | Fix the cause or suppress the warning |
+| Medium | An invalid regular expression in a filter fails the build also after a filter that does not match; timeout of 30 seconds | Projects with a broken or very slow pattern | Build error with the aspect named (was ignored silently or hung) | Fix the pattern |
+| Medium | Aspects are shared in more cases (extra private constructor, `[In] ref`); code for `MethodExecutionTag` and `FlowBehavior` only if used | Aspects with state the analysis does not see | A wrongly shared aspect would fail silently (the analysis is conservative on purpose) | `DisableAspectInstanceReuse`, `DisableExecutionArgsOptimization` |
+| Low to medium | An aspect on the `get` or `set` accessor is woven | Code with `[Aspect] get` that never did anything | The aspect runs now | Remove the attribute or add `[DisableWeaving]` |
+| Low | `FlowBehavior` is reset before `OnException` | Aspects that set `Continue` in `OnEntry` | The exception is rethrown unless `OnException` sets `Continue` or `Return` | Set it in `OnException` |
+| Low | Finalizers are not woven | Class or assembly aspects hitting finalizers | The aspect no longer runs there | none, it was unsafe |
+| Low | Runtime-async methods (.NET 11) are not woven | Projects using `runtime-async` | Method unwoven, warning | none |
+| Low | `args.Arguments` in `OnExit` and `OnException` hold the `ref` and `out` values after the call | Aspects which expected the values from before the call | New values | Copy them in `OnEntry` |
+| Low | A wrong argument type set by an aspect is not reported to `OnException` | Aspects which handled that error | The exception goes to the caller | none |
+| Low | `ReturnValue` of `ref` returns, `ref` arguments (the variable of the caller, written back only if replaced), `[In] ref`, skipped body of a `ref` returning method calls `OnExit` of the aspects before | Aspects with `[AllowChangingInputArguments]` or on `ref` methods | Correct values, nothing lost on concurrent changes | none |
+| Low | Async: tag of `OnExit` visible in `OnException`; the task is returned if the work fails while `OnExit` runs | Several aspects on async methods | Corrected edge cases | none |
+| Low | An aspect with a `Synchronized` method is not shared; a generic aspect with a private type argument is created per call | Performance only; before: `MethodAccessException` | Works | none |
+| Low | The executor method keeps `[DebuggerHidden]`, `[StackTraceHidden]` and similar attributes; debugger scopes | Debugging, stack traces, trimming | The executor behaves like the original | none |
+| None | `1`/`0` as boolean settings, generic aspects (`[AspectOrderIndex]`, constructor parameter and property of the type parameter), the same aspect on class and method with an index, `TypedReference` on .NET Framework, schema and README in the package | Everyone | More inputs work, errors fixed | none |
+
+### Changes
+
 - **Faster calls of woven methods: the getter of a shared aspect is inlined, and the weaver emits the code for `MethodExecutionTag` and `FlowBehavior` only if an aspect uses it.** Measured on .NET 10: the overhead of two aspects on a method drops from 6.0 ns to 2.5 ns, of two aspects on an async method from 17 ns and 208 B to 3.5 ns and 144 B (the numbers of [docs/performance.md](docs/performance.md)). `args.Arguments` of a method without parameters is `Array.Empty<object>()` (no allocation, if the target framework has it). Aspects which are not analyzed (`DisableExecutionArgsOptimization`, the aspect passes `args` on) keep the full code.
 - **The regular expressions of the aspect filters (`NamespaceFilter`, `TypeNameFilter`, `MethodNameFilter`) are cached and have a timeout of 30 seconds.** A pattern with catastrophic backtracking hung the build; it fails with a message naming the aspect and the filter now.
 - **A build warning for a setting in `FodyWeavers.xml` the weaver does not know** (e.g. `SupressRefStructWarnings`). Typos were ignored silently.
@@ -41,6 +65,18 @@ listed as well). The migration from version 2 is described in the
 - **Each aspect has its own `MethodExecutionTag`:** with several aspects on a method, an aspect which did not set the tag saw the tag of the aspect before it in `OnEntry`, `OnExit` and `OnException`. It sees `null` now, as documented.
 - **The configuration in `FodyWeavers.xml` has a schema** (`MethodBoundaryAspect.Fody.xcf`): IntelliSense and validation for `SuppressRefStructWarnings`, `DisableExecutionArgsOptimization` and `DisableAspectInstanceReuse`.
 - The NuGet package contains a README (shown on nuget.org); no change for users of the library.
+
+## Planned for version 4
+
+Announced in version 3 (obsolete attributes, warnings, README). Nothing of this is done yet. The migration will be described in the README under "Upgrading to version 4".
+
+| Risk | Change | Notes |
+|---|---|---|
+| Medium | `[ProvideAspectRole]`, `[AspectRoleDependency]`, `AspectDependencyAction` and `AspectDependencyPosition` are removed | `[Obsolete]` and a build warning per aspect since 3.x; use `[AspectOrderIndex]` |
+| Medium | Aspects applied directly to an event are woven into `add` and `remove` | No version did this so far; class and assembly aspects already hit the accessors; `[DisableWeaving]` on an event is honored since 3.5.0 |
+| Low | `OnMethodBoundaryAspect.CompileTimeValidate` is removed | `[Obsolete]`, never called, throws `NotSupportedException` |
+| Low | `NamespaceFilter`, `TypeNameFilter` and `MethodNameFilter` are no longer `virtual` | An override never had an effect; 3.x warns |
+| Low | The usage of `[DisableWeaving]`, `[AspectOrderIndex]` and `[AspectSkipProperties]` is restricted to the targets the weaver reads | Compiler error instead of silently ignored; `[AllowChangingInputArguments]` is class only already |
 
 ## 3.6.0
 

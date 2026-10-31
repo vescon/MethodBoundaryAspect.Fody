@@ -725,9 +725,22 @@ Also changed:
 - **Aspect classes are never woven** ([#70](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/70)). Version 2 only skipped weaving an aspect into its own class. An assembly or class aspect was still woven into the other aspects of the assembly, into base aspect classes and into classes nested in an aspect. That caused a `StackOverflowException` when two aspects were woven into each other, or when the aspect's `OnEntry` was inherited from a base aspect in the same assembly. Now no aspect is woven into a class derived from `OnMethodBoundaryAspect` or its nested classes, also if it is applied directly to one of their methods.
 - **Class and assembly aspects no longer hit the state machines of async and iterator methods** ([#66](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/66)). In version 2 they were also woven into the compiler-generated `MoveNext` and `SetStateMachine` methods (and the other members of iterator state machines), so the aspect was additionally called with `args.Method.Name == "MoveNext"` each time an async method started or resumed after an `await`, and each time an iterator was advanced. The async or iterator method itself is still woven.
 
+Changed in the releases of version 3 since 3.0 (all of them with the reason are in the [CHANGELOG](CHANGELOG.md), the section "Unreleased" has a table with a risk rating):
+
+- **Aspects without state are created once** and shared by all calls (3.5.0). Opt out with `DisableAspectInstanceReuse` (see [Aspect instances](#aspect-instances)).
+- **Each aspect has its own `MethodExecutionTag`.** An aspect which did not set it sees `null`, not the tag of the aspect before it.
+- **An aspect on the `get` or `set` accessor** (`int X { [Log] get; }`) is woven. It was silently ignored in version 2 and 3.0 to 3.6.
+- **`[DisableWeaving]` on a property or event** is honored (3.5.0); finalizers and methods with `__arglist` are not woven.
+- **`FlowBehavior` is reset before `OnException`.** `Continue` set in `OnEntry` no longer makes the method swallow a later exception.
+- **`args.Arguments` in `OnExit` and `OnException`** hold the values of `ref` and `out` arguments after the call.
+- **New build warnings and errors** which can fail a build with `TreatWarningsAsErrors`: unknown settings in `FodyWeavers.xml`, an aspect applied where it is ignored (constructor, field, event, parameter, return value, module), a method compiled with runtime-async, an invalid or very slow filter regular expression (error). See [Build warnings and errors](#build-warnings-and-errors).
+- **Skipped or swallowed methods** return a completed task (`Task`, `Task<T>`) and the default value instead of `null`; a `ref` returning method throws a `NotSupportedException` then.
+
+Planned for version 4: the aspect roles and `CompileTimeValidate` are removed, aspects applied directly to an event are woven, and the `virtual` filter properties and the usage of some attributes change (list with risk rating: [CHANGELOG](CHANGELOG.md#planned-for-version-4)). Aspects directly on an event are not woven in any version so far.
+
 The configuration in `FodyWeavers.xml` is unchanged; the optimization is enabled by default.
 
-The changes of later releases are listed in the [CHANGELOG](CHANGELOG.md).
+All changes of later releases are listed in the [CHANGELOG](CHANGELOG.md).
 
 ## Contributing
 
