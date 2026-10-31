@@ -75,6 +75,7 @@ namespace MethodBoundaryAspect.Fody
                     RememberOriginalArgumentElements(arguments);
             }
 
+            _argumentsArray = arguments;
             WeaveMethodExecutionArgs(arguments);
 
             SetupAspects();
@@ -108,6 +109,8 @@ namespace MethodBoundaryAspect.Fody
             _method.DeclaringType.Methods.Add(_clonedMethod);
             ClearMethod(_method);
         }
+
+        private NamedInstructionBlockChain _argumentsArray;
 
         private readonly Dictionary<ParameterDefinition, VariableDefinition> _originalArgumentElements =
             new Dictionary<ParameterDefinition, VariableDefinition>();
@@ -677,6 +680,19 @@ namespace MethodBoundaryAspect.Fody
             var setExceptionFromStack =
                 _creator.SetMethodExecutionArgsExceptionFromStack(ExecutionArgs);
             exceptionHandlerCurrent = setExceptionFromStack.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
+
+            // the method has written ref/out values into the variables of the caller before it threw: OnException (and
+            // OnExit, if the exception is swallowed) see them in Arguments
+            if (_argumentsArray != null)
+            {
+                var updateArguments = CreateUpdateArgumentsArrayFromByRefParameters(_argumentsArray);
+                if (updateArguments != null)
+                {
+                    var updateChain = new InstructionBlockChain();
+                    updateChain.Add(updateArguments);
+                    exceptionHandlerCurrent = updateChain.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
+                }
+            }
 
             if (WritesFlowBehavior)
                 exceptionHandlerCurrent = _creator.ResetMethodExecutionArgsFlowBehavior(ExecutionArgs).InsertAfter(exceptionHandlerCurrent, _ilProcessor);
