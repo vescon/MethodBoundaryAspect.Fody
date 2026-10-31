@@ -150,7 +150,7 @@ Derive from `OnMethodBoundaryAspect` and override any of `OnEntry`, `OnExit` and
 | `Instance` | the object the method is called on, `null` for static methods |
 | `Method` | the called method as [MethodBase](https://learn.microsoft.com/dotnet/api/system.reflection.methodbase) |
 | `Arguments` | the argument values as `object[]` (can be changed, see [Changing input arguments](#changing-input-arguments)) |
-| `ReturnValue` | the return value in `OnExit` (for async methods the returned `Task`), can be overwritten |
+| `ReturnValue` | the return value in `OnExit` (for async methods the returned `Task`), can be overwritten. For a method with a `ref` return it is the value of the returned variable; setting it writes through the reference (ignored for `ref readonly`, and `null` for a value type leaves the variable unchanged) |
 | `Exception` | the thrown exception in `OnException` |
 | `FlowBehavior` | controls what happens after the aspect method, see [FlowBehavior](#skipping-the-method-or-swallowing-exceptions-flowbehavior) |
 | `MethodExecutionTag` | any object you want to pass from `OnEntry` to `OnExit`/`OnException` of the same call |
@@ -302,7 +302,7 @@ Aspects are **not inherited**. An aspect on a class applies to the methods decla
 
 An aspect applied on several levels runs once per application: with `[Log]` on the class and on one of its methods, that method calls `Log` twice. Remove the attribute from the method to call it once.
 
-To define the order explicitly, use `[AspectOrderIndex]` on the assembly, class or method (the lower index runs `OnEntry` first; a method level index overrides a class level index, which overrides an assembly level index; for a nested class the index of the closest class that has one wins). If one aspect of a method has an index, all aspects of the method need a unique one:
+To define the order explicitly, use `[AspectOrderIndex]` on the assembly, class or method (the lower index runs `OnEntry` first; a method level index overrides a class level index, which overrides an assembly level index; for a nested class the index of the closest class that has one wins). If one aspect of a method has an index, all aspects of the method need an index, and two different aspects must not have the same one (the same aspect applied on several levels shares its index). Without indices the order is: assembly, the enclosing classes from the outermost to the innermost, the class, the property, the accessor or method:
 
 ```csharp
 [AspectOrderIndex(typeof(TransactionScopeAttribute), 1)]
@@ -314,7 +314,7 @@ public class OrderService
 }
 ```
 
-`[ProvideAspectRole]` and `[AspectRoleDependency]` are obsolete and will be removed in version 4, use `[AspectOrderIndex]` instead. A build warning is written for each aspect using them. They have known problems which are not fixed: a role is ignored if its aspect has no `[AspectRoleDependency]` itself, and a chain of dependencies (A after B, B after C) is rejected with an `InvalidAspectConfigurationException`. `OnMethodBoundaryAspect.CompileTimeValidate` is obsolete as well: the weaver never calls it (it does not run the code of aspects), and it will be removed in version 4.
+`[ProvideAspectRole]` and `[AspectRoleDependency]` are obsolete and will be removed in version 4, use `[AspectOrderIndex]` instead. A build warning is written for each aspect using them. If one aspect of a method uses a role, an `[AspectOrderIndex]` on any aspect of that method fails the build (the two ways of ordering exclude each other; the message doesn't name the aspect), and `AspectDependencyAction.None` still orders. They have known problems which are not fixed: a role is ignored if its aspect has no `[AspectRoleDependency]` itself, and a chain of dependencies (A after B, B after C) is rejected with an `InvalidAspectConfigurationException`. `OnMethodBoundaryAspect.CompileTimeValidate` is obsolete as well: the weaver never calls it (it does not run the code of aspects), and it will be removed in version 4.
 
 ## Changing the method behavior
 
@@ -630,7 +630,7 @@ An aspect that holds no state is created once and shared by all calls, instead o
 - the instance fields are primitives, enums, `string` or `Type` (no collections, arrays or other objects), and only the constructor writes them
 - the constructors only store their arguments and constants in fields (no counting of instances, no reading of a configuration, ...), and the property setters only store the value
 - no method of the aspect calls a setter, takes the address of a field, captures `this` in a lambda or hands `this` to other code (calling its own methods and `GetType()` is fine)
-- no finalizer, and the aspect and its constructors are accessible from the generated code (a `private` nested aspect, a non-public aspect of another assembly, or a generic aspect with a private type argument is created for every call)
+- no finalizer, no `extern` method and no `[MethodImpl(MethodImplOptions.Synchronized)]` method (a shared instance would be locked by all calls), and the aspect and its constructors are accessible from the generated code (a `private` nested aspect, a non-public aspect of another assembly, or a generic aspect with a private type argument is created for every call)
 - the aspect is no open generic type. Every use of the attribute has its own shared instance: `[Log]` on two methods shares one instance per use, not one for the whole assembly
 
 Other aspects behave as before, a new instance for every call. Use `args.MethodExecutionTag` for data of a call, as the instance is shared between concurrent calls.
@@ -679,7 +679,7 @@ The weaver writes a build warning instead of failing if it leaves something as i
 
 | Warning | Cause | What to do |
 |---|---|---|
-| `Method '...' is not weaved: ...` | the method can't be woven: an async method of a task-like type with its own builder and an `OnException` aspect, a method with a variable argument list (`__arglist`), a method compiled with runtime-async (.NET 11, `<Features>runtime-async=on</Features>`) | [`[DisableWeaving]`](#excluding-methods-disableweaving) on the method removes the warning |
+| `Method '...' is not weaved: ...` | the method can't be woven: an async method of a task-like type with its own builder and an `OnException` aspect, a method with a variable argument list (`__arglist`), a method compiled with runtime-async (.NET 11, `<Features>runtime-async=on</Features>`), an async method whose state machine the compiler did not create in the expected way (the message names the reason) | [`[DisableWeaving]`](#excluding-methods-disableweaving) on the method removes the warning |
 | `Method '...' uses ref struct values ...` | the method has `Span<T>` or other [ref structs](#ref-structs-spant-readonlyspant-) in its signature | `SuppressRefStructWarnings="true"` or `[DisableWeaving]` |
 | `Aspect '...' is applied to the constructor/field/event/parameter ..., where it is ignored` | an aspect is applied where the weaver never reads it (the compiler accepts it, the aspect attribute has no `[AttributeUsage]`) | apply the aspect to the method, property, class or assembly |
 | `Aspect '...' sets NamespaceFilter ...` | a filter is set in the constructor of the aspect or by overriding the property, the weaver ignores it | set it [where the aspect is applied](#filtering-by-name-and-visibility) |

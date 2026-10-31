@@ -4,7 +4,7 @@ namespace MethodBoundaryAspect.Fody.Attributes
 {
     /// <summary>
     /// Put on an aspect class: the aspect is not woven into property getters and setters when it is applied to a
-    /// class or an assembly.
+    /// class or an assembly. An aspect applied directly to a property or an accessor is not woven at all then.
     /// </summary>
     // the usage is restricted to classes in version 4
     public class AspectSkipPropertiesAttribute : Attribute

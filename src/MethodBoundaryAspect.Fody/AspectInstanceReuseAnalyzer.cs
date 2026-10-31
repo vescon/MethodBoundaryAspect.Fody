@@ -15,6 +15,7 @@ namespace MethodBoundaryAspect.Fody
     /// so creating it only once has no effect</item>
     /// <item>its properties are only set by the constructor call of the weaved code, the setters just store
     /// the value</item>
+    /// <item>no method is extern or synchronized ([MethodImpl(Synchronized)] would lock the shared instance for all calls)</item>
     /// <item>no method writes an instance field, takes the address of one, calls a setter or hands out "this"
     /// (except to call a method of the aspect, or GetType())</item>
     /// </list>

@@ -5,10 +5,10 @@ namespace MethodBoundaryAspect.Fody.Attributes
     /// <summary>
     /// Defines the order of the aspects of a method: the aspect with the lower index runs OnEntry first,
     /// OnExit and OnException in reverse order. If one aspect of a method has an index, all aspects of the
-    /// method need a unique one. An index on the method overrides an index on the class, which overrides
+    /// method need an index, and two different aspects must not have the same one. An index on the method overrides an index on the class, which overrides
     /// an index on the assembly.
     /// </summary>
-    // the weaver reads it from an assembly, class, struct, method, property or event, the usage is restricted to these in version 4
+    // the weaver reads it from an assembly, class, struct, method or property (an index on an event is not read), the usage is restricted to these in version 4
     [AttributeUsage(AttributeTargets.All, AllowMultiple = true)]
     public class AspectOrderIndexAttribute : Attribute
     {
