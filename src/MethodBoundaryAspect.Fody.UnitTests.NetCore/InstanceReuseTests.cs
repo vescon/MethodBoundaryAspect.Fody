@@ -174,6 +174,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             aspects.Methods.Should().NotContain(m => m.IsConstructor);
             aspects.Fields.Should().OnlyContain(f => f.IsPrivate && f.IsStatic && !f.IsInitOnly);
             aspects.Methods.Should().OnlyContain(m => m.IsAssembly && m.IsStatic && m.Body.InitLocals, "PEVerify wants initlocals");
+            aspects.Methods.Should().OnlyContain(m => m.AggressiveInlining);
         }
 
         [Fact]

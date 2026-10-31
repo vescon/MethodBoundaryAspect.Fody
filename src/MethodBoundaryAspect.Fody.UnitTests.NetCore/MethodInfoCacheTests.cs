@@ -71,6 +71,15 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfMethodsAreWeaved_ThenTheGettersAreInlined()
+        {
+            var weavedModule = Weave();
+
+            weavedModule.GetType("OnMethodBoundaryAspectCompile", "MethodInfos").Methods
+                .Should().OnlyContain(m => m.AggressiveInlining);
+        }
+
+        [Fact]
         public void IfMethodsAreWeaved_ThenTheCacheIsNotPartOfThePublicApi()
         {
             var weavedModule = Weave();
