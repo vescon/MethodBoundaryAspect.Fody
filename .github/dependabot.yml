@@ -12,6 +12,9 @@ updates:
       # Fody, FodyHelpers and FodyPackaging are updated by hand, together with the major version (a new Fody can turn
       # warnings of the weaver into errors)
       - dependency-name: "Fody*"
+      # version 3 and 4 of the runner do not support net462 (version 4: net472 and higher),
+      - dependency-name: "xunit.runner.visualstudio"
+        update-types: ["version-update:semver-major"]
     groups:
       test-packages:
         patterns: ["xunit*", "AwesomeAssertions", "Microsoft.NET.Test.Sdk", "coverlet*", "BenchmarkDotNet"]
