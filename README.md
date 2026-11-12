@@ -523,7 +523,7 @@ public static async Task<string> Process()
 
 ### Task-like types with their own async method builder
 
-`OnException` is woven into the catch block of the compiler-generated state machine, which completes the async method builder of the compiler (`AsyncTaskMethodBuilder`, `AsyncValueTaskMethodBuilder`, `AsyncVoidMethodBuilder`, ...). Methods returning a task-like type with its own builder (e.g. `UniTask`) can only be woven if their aspects use `OnEntry` and `OnExit` only. A task-like type implemented as a class has no default value other than `null`: if an aspect skips the method body or swallows an exception without setting `args.ReturnValue`, the method returns `null`. A method which also has an aspect with `OnException` is not changed at all, and a build warning is written ("... is not weaved"). Exclude the method from weaving with `[DisableWeaving]` to remove the warning.
+`OnException` is woven into the catch block of the compiler-generated state machine, which completes the async method builder of the compiler (`AsyncTaskMethodBuilder`, `AsyncValueTaskMethodBuilder`, `AsyncVoidMethodBuilder`, ...). Methods returning a task-like type with its own builder (e.g. `UniTask`) can only be woven if their aspects use `OnEntry` and `OnExit` only. A task-like type implemented as a class has no default value other than `null`: if an aspect skips the method body or swallows an exception without setting `args.ReturnValue`, the method returns `null`. A method which also has an aspect with `OnException` is not changed at all, and a build warning is written ("... is not woven"). Exclude the method from weaving with `[DisableWeaving]` to remove the warning.
 
 ### FlowBehavior in async methods
 
@@ -682,7 +682,7 @@ The weaver writes a build warning instead of failing if it leaves something as i
 
 | Warning | Cause | What to do |
 |---|---|---|
-| `Method '...' is not weaved: ...` | the method can't be woven: an async method of a task-like type with its own builder and an `OnException` aspect, a method with a variable argument list (`__arglist`), a method compiled with runtime-async (.NET 11, `<Features>runtime-async=on</Features>`), an async method whose state machine the compiler did not create in the expected way (the message names the reason) | [`[DisableWeaving]`](#excluding-methods-disableweaving) on the method removes the warning |
+| `Method '...' is not woven: ...` | the method can't be woven: an async method of a task-like type with its own builder and an `OnException` aspect, a method with a variable argument list (`__arglist`), a method compiled with runtime-async (.NET 11, `<Features>runtime-async=on</Features>`), an async method whose state machine the compiler did not create in the expected way (the message names the reason) | [`[DisableWeaving]`](#excluding-methods-disableweaving) on the method removes the warning |
 | `Method '...' uses ref struct values ...` | the method has `Span<T>` or other [ref structs](#ref-structs-spant-readonlyspant-) in its signature | `SuppressRefStructWarnings="true"` or `[DisableWeaving]` |
 | `Aspect '...' is applied to the constructor/field/event/parameter ..., where it is ignored` | an aspect is applied where the weaver never reads it (the compiler accepts it, the aspect attribute has no `[AttributeUsage]`) | apply the aspect to the method, property, class or assembly |
 | `Aspect '...' is applied to the interface/abstract/extern method (or property) ..., where it is ignored` | the method has no body to weave, and aspects are [not inherited](#several-aspects-on-one-method) by the methods which override or implement it | apply the aspect to the overrides and implementations |
@@ -691,7 +691,7 @@ The weaver writes a build warning instead of failing if it leaves something as i
 | `Aspect '...' configured in DisableExecutionArgsOptimization/DisableAspectInstanceReuse ... was not found` | the aspect named in `FodyWeavers.xml` is not applied to any woven method | use the full type name, or remove the entry |
 | `Unknown setting '...' in FodyWeavers.xml is ignored` | a typo in the `MethodBoundaryAspect` element (e.g. `SupressRefStructWarnings`) | see the [Configuration reference](#configuration-reference) |
 
-An invalid setup of an aspect (e.g. an invalid regular expression in a filter, two aspects of a method with the same order index) fails the build with a message that names the aspect or the method, e.g. `Aspect '...' has an invalid regular expression in ...` or `Method '...' could not be weaved: ...`.
+An invalid setup of an aspect (e.g. an invalid regular expression in a filter, two aspects of a method with the same order index) fails the build with a message that names the aspect or the method, e.g. `Aspect '...' has an invalid regular expression in ...` or `Method '...' could not be woven: ...`.
 
 ## Troubleshooting
 

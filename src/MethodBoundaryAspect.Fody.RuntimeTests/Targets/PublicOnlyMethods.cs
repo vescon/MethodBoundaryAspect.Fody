@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
 {
     // https://github.com/vescon/MethodBoundaryAspect.Fody/issues/19
-    // an aspect restricted to public methods, the aspect records which methods are weaved
+    // an aspect restricted to public methods, the aspect records which methods are woven
 
     [VisibilityRecordingAspect(AttributeTargetMemberAttributes = MulticastAttributes.Public)]
     public class PublicOnlyMethods

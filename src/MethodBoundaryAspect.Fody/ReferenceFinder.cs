@@ -112,7 +112,7 @@ namespace MethodBoundaryAspect.Fody
         {
             var importedType = _reflectionImporter.ImportReference(type, null);
             // On .NET Core, we need to rewrite mscorlib types to use the
-            // dot net assemblies from the weaved assembly and not the ones
+            // dot net assemblies from the woven assembly and not the ones
             // used by the weaver itself.
             if (importedType is TypeSpecification)
                 return importedType;

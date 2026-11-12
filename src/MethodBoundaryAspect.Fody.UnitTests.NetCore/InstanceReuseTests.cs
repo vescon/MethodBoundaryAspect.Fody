@@ -295,7 +295,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
                 .Select(m => m.Name)
                 .ToList();
 
-        // the method in which the aspect is created: the weaved method, or the kick-off method of an async method
+        // the method in which the aspect is created: the woven method, or the kick-off method of an async method
         private static IEnumerable<Instruction> GetInstructions(ModuleDefinition module, string methodName, Type type = null)
         {
             var method = module.GetType((type ?? typeof(InstanceReuseMethods)).FullName).Methods.Single(m => m.Name == methodName);

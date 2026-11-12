@@ -33,7 +33,7 @@ namespace MethodBoundaryAspect.Fody
         }
 
         /// <summary>
-        /// The configured aspect names which matched at least one weaved aspect.
+        /// The configured aspect names which matched at least one woven aspect.
         /// </summary>
         public HashSet<string> MatchedDisabledAspects { get; } = new HashSet<string>();
 

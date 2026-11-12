@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
 {
     /// <summary>
-    /// Records the names of the weaved methods, for filtering by <see cref="OnMethodBoundaryAspect.AttributeTargetMemberAttributes"/>.
+    /// Records the names of the woven methods, for filtering by <see cref="OnMethodBoundaryAspect.AttributeTargetMemberAttributes"/>.
     /// </summary>
     public class VisibilityRecordingAspect : OnMethodBoundaryAspect
     {

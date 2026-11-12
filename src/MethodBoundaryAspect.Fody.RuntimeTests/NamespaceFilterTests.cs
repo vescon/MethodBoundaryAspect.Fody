@@ -45,7 +45,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
             target.CallPrivate();
             target.Weaved = 1;
             target.Skipped = 1;
-            var weaved = target.Weaved;
+            var woven = target.Weaved;
             var skipped = target.Skipped;
 
             // CallPrivate is not woven, WeavePrivate is

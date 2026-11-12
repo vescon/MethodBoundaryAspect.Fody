@@ -26,7 +26,7 @@ namespace MethodBoundaryAspect.Fody
         private AspectInstanceCompileTimeWeaver _aspectInstanceCompileTimeWeaver;
 
         /// <summary>
-        /// Suppresses the warning for weaved methods using ref struct values (e.g. Span&lt;T&gt;).
+        /// Suppresses the warning for woven methods using ref struct values (e.g. Span&lt;T&gt;).
         /// Configurable in FodyWeavers.xml: &lt;MethodBoundaryAspect SuppressRefStructWarnings="true" /&gt;
         /// </summary>
         public bool SuppressRefStructWarnings { get; set; }
@@ -223,7 +223,7 @@ namespace MethodBoundaryAspect.Fody
             foreach (var aspect in configuredAspects)
             {
                 if (!matchedAspects.Contains(AspectTypeName.Normalize(aspect)))
-                    WriteWarning($"Aspect '{aspect}' configured in {settingName} of FodyWeavers.xml was not found in any weaved method. Use the full type name, e.g. 'MyNamespace.MyAspect'.");
+                    WriteWarning($"Aspect '{aspect}' configured in {settingName} of FodyWeavers.xml was not found in any woven method. Use the full type name, e.g. 'MyNamespace.MyAspect'.");
             }
         }
 
@@ -542,7 +542,7 @@ namespace MethodBoundaryAspect.Fody
             var isConfigurationError = exception is InvalidAspectConfigurationException || exception is NotSupportedException;
             var reason = isConfigurationError ? exception.Message : exception.ToString();
 
-            return new WeavingException($"Method '{method.FullName}' could not be weaved: {reason}")
+            return new WeavingException($"Method '{method.FullName}' could not be woven: {reason}")
             {
                 SequencePoint = method.DebugInformation.SequencePoints.FirstOrDefault()
             };
@@ -565,7 +565,7 @@ namespace MethodBoundaryAspect.Fody
             {
                 // not touched at all, failing the build would block the whole project for a single method
                 WriteWarning(
-                    $"Method '{method.FullName}' is not weaved: {unsupportedReason}. " +
+                    $"Method '{method.FullName}' is not woven: {unsupportedReason}. " +
                     "Exclude the method from weaving with [DisableWeaving] to remove this warning.",
                     method);
                 return false;
@@ -593,7 +593,7 @@ namespace MethodBoundaryAspect.Fody
                 return;
 
             // Ref structs (e.g. Span<T>) cannot be boxed into MethodExecutionArgs,
-            // they are weaved as null, see https://github.com/vescon/MethodBoundaryAspect.Fody/issues/129
+            // they are woven as null, see https://github.com/vescon/MethodBoundaryAspect.Fody/issues/129
             WriteWarning(
                 $"Method '{method.FullName}' uses ref struct values which cannot be passed to the aspect ({string.Join(", ", byRefLikeValues)}). " +
                 "They are null in MethodExecutionArgs and changes to them are ignored. " +

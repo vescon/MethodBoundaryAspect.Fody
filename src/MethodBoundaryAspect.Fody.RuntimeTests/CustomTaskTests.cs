@@ -8,7 +8,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 {
     /// <summary>
     /// OnException is woven into the catch block of MoveNext which calls SetException of the async method builder
-    /// of the compiler. A method with another builder (e.g. UniTask) is not weaved then, the build must not fail.
+    /// of the compiler. A method with another builder (e.g. UniTask) is not woven then, the build must not fail.
     /// </summary>
     [Collection(nameof(CustomTaskRecordingAspect))]
     public class CustomTaskTests

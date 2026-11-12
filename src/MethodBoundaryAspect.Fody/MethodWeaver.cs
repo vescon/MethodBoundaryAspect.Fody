@@ -792,7 +792,7 @@ namespace MethodBoundaryAspect.Fody
         private void Optimize()
         {
             // add DebuggerStepThrough attribute to avoid compiler searching for
-            // non existing source code for weaved il code
+            // non existing source code for woven il code
             var attributeCtor = _creator.GetDebuggerStepThroughAttributeCtorReference();
 
             // Only add DebuggerStepThrough if not already present.

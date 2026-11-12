@@ -4,7 +4,7 @@ using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
 {
     // https://github.com/vescon/MethodBoundaryAspect.Fody/issues/132
-    // each class calls a method of every visibility, the aspect records which of them are weaved
+    // each class calls a method of every visibility, the aspect records which of them are woven
 
     [VisibilityRecordingAspect(AttributeTargetMemberAttributes = MulticastAttributes.AnyVisibility)]
     public class AnyVisibilityMethods

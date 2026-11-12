@@ -13,7 +13,7 @@ namespace MethodBoundaryAspect.Fody
         private const string Namespace = "OnMethodBoundaryAspectCompile";
 
         /// <summary>
-        /// Adds an internal static class to the module: only the weaved code of the same assembly uses it, it is no API
+        /// Adds an internal static class to the module: only the woven code of the same assembly uses it, it is no API
         /// of the assembly.
         /// </summary>
         public static TypeDefinition CreateStaticClass(ModuleDefinition module, string name, TypeReference baseType)

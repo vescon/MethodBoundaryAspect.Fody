@@ -37,7 +37,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         {
             _warnings.Should().ContainSingle(w => w.Contains("runtime-async"))
                 .Which.Should().Contain(nameof(VarArgMethods.Normal))
-                .And.Contain("is not weaved")
+                .And.Contain("is not woven")
                 .And.Contain("runtime-async")
                 .And.Contain("[DisableWeaving]");
         }

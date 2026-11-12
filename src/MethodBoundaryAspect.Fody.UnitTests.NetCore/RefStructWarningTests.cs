@@ -10,7 +10,7 @@ using Xunit;
 namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 {
     /// <summary>
-    /// Methods using ref structs (e.g. Span&lt;T&gt;) are weaved with null values for them and a warning,
+    /// Methods using ref structs (e.g. Span&lt;T&gt;) are woven with null values for them and a warning,
     /// see https://github.com/vescon/MethodBoundaryAspect.Fody/issues/129
     /// </summary>
     [Collection(TestAssemblyNetCoreWeaving)]
@@ -81,7 +81,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             var assemblyPath = type.Assembly.Location;
             _weavedAssemblyPaths.Add(weaver.WeaveToShadowFile(assemblyPath, ModuleHelper.AssemblyResolver));
 
-            weaver.TotalWeavedMethods.Should().Be(expectedWeavedMethods, "the ref struct methods are still weaved, only [DisableWeaving] is skipped");
+            weaver.TotalWeavedMethods.Should().Be(expectedWeavedMethods, "the ref struct methods are still woven, only [DisableWeaving] is skipped");
             return warnings;
         }
 

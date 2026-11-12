@@ -9,7 +9,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
     /// <summary>
     /// https://github.com/vescon/MethodBoundaryAspect.Fody/issues/132
     /// MulticastAttributes.AnyVisibility had the same value as MulticastAttributes.Public,
-    /// so an aspect with AttributeTargetMemberAttributes = AnyVisibility only weaved public methods.
+    /// so an aspect with AttributeTargetMemberAttributes = AnyVisibility only woven public methods.
     /// </summary>
     [Collection(nameof(VisibilityRecordingAspect))]
     public class Issue132Tests

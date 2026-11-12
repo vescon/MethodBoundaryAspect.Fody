@@ -48,7 +48,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetFramework
         }
 
         /// <summary>
-        /// Gets the requested type from the just created weaved assembly
+        /// Gets the requested type from the just created woven assembly
         /// </summary>
         /// <param name="name">Name of the type to return.</param>
         /// <returns></returns>

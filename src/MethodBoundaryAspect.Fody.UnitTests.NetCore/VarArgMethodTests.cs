@@ -33,7 +33,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         {
             _warnings.Should().ContainSingle()
                 .Which.Should().Contain(nameof(VarArgMethods.VarArg))
-                .And.Contain("is not weaved")
+                .And.Contain("is not woven")
                 .And.Contain("__arglist")
                 .And.Contain("[DisableWeaving]");
         }

@@ -9,7 +9,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 {
     /// <summary>
     /// MethodExecutionArgs properties which are not used by any aspect of a method are not provided at runtime.
-    /// The weaved methods have to behave the same, except that a skipped method body without a return value
+    /// The woven methods have to behave the same, except that a skipped method body without a return value
     /// set by the aspect returns the default value.
     /// </summary>
     public class ExecutionArgsUsageTests

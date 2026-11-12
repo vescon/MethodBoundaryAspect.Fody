@@ -6,8 +6,8 @@ using System.Runtime.Loader;
 namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 {
     /// <summary>
-    /// A weaved test assembly loaded into its own, collectible <see cref="AssemblyLoadContext"/>, so the tests can run
-    /// the weaved code (the assembly that was weaved is loaded in the default context for the other tests). The
+    /// A woven test assembly loaded into its own, collectible <see cref="AssemblyLoadContext"/>, so the tests can run
+    /// the woven code (the assembly that was woven is loaded in the default context for the other tests). The
     /// references, e.g. the runtime library, are loaded by the default context.
     /// </summary>
     internal sealed class WeavedAssembly : IDisposable

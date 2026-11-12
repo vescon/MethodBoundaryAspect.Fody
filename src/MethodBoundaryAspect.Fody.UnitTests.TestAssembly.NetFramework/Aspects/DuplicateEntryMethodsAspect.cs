@@ -3,7 +3,7 @@
 namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.Aspects
 {
     /// <summary>
-    /// remark: weaved methods with parameter MethodExecutionArgs should be ordered last
+    /// remark: woven methods with parameter MethodExecutionArgs should be ordered last
     /// </summary>
     public class DuplicateEntryMethodsAspect : OnMethodBoundaryAspect
     {
