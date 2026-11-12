@@ -9,7 +9,7 @@
     <Authors>Ralf Kornelius, Marcell Spies, Martin Ayasse, Contributors</Authors>
     <Company>VESCON GmbH</Company>
     <Copyright>Copyright © 2026 VESCON GmbH</Copyright>
-    <PackageDescription>A Fody weaver which allows to decorate methods and hook into method start, method end and method exceptions. Additionally you have access to useful method parameters.</PackageDescription>
+    <PackageDescription>A Fody weaver that lets you hook into the start, the end and the exceptions of methods by adding an attribute. The calls are woven into the IL at build time: no runtime proxy, and it also works for static, private, generic and async methods. Aspects get the arguments, the return value, the instance and the exception.</PackageDescription>
     <PackageTags>il weaving fody aspect aop method-invocation method boundary</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     
