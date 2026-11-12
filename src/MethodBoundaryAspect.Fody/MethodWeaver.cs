@@ -209,6 +209,10 @@ namespace MethodBoundaryAspect.Fody
                     foreach (var parameterConstraint in parameter.Constraints)
                         clonedParameter.Constraints.Add(parameterConstraint);
 
+                    // e.g. [DynamicallyAccessedMembers]: the wrapper passes its type argument on, the trimmer checks the annotations
+                    foreach (var attribute in parameter.CustomAttributes)
+                        clonedParameter.CustomAttributes.Add(CloneAttribute(attribute));
+
                     clonedMethod.GenericParameters.Add(clonedParameter);
                 }
             }
