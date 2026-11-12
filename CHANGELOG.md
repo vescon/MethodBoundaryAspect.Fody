@@ -5,7 +5,7 @@ listed as well). The migration from version 2 is described in the
 [README](README.md#upgrading-to-version-3). Versions are created from the Git tags, see the
 [releases on GitHub](https://github.com/vescon/MethodBoundaryAspect.Fody/releases).
 
-## 3.7.0 (not released yet)
+## 3.7.0
 
 ### Risk overview of the changes in 3.7.0
 
@@ -49,6 +49,7 @@ Which entries below can change existing code. The rating is an estimate: how lik
 - **The warning "Aspect ... sets X in its code" names a generic aspect correctly.** The suggestion was `[Int32>(NamespaceFilter = ...)]` for `[Validate<int>]`, it is `[Validate(NamespaceFilter = ...)]` now.
 - **An invalid regular expression in a filter (`NamespaceFilter`, `TypeNameFilter`, `MethodNameFilter`) fails the build also if an earlier filter of the aspect does not match.** The filters were evaluated one after the other for each method and the first one that did not match stopped it, so the invalid expression was ignored silently.
 - **A build warning for an aspect applied where it is ignored:** on a constructor, field, event, parameter, return value or the module (`[module: Log]`). The compiler accepts it there, the weaver never reads it, so nothing happened silently.
+- **An aspect which is replaced by a newer version without rebuilding the project that uses it:** a `FlowBehavior` the new version sets is ignored if the old version did not set one (the code for it is only woven if used, see the first entry). Rebuild the project or use `DisableExecutionArgsOptimization`.
 - **`1` and `0` are accepted as boolean values in `FodyWeavers.xml`** (`SuppressRefStructWarnings`, `DisableExecutionArgsOptimization`, `DisableAspectInstanceReuse`). The schema allows them, but the build failed with "Invalid value '1'".
 - **A method compiled with runtime-async (.NET 11, `<Features>runtime-async=on</Features>`) is not woven, a build warning is written.** Such a method has no state machine and was woven like a synchronous method, which keeps the async flag at a method without an `await`. Weaving these methods is not supported yet.
 - **Skipping the body of a method with a `ref` return calls the `OnExit` of the aspects before the aspect that skipped it,** like swallowing an exception of such a method already did. The method throws a `NotSupportedException` in both cases, but an aspect that opened a resource in `OnEntry` (a transaction) did not get its `OnExit` when the body was skipped.

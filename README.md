@@ -580,7 +580,8 @@ The aspect calls are woven into the IL at build time, so there is no reflection 
 | [The method info is loaded once](#method-info-of-argsmethod) | the reflection call that resolves `args.Method`, on every call | - |
 | Only the aspect methods you override are called | calls of empty base methods, and the `try`/`catch` for `OnException` if no aspect overrides it | - |
 | The original body runs in a method marked `AggressiveInlining` | the JIT can inline it again, so there is usually no additional stack frame | - |
-| `MethodExecutionTag` is only saved and restored with several aspects on a method | a local variable and two assignments per aspect | - |
+| `MethodExecutionTag` is only saved and restored with several aspects on a method, and only if one of them uses the tag | a local variable and two assignments per aspect | `DisableExecutionArgsOptimization` |
+| `FlowBehavior` is only checked if an aspect of the method sets it | the checks after `OnEntry` and `OnException` | `DisableExecutionArgsOptimization` |
 | Async methods get no wrapper method | no additional call level, the aspect state lives in the compiler-generated state machine | - |
 
 Measured overhead of an aspect with `OnEntry` and `OnExit` compared to the same call without an aspect: see [Measured overhead](#measured-overhead) and the [performance page](docs/performance.md).
@@ -596,6 +597,8 @@ Filling all `MethodExecutionArgs` properties on every call costs time and memory
 | `args.ReturnValue` (write) | the return value is not read back (unboxed) from `args.ReturnValue` after the aspect calls |
 | `args.Method` | the `MethodBase` is not looked up |
 | `args.Instance` | the instance is not set (and not boxed for structs) |
+| `args.MethodExecutionTag` | with several aspects: the tag is not saved and restored for each aspect |
+| `args.FlowBehavior` (write) | the `FlowBehavior` is not checked after `OnEntry` and `OnException`: the body always runs, an exception is always rethrown |
 
 For example, only `args.Method` is provided for this aspect:
 
@@ -617,7 +620,7 @@ public sealed class TimingAttribute : OnMethodBoundaryAspect
 
 The analysis is conservative. If `args` is used in any other way than reading or writing its properties (for example, passed to a logger, stored in a field, or captured by a lambda), the aspect gets all properties. Calls to non-virtual methods of the aspect and its base classes are followed, e.g. `base.OnEntry(args)` or a private helper. When several aspects are applied to a method, a property is provided if any of them uses it. Aspects whose assembly can only be resolved as a reference assembly are never optimized.
 
-The analysis runs when the project using the aspect is woven. If that project is not rebuilt when the aspect's assembly is updated (e.g. an aspect loaded from a plugin), a new aspect version could access properties that were not provided and are `null`. Disable the optimization for such aspects, see [Configuration reference](#configuration-reference).
+The analysis runs when the project using the aspect is woven. If that project is not rebuilt when the aspect's assembly is updated (e.g. an aspect loaded from a plugin), a new aspect version could access properties that were not provided and are `null`, a `FlowBehavior` it sets is ignored, and with several aspects it sees the `MethodExecutionTag` of another aspect. Disable the optimization for such aspects, see [Configuration reference](#configuration-reference).
 
 ### Method info of `args.Method`
 
@@ -671,7 +674,7 @@ All settings are optional and go into the `MethodBoundaryAspect` element of `Fod
 | `<DisableAspectInstanceReuse Aspect="..." />` | create this aspect for every call instead of sharing one instance, see [Aspect instances](#aspect-instances) (full type name, nested types as `Namespace.Outer+Inner`). A build warning is written if the aspect is not applied to any woven method |
 | `DisableAspectInstanceReuse="true"` | the same for all aspects |
 
-Errors in the configuration fail the build with a message: a value other than `true` or `false` for a boolean setting, and an element without the `Aspect` attribute. `Aspect` matches the exact type name only, a generic aspect is written with the number of its type parameters: ``Ns.Validate`1``.
+Errors in the configuration fail the build with a message: a value other than `true`, `false`, `1` or `0` for a boolean setting, and an element without the `Aspect` attribute. `Aspect` matches the exact type name only, a generic aspect is written with the number of its type parameters: ``Ns.Validate`1``.
 
 ## Build warnings and errors
 
@@ -715,7 +718,7 @@ A new aspect instance is created for every call (or, for an aspect without state
 
 Version 3 only provides the `MethodExecutionArgs` properties that the aspects of a method use (see [Performance](#performance)). Which properties are used is determined when the project using the aspect is woven. This changes the runtime behavior in these cases:
 
-- **The aspect code changes without the woven project being woven again.** If the aspect's assembly is replaced by a newer version (e.g. a plugin, a separately deployed library, or a binding redirect) and the project using the aspect is not rebuilt, the new aspect version gets `null` for the properties the old version didn't use (`Arguments`, `Method`, `Instance`, `ReturnValue`), and a `ReturnValue` it sets is ignored. Rebuild all projects using the aspect after changing it, or [disable the optimization](#configuration-reference) for this aspect.
+- **The aspect code changes without the woven project being woven again.** If the aspect's assembly is replaced by a newer version (e.g. a plugin, a separately deployed library, or a binding redirect) and the project using the aspect is not rebuilt, the new aspect version gets `null` for the properties the old version didn't use (`Arguments`, `Method`, `Instance`, `ReturnValue`), and a `ReturnValue` or (since 3.7.0) a `FlowBehavior` it sets is ignored. Rebuild all projects using the aspect after changing it, or [disable the optimization](#configuration-reference) for this aspect.
 - **The method body is skipped without a return value.** If an aspect skips the method body (`FlowBehavior.Return` in `OnEntry`, or `FlowBehavior.Continue`/`FlowBehavior.Return` in `OnException`) and no aspect sets `args.ReturnValue`, the method returns the default value of its return type. Version 2 threw a `NullReferenceException` for value types in this case.
 
 Also changed:
