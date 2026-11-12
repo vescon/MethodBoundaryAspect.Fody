@@ -12,7 +12,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
     /// targets runs in the RuntimeTests.
     /// </summary>
     [Collection(RefStructWarningTests.TestAssemblyNetCoreWeaving)]
-    public class SpecialAspectTests : MethodBoundaryAspectTestBase
+    public class SpecialAspectWeavingTests : MethodBoundaryAspectTestBase
     {
         [Fact]
         public void IfNetCoreClassIsWeaved_ThenWeavingShouldNotThrow()

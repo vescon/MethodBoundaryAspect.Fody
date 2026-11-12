@@ -21,7 +21,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
     /// from a new instance is created for every call.
     /// </summary>
     [Collection(RefStructWarningTests.TestAssemblyNetCoreWeaving)]
-    public class InstanceReuseTests : IDisposable
+    public class InstanceReuseWeavingTests : IDisposable
     {
         private const string AspectsClass = "OnMethodBoundaryAspectCompile.Aspects";
 

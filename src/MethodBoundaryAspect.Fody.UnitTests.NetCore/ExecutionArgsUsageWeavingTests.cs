@@ -19,7 +19,7 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
     /// see <see cref="ExecutionArgsUsageAnalyzer"/>.
     /// </summary>
     [Collection(RefStructWarningTests.TestAssemblyNetCoreWeaving)]
-    public class ExecutionArgsUsageTests : IDisposable
+    public class ExecutionArgsUsageWeavingTests : IDisposable
     {
         private const ExecutionArgsUsage All = ExecutionArgsUsage.All;
 
