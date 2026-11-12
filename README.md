@@ -748,7 +748,7 @@ All changes of later releases are listed in the [CHANGELOG](CHANGELOG.md).
 
 ## Contributing
 
-Issues and pull requests are welcome, feel free to [fork](https://github.com/vescon/MethodBoundaryAspect.Fody/fork) the repository.
+Issues and pull requests are welcome, feel free to [fork](https://github.com/vescon/MethodBoundaryAspect.Fody/fork) the repository. See [CONTRIBUTING.md](CONTRIBUTING.md) for what a change needs, and [SECURITY.md](SECURITY.md) to report a vulnerability.
 
 ```
 dotnet build --configuration Release src/MethodBoundaryAspect.Fody.sln
