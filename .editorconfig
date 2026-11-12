@@ -1,0 +1,12 @@
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.{xml,csproj,props,targets,yml,yaml,json,xsd,xcf,sln}]
+indent_size = 2
+
+[*.md]
+trim_trailing_whitespace = false
