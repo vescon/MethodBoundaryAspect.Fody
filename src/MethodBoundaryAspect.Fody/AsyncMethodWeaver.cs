@@ -29,41 +29,68 @@ namespace MethodBoundaryAspect.Fody
         {
             _moveNext = moveNext;
 
-            var instructions = _ilProcessor.Body.Instructions;
-            if (instructions.Count < 2)
-                throw new InvalidOperationException($"Async state machine on {method.FullName} not in expected configuration.");
+            // GetUnsupportedReason checks this before the weaver is created, the method is not changed until here
+            var reason = Inspect(method, moveNext, out _stateMachineLocal, out _setupPointer);
+            if (reason != null)
+                throw new InvalidOperationException($"Async state machine on {method.FullName}: {reason}");
 
-            _stateMachineLocal = method.Body.Variables.Single(v => v.VariableType.Resolve() == _moveNext.DeclaringType);
             _stateMachine = _stateMachineLocal.VariableType;
+        }
+
+        /// <summary>
+        /// The local variable of the kickoff method which holds the state machine, null if there is not exactly one.
+        /// </summary>
+        internal static VariableDefinition FindStateMachineLocal(MethodDefinition method, MethodDefinition moveNext)
+        {
+            var locals = method.Body.Variables.Where(v => v.VariableType.Resolve() == moveNext.DeclaringType).Take(2).ToList();
+            return locals.Count == 1 ? locals[0] : null;
+        }
+
+        /// <summary>
+        /// Checks the structure of the kickoff method the weaver relies on and finds where the setup code is inserted.
+        /// </summary>
+        /// <param name="setupPointer">The instruction after which the setup is inserted, null: at the start of the method.</param>
+        /// <returns>The reason why the method can't be woven, null if it can.</returns>
+        private static string Inspect(MethodDefinition method, MethodDefinition moveNext, out VariableDefinition stateMachineLocal, out Instruction setupPointer)
+        {
+            setupPointer = null;
+            stateMachineLocal = null;
+
+            var instructions = method.Body.Instructions;
+            if (instructions.Count < 2)
+                return "the state machine is not created in the expected way";
+
+            stateMachineLocal = FindStateMachineLocal(method, moveNext);
+            if (stateMachineLocal == null)
+                return "the state machine is not stored in exactly one local variable";
 
             // If state machine is a reference type, then we need to insert our
             // instructions after it is newed up and stored so that we can access
             // the instance.
-            if (!_stateMachine.IsValueType)
+            if (!stateMachineLocal.VariableType.IsValueType)
             {
-                if (instructions[0].OpCode != OpCodes.Newobj)
-                    throw new InvalidOperationException($"Async state machine on {method.FullName} does not create expected state machine. Opcode = {instructions[0].OpCode}");
+                if (instructions[0].OpCode != OpCodes.Newobj || !IsStloc(instructions[1]))
+                    return "the state machine is not created and stored in the expected way";
 
-                if (!(instructions[0].Operand is MethodReference mr)
-                    || mr.DeclaringType?.Resolve()?.Interfaces.Any(i => i.InterfaceType.FullName == typeof(IAsyncStateMachine).FullName) != true)
-                    throw new InvalidOperationException($"Async state machine on {method.FullName} does not create correct state machine type.");
+                if (!(instructions[0].Operand is MethodReference constructor)
+                    || constructor.DeclaringType?.Resolve()?.Interfaces.Any(i => i.InterfaceType.FullName == typeof(IAsyncStateMachine).FullName) != true)
+                    return "the object created first is not a state machine";
 
-                if (!IsStloc(instructions[1]))
-                    throw new InvalidOperationException($"Async state machine on {method.FullName} not stored in expected manner.");
-
-                _setupPointer = instructions[1];
+                setupPointer = instructions[1];
+                return null;
             }
+
             // If state machine is a value type, it will have default value
             // and be non-nullable, so we can just insert our instructions
             // at the beginning of the method without worrying about NullReferenceException.
             // Visual Basic explicitly initializes the state machine first (ldloca, initobj),
             // so we have to insert our instructions after it or they would be overwritten.
-            else if (instructions[1].OpCode == OpCodes.Initobj
-                     && instructions[1].Operand is TypeReference initType
-                     && initType.Resolve() == _moveNext.DeclaringType)
-                _setupPointer = instructions[1];
-            else
-                _setupPointer = null;
+            if (instructions[1].OpCode == OpCodes.Initobj
+                && instructions[1].Operand is TypeReference initType
+                && initType.Resolve() == moveNext.DeclaringType)
+                setupPointer = instructions[1];
+
+            return null;
         }
 
         /// <summary>
@@ -74,16 +101,9 @@ namespace MethodBoundaryAspect.Fody
         /// <returns>The reason why the method can't be woven, null if it can.</returns>
         public static string GetUnsupportedReason(MethodDefinition method, MethodDefinition moveNext, bool weavesOnException)
         {
-            var instructions = method.Body.Instructions;
-            if (instructions.Count < 2)
-                return "the state machine is not created in the expected way";
-
-            var stateMachineLocal = method.Body.Variables.SingleOrDefault(v => v.VariableType.Resolve() == moveNext.DeclaringType);
-            if (stateMachineLocal == null)
-                return "the state machine is not stored in a local variable";
-
-            if (!stateMachineLocal.VariableType.IsValueType && (instructions[0].OpCode != OpCodes.Newobj || !IsStloc(instructions[1])))
-                return "the state machine is not created and stored in the expected way";
+            var reason = Inspect(method, moveNext, out _, out _);
+            if (reason != null)
+                return reason;
 
             if (!weavesOnException)
                 return null;

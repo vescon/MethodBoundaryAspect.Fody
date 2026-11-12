@@ -24,7 +24,7 @@ namespace MethodBoundaryAspect.Fody
             : base(info, methods, method, module, sharedInstanceGetter)
         {
             _moveNext = moveNext;
-            _stateMachineLocal = method.Body.Variables.Single(v => v.VariableType.Resolve() == moveNext.DeclaringType);
+            _stateMachineLocal = AsyncMethodWeaver.FindStateMachineLocal(method, moveNext);
             _stateMachine = _stateMachineLocal.VariableType;
         }
 
