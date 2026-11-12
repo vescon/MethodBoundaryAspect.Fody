@@ -1,0 +1,15 @@
+name: Feature request or question
+description: An idea, or a question how to do something with an aspect.
+labels: [question]
+body:
+  - type: textarea
+    id: goal
+    attributes:
+      label: What do you want to achieve?
+      description: Describe the goal, not only the solution. An example of the code you would write helps.
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What did you try?

@@ -1,0 +1,38 @@
+name: Bug report
+description: The weaver fails, writes an unexpected warning, or woven code behaves wrongly.
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Version of MethodBoundaryAspect.Fody
+      placeholder: "3.7.0"
+    validations:
+      required: true
+  - type: input
+    id: framework
+    attributes:
+      label: Target framework and SDK
+      description: For example net8.0 with SDK 8.0.400, or net48.
+    validations:
+      required: true
+  - type: textarea
+    id: aspect
+    attributes:
+      label: The aspect and the method it is applied to
+      description: The aspect class (the method headers are enough if it is long) and the method, class or assembly attribute.
+      render: csharp
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+      description: Include the build output (the whole message of the weaver) or the exception with its stack trace.
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: FodyWeavers.xml
+      render: xml
