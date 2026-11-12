@@ -82,6 +82,7 @@ Announced in version 3 (obsolete attributes, warnings, README). Nothing of this 
 | Low | `OnMethodBoundaryAspect.CompileTimeValidate` is removed | `[Obsolete]`, never called, throws `NotSupportedException` |
 | Low | `NamespaceFilter`, `TypeNameFilter` and `MethodNameFilter` are no longer `virtual` | An override never had an effect; 3.x warns |
 | Low | The usage of `[DisableWeaving]`, `[AspectOrderIndex]` and `[AspectSkipProperties]` is restricted to the targets the weaver reads | Compiler error instead of silently ignored; `[AllowChangingInputArguments]` is class only already |
+| Medium | The minimum .NET Framework is raised from 4.6.2 to 4.7.2 (the package and the test projects) | Version 4 of `xunit.runner.visualstudio` and later supports net472 and higher only; Microsoft ends the support of 4.6.2 in January 2027. Fody is updated together with it |
 
 ## 3.6.0
 
