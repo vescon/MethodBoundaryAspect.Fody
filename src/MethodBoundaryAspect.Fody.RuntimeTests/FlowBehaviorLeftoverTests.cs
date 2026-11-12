@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using FluentAssertions;
+using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.Attributes;
 using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 using MethodBoundaryAspect.Fody.RuntimeTests.Targets;

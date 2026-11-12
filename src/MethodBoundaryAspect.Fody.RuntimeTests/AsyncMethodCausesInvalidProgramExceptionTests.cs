@@ -1,4 +1,4 @@
-using FluentAssertions;
+using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 using System;
 using System.Linq;

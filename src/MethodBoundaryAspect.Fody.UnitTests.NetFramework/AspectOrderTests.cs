@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using FluentAssertions;
+using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.Ordering;
 using Xunit;
 

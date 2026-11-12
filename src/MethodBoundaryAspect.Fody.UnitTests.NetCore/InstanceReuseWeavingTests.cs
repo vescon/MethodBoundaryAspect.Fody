@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
-using FluentAssertions;
+using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.Shared;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore.Aspects;

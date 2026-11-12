@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using FluentAssertions;
+using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.Shared;
 using Mono.Cecil;
 using Mono.Cecil.Cil;

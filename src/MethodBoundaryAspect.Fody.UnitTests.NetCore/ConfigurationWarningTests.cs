@@ -1,4 +1,4 @@
-using FluentAssertions;
+using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.Shared;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore;
 using System;

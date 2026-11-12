@@ -1,5 +1,5 @@
 ﻿using System;
-using FluentAssertions;
+using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.UnverifiableTestAssembly.NetFramework;
 using Xunit;
 

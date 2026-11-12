@@ -14,4 +14,4 @@ updates:
       - dependency-name: "Fody*"
     groups:
       test-packages:
-        patterns: ["xunit*", "FluentAssertions", "Microsoft.NET.Test.Sdk", "coverlet*", "BenchmarkDotNet"]
+        patterns: ["xunit*", "AwesomeAssertions", "Microsoft.NET.Test.Sdk", "coverlet*", "BenchmarkDotNet"]

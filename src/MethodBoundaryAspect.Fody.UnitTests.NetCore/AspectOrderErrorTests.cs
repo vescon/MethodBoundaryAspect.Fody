@@ -1,5 +1,5 @@
 #pragma warning disable 0618 // the obsolete aspect roles are the subject of these tests
-using FluentAssertions;
+using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.Ordering;
 using System;
 using System.Collections.Generic;

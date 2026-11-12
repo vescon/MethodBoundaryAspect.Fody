@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using FluentAssertions;
+using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework.External.Aspects;
 using Xunit;

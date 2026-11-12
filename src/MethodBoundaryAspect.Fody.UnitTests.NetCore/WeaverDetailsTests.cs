@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Xml.Linq;
 using Fody;
-using FluentAssertions;
+using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.Shared;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore;
 using Mono.Cecil;

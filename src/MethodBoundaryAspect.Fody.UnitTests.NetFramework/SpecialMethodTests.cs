@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Reflection;
-using FluentAssertions;
+using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetFramework;
 using Xunit;
 

@@ -1,4 +1,4 @@
-﻿using FluentAssertions;
+﻿using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.Attributes;
 using System;
 using System.Threading;

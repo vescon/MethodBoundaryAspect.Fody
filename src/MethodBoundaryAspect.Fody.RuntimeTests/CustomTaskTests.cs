@@ -1,4 +1,4 @@
-using FluentAssertions;
+using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.RuntimeTests.Aspects;
 using MethodBoundaryAspect.Fody.RuntimeTests.Targets;
 using System.Threading.Tasks;

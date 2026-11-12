@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using FluentAssertions;
+using AwesomeAssertions;
 using MethodBoundaryAspect.Fody.Attributes;
 using MethodBoundaryAspect.Fody.RuntimeTests.Targets;
 using Xunit;
