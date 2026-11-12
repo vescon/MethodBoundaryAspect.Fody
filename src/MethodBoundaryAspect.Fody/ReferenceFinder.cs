@@ -16,6 +16,14 @@ namespace MethodBoundaryAspect.Fody
             _reflectionImporter = new CoreLibraryReflectionImporter(moduleDefinition);
         }
 
+        /// <summary>
+        /// A reference to the method with the name (e.g. "set_ReturnValue") of the type or its base types.
+        /// </summary>
+        public MethodReference GetMethodReference(TypeReference typeReference, string methodName)
+        {
+            return GetMethodReference(typeReference, md => md.Name == methodName);
+        }
+
         public MethodReference GetMethodReference(TypeReference typeReference, Func<MethodDefinition, bool> predicate)
         {
             var currentType = typeReference;

@@ -96,8 +96,7 @@ namespace MethodBoundaryAspect.Fody
 
         public InstructionBlockChain LoadTagInMoveNext(IPersistable executionArgs)
         {
-            var setMethod = _referenceFinder.GetMethodReference(executionArgs.PersistedType,
-                    md => md.Name == "set_MethodExecutionTag");
+            var setMethod = _referenceFinder.GetMethodReference(executionArgs.PersistedType, "set_MethodExecutionTag");
             var sm = StateMachineFromMoveNext;
 
             return _creator.CallVoidMethod(setMethod, GetMoveNextExecutionArgs(executionArgs),
@@ -111,8 +110,7 @@ namespace MethodBoundaryAspect.Fody
             var onExceptionMethodRef = _referenceFinder.GetMethodReference(Info.AspectAttribute.AttributeType,
                 AspectMethodCriteria.IsOnExceptionMethod);
 
-            var setMethod = _referenceFinder.GetMethodReference(executionArgs.PersistedType,
-                md => md.Name == "set_Exception");
+            var setMethod = _referenceFinder.GetMethodReference(executionArgs.PersistedType, "set_Exception");
 
             var setExceptionOnArgsBlock = _creator.CallVoidMethod(setMethod, GetMoveNextExecutionArgs(executionArgs),
                 new VariablePersistable(exceptionLocal));

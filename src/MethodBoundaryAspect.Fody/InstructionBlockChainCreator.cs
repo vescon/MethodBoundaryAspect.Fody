@@ -124,7 +124,7 @@ namespace MethodBoundaryAspect.Fody
             {
                 createThisVariableBlock = CreateThisVariable();
                 var methodExecutionArgsSetInstanceMethodRef =
-                    _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Instance");
+                    _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, "set_Instance");
                 callSetInstanceBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetInstanceMethodRef,
                     new VariablePersistable(methodExecutionArgsVariable),
                     new VariablePersistable(createThisVariableBlock.Variable));
@@ -138,7 +138,7 @@ namespace MethodBoundaryAspect.Fody
             if (argumentsArrayChain != null)
             {
                 var methodExecutionArgsSetArgumentsMethodRef =
-                    _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Arguments");
+                    _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, "set_Arguments");
                 var callSetArgumentsBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetArgumentsMethodRef,
                     new VariablePersistable(methodExecutionArgsVariable),
                     new VariablePersistable(argumentsArrayChain.Variable));
@@ -154,7 +154,7 @@ namespace MethodBoundaryAspect.Fody
                 var loadMethodInfoBlock = methodInfoCompileTimeWeaver.PushMethodInfoOnStack(method, variablePersistable);
 
                 var methodExecutionArgsSetMethodBaseMethodRef =
-                    _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, md => md.Name == "set_Method");
+                    _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, "set_Method");
                 var callSetMethodBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetMethodBaseMethodRef,
                     new VariablePersistable(methodExecutionArgsVariable),
                     variablePersistable);
@@ -176,8 +176,7 @@ namespace MethodBoundaryAspect.Fody
             IPersistable newMethodExecutionArgsBlockChain, NamedInstructionBlockChain loadReturnValue)
         {
             var methodExecutionArgsSetReturnValueMethodRef =
-                _referenceFinder.GetMethodReference(newMethodExecutionArgsBlockChain.PersistedType,
-                    md => md.Name == "set_ReturnValue");
+                _referenceFinder.GetMethodReference(newMethodExecutionArgsBlockChain.PersistedType, "set_ReturnValue");
             var callSetReturnValueBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetReturnValueMethodRef,
                 newMethodExecutionArgsBlockChain,
                 new VariablePersistable(loadReturnValue.Variable));
@@ -195,8 +194,7 @@ namespace MethodBoundaryAspect.Fody
             var assignExceptionVariable = _creator.AssignValueFromStack(exceptionVariable);
 
             var methodExecutionArgsSetExceptionMethodRef =
-                _referenceFinder.GetMethodReference(createMethodExecutionArgsInstance.PersistedType,
-                    md => md.Name == "set_Exception");
+                _referenceFinder.GetMethodReference(createMethodExecutionArgsInstance.PersistedType, "set_Exception");
             var callSetExceptionBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetExceptionMethodRef,
                 createMethodExecutionArgsInstance,
                 new VariablePersistable(exceptionVariable));
@@ -212,8 +210,7 @@ namespace MethodBoundaryAspect.Fody
             IPersistable tag)
         {
             var getMethod =
-                _referenceFinder.GetMethodReference(createMethodExecutionArgsInstance.PersistedType,
-                    md => md.Name == "get_MethodExecutionTag");
+                _referenceFinder.GetMethodReference(createMethodExecutionArgsInstance.PersistedType, "get_MethodExecutionTag");
             var chain = new InstructionBlockChain();
             chain.Add(_creator.CallInstanceMethod(getMethod, createMethodExecutionArgsInstance, tag));
             return chain;
@@ -224,7 +221,7 @@ namespace MethodBoundaryAspect.Fody
         /// </summary>
         public InstructionBlockChain ClearMethodExecutionArgsTag(ILoadable executionArgs)
         {
-            var setMethod = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "set_MethodExecutionTag");
+            var setMethod = _referenceFinder.GetMethodReference(executionArgs.PersistedType, "set_MethodExecutionTag");
 
             var instructions = executionArgs.Load(true, false).Instructions.ToList();
             instructions.Add(Instruction.Create(OpCodes.Ldnull));
@@ -239,8 +236,7 @@ namespace MethodBoundaryAspect.Fody
             IPersistable createMethodExecutionArgsInstance,
             IPersistable tag)
         {
-            var setMethod = _referenceFinder.GetMethodReference(createMethodExecutionArgsInstance.PersistedType,
-                    md => md.Name == "set_MethodExecutionTag");
+            var setMethod = _referenceFinder.GetMethodReference(createMethodExecutionArgsInstance.PersistedType, "set_MethodExecutionTag");
             var chain = new InstructionBlockChain();
             chain.Add(_creator.CallVoidInstanceMethod(setMethod, createMethodExecutionArgsInstance, tag));
             return chain;
@@ -270,7 +266,7 @@ namespace MethodBoundaryAspect.Fody
             if (_method.ReturnsRefReadonly())
                 return new InstructionBlockChain();
 
-            var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "get_ReturnValue");
+            var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, "get_ReturnValue");
             var readValueBlock = _creator.CallInstanceMethod(getReturnValue, executionArgs, new VariablePersistable(returnValue));
 
             var readValueBlockChain = new InstructionBlockChain();
@@ -331,7 +327,7 @@ namespace MethodBoundaryAspect.Fody
             if (InstructionBlockCreator.IsVoid(_method.ReturnType) || _method.ReturnType.CannotBeBoxed())
                 return new InstructionBlockChain();
 
-            var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "get_ReturnValue");
+            var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, "get_ReturnValue");
             var value = _creator.CreateVariable(_method.Module.TypeSystem.Object);
             var end = Instruction.Create(OpCodes.Nop);
 
@@ -356,7 +352,7 @@ namespace MethodBoundaryAspect.Fody
         /// </summary>
         public InstructionBlockChain ResetMethodExecutionArgsFlowBehavior(ILoadable executionArgs)
         {
-            var setFlowBehavior = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "set_FlowBehavior");
+            var setFlowBehavior = _referenceFinder.GetMethodReference(executionArgs.PersistedType, "set_FlowBehavior");
 
             var instructions = executionArgs.Load(true, false).Instructions.ToList();
             instructions.Add(Instruction.Create(OpCodes.Ldc_I4, FlowBehaviorValues.Default));
@@ -372,7 +368,7 @@ namespace MethodBoundaryAspect.Fody
         /// </summary>
         public InstructionBlockChain ClearMethodExecutionArgsReturnValue(ILoadable executionArgs, TypeReference onlyIfInstanceOf = null)
         {
-            var setReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "set_ReturnValue");
+            var setReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, "set_ReturnValue");
 
             var instructions = executionArgs.Load(true, false).Instructions.ToList();
             instructions.Add(Instruction.Create(OpCodes.Ldnull));
@@ -385,7 +381,7 @@ namespace MethodBoundaryAspect.Fody
                 return chain;
             }
 
-            var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, md => md.Name == "get_ReturnValue");
+            var getReturnValue = _referenceFinder.GetMethodReference(executionArgs.PersistedType, "get_ReturnValue");
             var end = Instruction.Create(OpCodes.Nop);
             var check = executionArgs.Load(true, false).Instructions.ToList();
             check.Add(Instruction.Create(OpCodes.Call, getReturnValue));
@@ -409,48 +405,21 @@ namespace MethodBoundaryAspect.Fody
             return block;
         }
 
-        public InstructionBlockChain CallAspectOnEntry(
-            AspectData aspectInstance,
-            IPersistable executionArgs)
+        public InstructionBlockChain CallAspectOnEntry(AspectData aspectData, IPersistable executionArgs) =>
+            CallAspectMethod(aspectData, AspectMethodCriteria.IsOnEntryMethod, executionArgs);
+
+        public InstructionBlockChain CallAspectOnExit(AspectData aspectData, IPersistable executionArgs) =>
+            CallAspectMethod(aspectData, AspectMethodCriteria.IsOnExitMethod, executionArgs);
+
+        public InstructionBlockChain CallAspectOnException(AspectData aspectData, IPersistable executionArgs) =>
+            CallAspectMethod(aspectData, AspectMethodCriteria.IsOnExceptionMethod, executionArgs);
+
+        private InstructionBlockChain CallAspectMethod(AspectData aspectData, Func<MethodDefinition, bool> isAspectMethod, IPersistable executionArgs)
         {
-            var onEntryMethodRef = _referenceFinder.GetMethodReference(
-                aspectInstance.Info.AspectAttribute.AttributeType,
-                AspectMethodCriteria.IsOnEntryMethod);
-            var callOnEntryBlock = _creator.CallVoidInstanceMethod(onEntryMethodRef,
-                aspectInstance.AspectPersistable, executionArgs);
-
-            var callAspectOnEntryBlockChain = new InstructionBlockChain();
-            callAspectOnEntryBlockChain.Add(callOnEntryBlock);
-            return callAspectOnEntryBlockChain;
-        }
-
-        public InstructionBlockChain CallAspectOnExit(AspectData aspectData,
-            IPersistable executionArgs)
-        {
-            var onExitMethodRef = _referenceFinder.GetMethodReference(
-                aspectData.Info.AspectAttribute.AttributeType,
-                AspectMethodCriteria.IsOnExitMethod);
-            var callOnExitBlock = _creator.CallVoidInstanceMethod(onExitMethodRef,
-                aspectData.AspectPersistable, executionArgs);
-
-            var callAspectOnExitBlockChain = new InstructionBlockChain();
-            callAspectOnExitBlockChain.Add(callOnExitBlock);
-            return callAspectOnExitBlockChain;
-        }
-
-        public InstructionBlockChain CallAspectOnException(
-            AspectData aspectData,
-            IPersistable executionArgs)
-        {
-            var onExceptionMethodRef = _referenceFinder.GetMethodReference(
-                aspectData.Info.AspectAttribute.AttributeType,
-                AspectMethodCriteria.IsOnExceptionMethod);
-            var callOnExceptionBlock = _creator.CallVoidInstanceMethod(onExceptionMethodRef,
-                aspectData.AspectPersistable, executionArgs);
-
-            var callAspectOnExceptionBlockChain = new InstructionBlockChain();
-            callAspectOnExceptionBlockChain.Add(callOnExceptionBlock);
-            return callAspectOnExceptionBlockChain;
+            var methodRef = _referenceFinder.GetMethodReference(aspectData.Info.AspectAttribute.AttributeType, isAspectMethod);
+            var chain = new InstructionBlockChain();
+            chain.Add(_creator.CallVoidInstanceMethod(methodRef, aspectData.AspectPersistable, executionArgs));
+            return chain;
         }
 
         public InstructionBlockChain CallMethodWithLocalParameters(
