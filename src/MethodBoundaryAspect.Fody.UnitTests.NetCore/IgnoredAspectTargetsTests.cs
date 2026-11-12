@@ -53,6 +53,35 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             _weaver.TotalWeavedProperties.Should().Be(2);
         }
 
+        [Theory]
+        [InlineData(typeof(IIgnoredAspectTargets), "the interface method", "InterfaceMethod", "not inherited")]
+        [InlineData(typeof(IIgnoredAspectTargets), "the interface property", "InterfaceProperty", "not inherited")]
+        [InlineData(typeof(IgnoredAspectTargetsWithoutBody), "the abstract method", "AbstractMethod", "not inherited")]
+        [InlineData(typeof(IgnoredAspectTargetsWithoutBody), "the abstract property", "AbstractProperty", "not inherited")]
+        [InlineData(typeof(IgnoredAspectTargetsWithoutBody), "the extern method", "GetCurrentThreadId", "no body")]
+        public void IfAnAspectIsAppliedToAMethodWithoutBody_ThenAWarningIsWritten(System.Type type, string target, string name, string hint)
+        {
+            _weaver.AddClassFilter(type.FullName);
+
+            _weaver.Execute();
+
+            _warnings.Should().ContainSingle(w => w.Contains(target))
+                .Which.Should().Contain(name)
+                .And.Contain("is ignored")
+                .And.Contain(hint);
+        }
+
+        [Fact]
+        public void IfAnAspectIsAppliedToAMethodWithBodyOfAnAbstractClass_ThenItIsWovenWithoutWarning()
+        {
+            _weaver.AddClassFilter(typeof(IgnoredAspectTargetsWithoutBody).FullName);
+
+            _weaver.Execute();
+
+            _warnings.Should().HaveCount(3).And.NotContain(w => w.Contains("MethodWithBody"));
+            _weaver.TotalWeavedMethods.Should().Be(1);
+        }
+
         [Fact]
         public void IfAnAspectIsAppliedToTheModule_ThenAWarningIsWritten()
         {

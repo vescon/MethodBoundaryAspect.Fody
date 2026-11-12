@@ -392,20 +392,48 @@ namespace MethodBoundaryAspect.Fody
             {
                 if (method.IsConstructor)
                     WarnAboutIgnoredAspects(method.CustomAttributes, $"the constructor '{method.FullName}'");
+                else if (!method.HasBody)
+                    WarnAboutIgnoredAspects(method.CustomAttributes, $"the {DescribeMethodWithoutBody(method)} method '{method.FullName}'", GetHintForMethodWithoutBody(method));
 
                 WarnAboutIgnoredAspects(method.MethodReturnType.CustomAttributes, $"the return value of '{method.FullName}'");
                 foreach (var parameter in method.Parameters)
                     WarnAboutIgnoredAspects(parameter.CustomAttributes, $"the parameter '{parameter.Name}' of '{method.FullName}'");
             }
+
+            // the aspects of a property are woven into its accessors
+            foreach (var property in type.Properties)
+            {
+                var accessor = property.GetMethod ?? property.SetMethod;
+                if (accessor == null || (property.GetMethod?.HasBody ?? false) || (property.SetMethod?.HasBody ?? false))
+                    continue;
+
+                WarnAboutIgnoredAspects(property.CustomAttributes, $"the {DescribeMethodWithoutBody(accessor)} property '{property.FullName}'", GetHintForMethodWithoutBody(accessor));
+            }
         }
 
-        private void WarnAboutIgnoredAspects(Collection<CustomAttribute> attributes, string target)
+        private static string DescribeMethodWithoutBody(MethodDefinition method)
+        {
+            if (!method.IsAbstract)
+                return "extern";
+
+            return method.DeclaringType.IsInterface ? "interface" : "abstract";
+        }
+
+        // a common mistake: the aspect is expected to run for the overrides and implementations
+        private static string GetHintForMethodWithoutBody(MethodDefinition method)
+        {
+            return method.IsAbstract
+                ? "It has no body to weave and aspects are not inherited. Apply the aspect to the methods which override or implement it."
+                : "It has no body to weave. Remove the aspect.";
+        }
+
+        private void WarnAboutIgnoredAspects(Collection<CustomAttribute> attributes, string target, string hint = null)
         {
             foreach (var attribute in attributes.Where(IsMethodBoundaryAspect))
             {
                 WriteWarning(
                     $"Aspect '{attribute.AttributeType.FullName}' is applied to {target}, where it is ignored. " +
-                    "Aspects work on methods, properties, classes and assemblies. Remove it or move it to the method.");
+                    (hint ?? "Aspects work on methods, properties, classes and assemblies. Remove it or move it to the method."));
             }
         }
 
