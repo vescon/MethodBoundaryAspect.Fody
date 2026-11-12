@@ -445,13 +445,17 @@ namespace MethodBoundaryAspect.Fody
         {
             var classMethodBoundaryAspects = type.CustomAttributes;
 
-            var propertyGetters = type.Properties
-                .Where(x => x.GetMethod != null)
-                .ToDictionary(x => x.GetMethod);
-
-            var propertySetters = type.Properties
-                .Where(x => x.SetMethod != null)
-                .ToDictionary(x => x.SetMethod);
+            // two properties could share an accessor (hand written IL), ToDictionary would throw outside of the try block
+            // which names the method
+            var propertyGetters = new Dictionary<MethodDefinition, PropertyDefinition>();
+            var propertySetters = new Dictionary<MethodDefinition, PropertyDefinition>();
+            foreach (var property in type.Properties)
+            {
+                if (property.GetMethod != null && !propertyGetters.ContainsKey(property.GetMethod))
+                    propertyGetters.Add(property.GetMethod, property);
+                if (property.SetMethod != null && !propertySetters.ContainsKey(property.SetMethod))
+                    propertySetters.Add(property.SetMethod, property);
+            }
 
             var typeNamespace = GetNamespace(type);
             var weavedAtLeastOneMethod = false;
@@ -463,10 +467,10 @@ namespace MethodBoundaryAspect.Fody
                 // the aspects of a property and of its accessor (int X { [Aspect] get; }) are both on method level
                 IEnumerable<CustomAttribute> methodMethodBoundaryAspects;
 
-                if (method.IsGetter)
-                    methodMethodBoundaryAspects = propertyGetters[method].CustomAttributes.Concat(method.CustomAttributes).ToList();
-                else if (method.IsSetter)
-                    methodMethodBoundaryAspects = propertySetters[method].CustomAttributes.Concat(method.CustomAttributes).ToList();
+                if (method.IsGetter && propertyGetters.TryGetValue(method, out var getterProperty))
+                    methodMethodBoundaryAspects = getterProperty.CustomAttributes.Concat(method.CustomAttributes).ToList();
+                else if (method.IsSetter && propertySetters.TryGetValue(method, out var setterProperty))
+                    methodMethodBoundaryAspects = setterProperty.CustomAttributes.Concat(method.CustomAttributes).ToList();
                 else
                     methodMethodBoundaryAspects = method.CustomAttributes;
 
