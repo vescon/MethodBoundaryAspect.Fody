@@ -96,6 +96,25 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfTheTimeoutOfTheFiltersChangesBetweenRuns_ThenTheNewTimeoutIsUsed()
+        {
+            var weaver = CreateWeaver(typeof(InvalidFilterMethods));
+            var method = weaver.ModuleDefinition.GetType(typeof(InvalidFilterMethods).FullName).Methods
+                .Single(m => m.Name == nameof(InvalidFilterMethods.Filtered));
+            var aspect = method.CustomAttributes.Single();
+            var filter = aspect.Properties.Single();
+            aspect.Properties[0] = new CustomAttributeNamedArgument(filter.Name, new CustomAttributeArgument(filter.Argument.Type, "^(a+)+$"));
+            method.Name = "a!"; // does not match, quickly
+            weaver.Execute();
+
+            weaver.RegexMatchTimeout = TimeSpan.FromMilliseconds(100);
+            method.Name = new string('a', 60) + "!";
+            Action weave = () => weaver.Execute();
+
+            weave.Should().Throw<WeavingException>().WithMessage("*needs too long to match*");
+        }
+
+        [Fact]
         public void IfAFilterIsNoValidRegularExpression_ThenWeavingFailsWithTheAspectAndFilter()
         {
             var weaver = CreateWeaver(typeof(InvalidFilterMethods));

@@ -166,6 +166,7 @@ namespace MethodBoundaryAspect.Fody
             ReadAspectInstanceReuseConfig();
 
             _isAspectAttributeCache.Clear();
+            _filterRegexes.Clear(); // RegexMatchTimeout can differ between runs
             _warnedAboutAspectRoles.Clear();
             _checkedAspectFilters.Clear();
             _methodInfoCompileTimeWeaver = new MethodInfoCompileTimeWeaver(module);
