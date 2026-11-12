@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+  - package-ecosystem: nuget
+    directory: /src
+    schedule:
+      interval: monthly
+    ignore:
+      # Fody, FodyHelpers and FodyPackaging are updated by hand, together with the major version (a new Fody can turn
+      # warnings of the weaver into errors)
+      - dependency-name: "Fody*"
+    groups:
+      test-packages:
+        patterns: ["xunit*", "FluentAssertions", "Microsoft.NET.Test.Sdk", "coverlet*", "BenchmarkDotNet"]
