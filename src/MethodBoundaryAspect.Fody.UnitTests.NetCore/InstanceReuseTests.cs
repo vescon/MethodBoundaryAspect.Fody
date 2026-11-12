@@ -106,7 +106,8 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             var module = Weave(config: null);
 
             var getter = module.GetType(AspectsClass).Methods
-                .Single(m => m.Name.StartsWith("GetAspect_") && m.Name.EndsWith(nameof(ValuesReuseAspect)));
+                .Single(m => m.Name.StartsWith("GetAspect_") && m.Name.EndsWith(nameof(ValuesReuseAspect))
+                             && m.Body.Instructions.Any(i => i.OpCode == OpCodes.Ldstr && (string)i.Operand == "name"));
 
             var instructions = getter.Body.Instructions;
             instructions.Should().Contain(i => i.OpCode == OpCodes.Ldstr && (string)i.Operand == "name");
@@ -150,6 +151,22 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
 
             first.Should().ContainSingle();
             second.Should().Equal(first);
+        }
+
+        [Fact]
+        public void IfAnAttributeWithTheSameValuesIsUsedSeveralTimes_ThenTheyShareOneInstance()
+        {
+            var module = Weave(config: null);
+
+            var getter = CalledAspectGetters(GetInstructions(module, nameof(InstanceReuseMethods.WithValues)));
+            var same = CalledAspectGetters(GetInstructions(module, nameof(InstanceReuseMethods.SameValues)));
+            var sameInAnotherOrder = CalledAspectGetters(GetInstructions(module, nameof(InstanceReuseMethods.SameValuesInAnotherOrder)));
+            var other = CalledAspectGetters(GetInstructions(module, nameof(InstanceReuseMethods.OtherValues)));
+
+            getter.Should().ContainSingle();
+            same.Should().Equal(getter);
+            sameInAnotherOrder.Should().Equal(getter);
+            other.Should().ContainSingle().Which.Should().NotBe(getter.Single());
         }
 
         [Fact]

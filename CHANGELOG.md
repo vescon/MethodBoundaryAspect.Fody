@@ -67,6 +67,7 @@ Which entries below can change existing code. The rating is an estimate: how lik
 - **Each aspect has its own `MethodExecutionTag`:** with several aspects on a method, an aspect which did not set the tag saw the tag of the aspect before it in `OnEntry`, `OnExit` and `OnException`. It sees `null` now, as documented.
 - **The configuration in `FodyWeavers.xml` has a schema** (`MethodBoundaryAspect.Fody.xcf`): IntelliSense and validation for `SuppressRefStructWarnings`, `DisableExecutionArgsOptimization` and `DisableAspectInstanceReuse`.
 - The NuGet package contains a README (shown on nuget.org); no change for users of the library.
+- **Uses of an attribute with the same values share one aspect instance.** `[Log]` on 1000 methods generated 1000 fields and getters in `OnMethodBoundaryAspectCompile.Aspects`, now one. A reusable aspect can not be told from a new instance, so this only makes the assembly smaller.
 - The build messages say "woven" instead of "weaved" (`Method '...' is not woven`, `could not be woven`, `was not found in any woven method`). Only matters for a build log filter on the old wording.
 
 ## Planned for version 4

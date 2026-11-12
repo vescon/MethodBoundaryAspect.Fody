@@ -16,6 +16,22 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
         {
         }
 
+        // the same attribute values as WithValues (the named arguments in another order as well): one shared instance for all
+        [ValuesReuseAspect("name", DayOfWeek.Friday, Level = 2, Text = "text")]
+        public void SameValues()
+        {
+        }
+
+        [ValuesReuseAspect("name", DayOfWeek.Friday, Text = "text", Level = 2)]
+        public void SameValuesInAnotherOrder()
+        {
+        }
+
+        [ValuesReuseAspect("other", DayOfWeek.Friday, Level = 2, Text = "text")]
+        public void OtherValues()
+        {
+        }
+
         [ExtraPrivateConstructorReuseAspect]
         public void ExtraPrivateConstructor()
         {

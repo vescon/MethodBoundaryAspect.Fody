@@ -634,7 +634,7 @@ An aspect that holds no state is created once and shared by all calls, instead o
 - the constructors only store their arguments and constants in fields (no counting of instances, no reading of a configuration, ...), and the property setters only store the value
 - no method of the aspect calls a setter, takes the address of a field, captures `this` in a lambda or hands `this` to other code (calling its own methods and `GetType()` is fine)
 - no finalizer, no `extern` method and no `[MethodImpl(MethodImplOptions.Synchronized)]` method (a shared instance would be locked by all calls), and the aspect and its constructors are accessible from the generated code (a `private` nested aspect, a non-public aspect of another assembly, or a generic aspect with a private type argument is created for every call)
-- the aspect is no open generic type. Every use of the attribute has its own shared instance: `[Log]` on two methods shares one instance per use, not one for the whole assembly
+- the aspect is no open generic type. Uses of an attribute with the same constructor, arguments, properties and fields share one instance: `[Log]` on 1000 methods is one instance, `[Log(Level = 1)]` and `[Log(Level = 2)]` are two
 
 Other aspects behave as before, a new instance for every call. Use `args.MethodExecutionTag` for data of a call, as the instance is shared between concurrent calls.
 

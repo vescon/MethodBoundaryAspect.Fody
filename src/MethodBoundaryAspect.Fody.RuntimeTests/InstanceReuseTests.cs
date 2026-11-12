@@ -41,10 +41,10 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
         }
 
         [Fact]
-        public void EveryUseOfAnAttributeShouldHaveItsOwnInstance()
+        public void UsesOfAnAttributeWithTheSameValuesShouldShareOneInstance()
         {
-            // Sync, Async, Throwing, ThrowingAsync, Two (2 attributes) and TwoAsync (2 attributes)
-            SharedAspectFields<SharedAspectAttribute>().Should().HaveCount(8);
+            // "method", "async"+Level 2, "throwing", "throwing"+Level 1, "first" (Two, TwoAsync), "second" (Two, TwoAsync)
+            SharedAspectFields<SharedAspectAttribute>().Should().HaveCount(6);
         }
 
         [Fact]

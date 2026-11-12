@@ -37,7 +37,8 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests.Targets
             throw new InvalidOperationException("failed async");
         }
 
-        // the same shared aspect type twice: every attribute has its own instance and tag
+        // the same shared aspect type twice: the attributes have different values, so each has its own instance; the tag
+        // is saved per aspect of the call in any case
         [SharedAspect("first")]
         [SharedAspect("second")]
         public int Two(int value) => value;
