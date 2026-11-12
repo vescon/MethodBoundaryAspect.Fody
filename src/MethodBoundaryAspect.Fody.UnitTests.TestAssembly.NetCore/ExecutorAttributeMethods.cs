@@ -17,5 +17,15 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
         {
             return value;
         }
+
+        // the trimmer checks the annotations of the generic parameter, the parameters and the return value of the method
+        // which calls the executor against the ones of the executor
+        [OnlyOnEntryAspect]
+        [return: DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicMethods)]
+        public Type GenericAnnotated<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] T>(
+            [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] Type type)
+        {
+            return typeof(T);
+        }
     }
 }

@@ -48,6 +48,31 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfAMethodIsWeaved_ThenTheExecutorGetsTheAnnotationsOfTheGenericParameterTheParametersAndTheReturnValue()
+        {
+            var executor = _type.Methods.Single(m => m.Name == "$_executor_GenericAnnotated");
+
+            Names(executor.GenericParameters.Single().CustomAttributes).Should().Equal("DynamicallyAccessedMembersAttribute");
+            Names(executor.Parameters.Single().CustomAttributes).Should().Equal("DynamicallyAccessedMembersAttribute");
+            Names(executor.MethodReturnType.CustomAttributes).Should().Equal("DynamicallyAccessedMembersAttribute");
+            executor.GenericParameters.Single().CustomAttributes.Single().ConstructorArguments.Single().Value
+                .Should().Be((int)System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors);
+        }
+
+        [Fact]
+        public void IfAMethodIsWeaved_ThenTheWrapperKeepsTheAnnotationsOfTheGenericParameterTheParametersAndTheReturnValue()
+        {
+            var method = _type.Methods.Single(m => m.Name == nameof(ExecutorAttributeMethods.GenericAnnotated));
+
+            Names(method.GenericParameters.Single().CustomAttributes).Should().Equal("DynamicallyAccessedMembersAttribute");
+            Names(method.Parameters.Single().CustomAttributes).Should().Equal("DynamicallyAccessedMembersAttribute");
+            Names(method.MethodReturnType.CustomAttributes).Should().Equal("DynamicallyAccessedMembersAttribute");
+        }
+
+        private static System.Collections.Generic.IEnumerable<string> Names(Mono.Collections.Generic.Collection<CustomAttribute> attributes) =>
+            attributes.Select(a => a.AttributeType.Name);
+
+        [Fact]
         public void IfAMethodIsWeaved_ThenTheOriginalMethodKeepsItsAttributes()
         {
             var method = _type.Methods.Single(m => m.Name == nameof(ExecutorAttributeMethods.Annotated));

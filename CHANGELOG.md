@@ -68,6 +68,7 @@ Which entries below can change existing code. The rating is an estimate: how lik
 - **The configuration in `FodyWeavers.xml` has a schema** (`MethodBoundaryAspect.Fody.xcf`): IntelliSense and validation for `SuppressRefStructWarnings`, `DisableExecutionArgsOptimization` and `DisableAspectInstanceReuse`.
 - The NuGet package contains a README (shown on nuget.org); no change for users of the library.
 - **Uses of an attribute with the same values share one aspect instance.** `[Log]` on 1000 methods generated 1000 fields and getters in `OnMethodBoundaryAspectCompile.Aspects`, now one. A reusable aspect can not be told from a new instance, so this only makes the assembly smaller.
+- **The executor method keeps the annotations of the generic parameters and the return value** (`[DynamicallyAccessedMembers]`, `[NotNull]`, ...). The parameters kept them already. The wrapper passes its type argument on to the executor, so the trimmer reported IL2091 in the woven code of an annotated generic method.
 - The build messages say "woven" instead of "weaved" (`Method '...' is not woven`, `could not be woven`, `was not found in any woven method`). Only matters for a build log filter on the old wording.
 
 ## Planned for version 4

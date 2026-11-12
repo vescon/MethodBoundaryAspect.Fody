@@ -134,6 +134,18 @@ namespace MethodBoundaryAspect.Fody
             "System.Diagnostics.CodeAnalysis.RequiresDynamicCodeAttribute"
         };
 
+        private static CustomAttribute CloneAttribute(CustomAttribute attribute)
+        {
+            var clonedAttribute = new CustomAttribute(attribute.Constructor);
+            foreach (var argument in attribute.ConstructorArguments)
+                clonedAttribute.ConstructorArguments.Add(argument);
+            foreach (var property in attribute.Properties)
+                clonedAttribute.Properties.Add(property);
+            foreach (var field in attribute.Fields)
+                clonedAttribute.Fields.Add(field);
+            return clonedAttribute;
+        }
+
         private static MethodDefinition CloneMethod(MethodDefinition method)
         {
             var targetMethodName = "$_executor_" + method.Name;
@@ -163,15 +175,13 @@ namespace MethodBoundaryAspect.Fody
                 if (!ExecutorAttributeTypes.Contains(attribute.AttributeType.FullName))
                     continue;
 
-                var clonedAttribute = new CustomAttribute(attribute.Constructor);
-                foreach (var argument in attribute.ConstructorArguments)
-                    clonedAttribute.ConstructorArguments.Add(argument);
-                foreach (var property in attribute.Properties)
-                    clonedAttribute.Properties.Add(property);
-                foreach (var field in attribute.Fields)
-                    clonedAttribute.Fields.Add(field);
-                clonedMethod.CustomAttributes.Add(clonedAttribute);
+                clonedMethod.CustomAttributes.Add(CloneAttribute(attribute));
             }
+
+            // the annotations of the return value, e.g. [return: DynamicallyAccessedMembers]: the wrapper returns what the
+            // executor returns, the trimmer compares both
+            foreach (var attribute in method.MethodReturnType.CustomAttributes)
+                clonedMethod.MethodReturnType.CustomAttributes.Add(CloneAttribute(attribute));
 
             foreach (var parameter in method.Parameters)
                 clonedMethod.Parameters.Add(parameter);
@@ -188,22 +198,7 @@ namespace MethodBoundaryAspect.Fody
 
             if (method.HasGenericParameters)
             {
-                //Contravariant:
-                //  The generic type parameter is contravariant. A contravariant type parameter can appear as a parameter type in method signatures.  
-                //Covariant:
-                //  The generic type parameter is covariant. A covariant type parameter can appear as the result type of a method, the type of a read-only field, a declared base type, or an implemented interface. 
-                //DefaultConstructorConstraint:
-                //  A type can be substituted for the generic type parameter only if it has a parameterless constructor. 
-                //None:
-                //  There are no special flags. 
-                //NotNullableValueTypeConstraint:
-                //  A type can be substituted for the generic type parameter only if it is a value type and is not nullable. 
-                //ReferenceTypeConstraint:
-                //  A type can be substituted for the generic type parameter only if it is a reference type. 
-                //SpecialConstraintMask:
-                //  Selects the combination of all special constraint flags. This value is the result of using logical OR to combine the following flags: DefaultConstructorConstraint, ReferenceTypeConstraint, and NotNullableValueTypeConstraint. 
-                //VarianceMask:
-                //  Selects the combination of all variance flags. This value is the result of using logical OR to combine the following flags: Contravariant and Covariant. 
+                // GenericParameterAttributes: the variance and the constraints (new(), class, struct, allows ref struct)
                 foreach (var parameter in method.GenericParameters)
                 {
                     // all flags, also those without a type constraint, e.g. "allows ref struct"
