@@ -26,14 +26,7 @@ jobs:
           8.0.x
           9.0.x
           10.0.x
-
-    # .NET 11 is still a release candidate (GA is planned for November 2026). When 11.0.x is released, move it into the
-    # list above and delete this step, then remove the preview note in CLAUDE.md. The SDK 11 builds all targets.
-    - name: Setup .NET 11 (release candidate)
-      uses: actions/setup-dotnet@v6
-      with:
-        dotnet-version: 11.0.x
-        dotnet-quality: preview
+          11.0.x
 
     # The actions write the GitVersion_* variables used by src/Directory.Build.props into the environment of the
     # following steps. GitVersion 6 only reads tags with three numbers (v3.3.0), see "Check the version".
@@ -67,8 +60,10 @@ jobs:
           }
         }
 
+    # One project at a time and no reused MSBuild nodes: TestAssembly.NetFramework is built by two projects, a parallel
+    # build can fail with a locked DLL.
     - name: Build solution
-      run: dotnet build --configuration Release src/MethodBoundaryAspect.Fody.sln
+      run: dotnet build --configuration Release src/MethodBoundaryAspect.Fody.sln -m:1 -nodeReuse:false
 
     - name: Run tests - NetFramework
       run: dotnet test src\MethodBoundaryAspect.Fody.UnitTests.NetFramework --configuration Release --no-build

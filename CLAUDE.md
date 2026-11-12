@@ -11,13 +11,13 @@ A [Fody](https://github.com/Fody/Fody) weaver. Users derive aspects from `OnMeth
 The CI (`.github/workflows/main.yaml`, Windows) does exactly this:
 
 ```bash
-dotnet build --configuration Release src/MethodBoundaryAspect.Fody.sln
+dotnet build --configuration Release src/MethodBoundaryAspect.Fody.sln -m:1 -nodeReuse:false
 dotnet test src/MethodBoundaryAspect.Fody.UnitTests.NetFramework --configuration Release --no-build
 dotnet test src/MethodBoundaryAspect.Fody.UnitTests.NetCore --configuration Release --no-build
 dotnet test src/MethodBoundaryAspect.Fody.RuntimeTests --configuration Release --no-build
 ```
 
-- **.NET 11:** RuntimeTests targets `net11.0`, so building the solution needs a .NET 11 SDK (the release candidate until GA, installed in CI by a separate `setup-dotnet` step with `dotnet-quality: preview`). When 11.0.x is released: move `11.0.x` into the version list of the normal step in `.github/workflows/main.yaml`, delete the RC step, and drop this note. Nothing in the repo pins the RC version.
+- **.NET 11:** RuntimeTests targets `net11.0`, so building the solution needs a .NET 11 SDK.
 - The CI also runs the RuntimeTests as Debug build on net10.0: the compiler generates classes instead of structs for async state machines there (`dotnet build -c Debug` the weaver, then RuntimeTests `-f net10.0`).
 - Single test: `dotnet test <project> -c Release --no-build --filter "FullyQualifiedName~ClassName.MethodName"`; RuntimeTests on one runtime: add `-f net8.0`.
 - Build with `-m:1 -nodeReuse:false`: a parallel build can fail with a locked `TestAssembly.NetFramework.dll` (it is built by two projects), and a reused MSBuild node may still hold a weaver DLL from another checkout ("Assembly with same name is already loaded").
@@ -58,4 +58,4 @@ Special cases already handled (keep them working): ref structs (`Span<T>`) are p
 ## Conventions
 
 - Changes to woven behavior should get a RuntimeTests test (runs on all seven runtimes); weaving-level details (emitted IL, warnings, config) go into UnitTests.NetCore.
-- Behavior changes for users belong in the README (user documentation, including breaking changes per major version) and in the section of the next version in CHANGELOG.md (currently "3.7.0 (not released yet)"). The benchmark tables are in docs/performance.md.
+- Behavior changes for users belong in the README (user documentation, including breaking changes per major version) and in the section of the next version in CHANGELOG.md (a section "x.y.z (not released yet)" at the top; add it if the last section is a released version). The benchmark tables are in docs/performance.md.
