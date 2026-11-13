@@ -96,3 +96,22 @@ public static async Task<string> Process()
 - `FlowBehavior.Return` in `OnEntry`: `args.ReturnValue` is what the method returns, so it has to be a task, e.g. `args.ReturnValue = Task.FromResult(42);`. If no aspect sets it, the method returns a completed task (with the default value as result for `Task<T>`).
 - `FlowBehavior.Continue` in `OnException`: the returned task completes successfully with `args.ReturnValue` as its result (the value, not a task), e.g. `args.ReturnValue = 0;` for a `Task<int>`. If no aspect sets it, the result is the default value. For `Task<T>` and `ValueTask<T>`, `args.ReturnValue` is set to `null` before `OnException` is called, the task returned to the caller (provided to `OnExit`) is never the result. For `Task`, `ValueTask` and `void` methods `args.ReturnValue` is not changed and still holds the returned task (or `null` if the method had not returned it yet).
 - An exception thrown in `OnException` (e.g. to wrap the original exception) faults the returned task with that exception, like it is thrown to the caller of a synchronous method. The `OnException` of the remaining aspects is not called.
+
+## Runtime-async methods (.NET 11)
+
+With `<Features>runtime-async=on</Features>` the C# compiler emits `async` methods without a state machine, the runtime handles the `await`. The weaver cannot weave these methods yet: it leaves them as they are and writes a build warning (`Method '...' is not woven: ...`). All other methods are woven as usual. Options:
+
+- **Do not enable `runtime-async` in the projects that use aspects.** Their `async` methods are woven as described above.
+- **Apply the aspect to a method that is not `async`** and returns the task of an `async` method:
+
+  ```csharp
+  [Log]
+  public Task<int> LoadAsync() => LoadCoreAsync();   // not async, woven like a synchronous method
+
+  private async Task<int> LoadCoreAsync() { /* ... */ }
+  ```
+
+  `OnEntry` and `OnExit` work like for an async method (`OnExit` when the task is returned, `args.ReturnValue` is the task). `OnException` is not called for a failure of the asynchronous work, because the wrapper only returns the task. To react to it, continue the task in `OnExit` (see above).
+- **Remove the warning** with [`[DisableWeaving]`](../README.md#excluding-methods-disableweaving) on the method, if it does not need an aspect.
+
+Weaving runtime-async methods is planned for version 4, see the [CHANGELOG](../CHANGELOG.md#planned-for-version-4).
