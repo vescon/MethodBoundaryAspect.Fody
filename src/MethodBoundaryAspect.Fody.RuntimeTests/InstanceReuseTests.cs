@@ -12,7 +12,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 {
     /// <summary>
     /// An aspect without state is created once for all calls, an aspect with state for every call, see
-    /// the section "Aspect instances" of the README.
+    /// the section "Aspect instances" of docs/performance.md.
     /// </summary>
     [Collection(nameof(InstanceReuseAspects))]
     public class InstanceReuseTests

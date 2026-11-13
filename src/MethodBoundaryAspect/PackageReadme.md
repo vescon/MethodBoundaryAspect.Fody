@@ -77,13 +77,13 @@ All three aspect methods get a `MethodExecutionArgs` with the information of the
 
 ## Documentation
 
-The complete documentation is the [README on GitHub](https://github.com/vescon/MethodBoundaryAspect.Fody#readme):
+The complete documentation is the [README on GitHub](https://github.com/vescon/MethodBoundaryAspect.Fody#readme) and the pages in its [docs folder](https://github.com/vescon/MethodBoundaryAspect.Fody/tree/master/docs):
 
 - [How it works](https://github.com/vescon/MethodBoundaryAspect.Fody#how-it-works), [Writing aspects](https://github.com/vescon/MethodBoundaryAspect.Fody#writing-aspects) and [Applying aspects](https://github.com/vescon/MethodBoundaryAspect.Fody#applying-aspects)
-- [Changing the method behavior](https://github.com/vescon/MethodBoundaryAspect.Fody#changing-the-method-behavior) (return values, arguments, skipping the method, swallowing exceptions) and [Async methods](https://github.com/vescon/MethodBoundaryAspect.Fody#async-methods)
-- [Limitations](https://github.com/vescon/MethodBoundaryAspect.Fody#limitations), [Performance](https://github.com/vescon/MethodBoundaryAspect.Fody#performance) and the [Configuration reference](https://github.com/vescon/MethodBoundaryAspect.Fody#configuration-reference)
+- [Changing the method behavior](https://github.com/vescon/MethodBoundaryAspect.Fody#changing-the-method-behavior) (return values, arguments, skipping the method, swallowing exceptions) and [Async methods](https://github.com/vescon/MethodBoundaryAspect.Fody/blob/master/docs/async-methods.md)
+- [Limitations](https://github.com/vescon/MethodBoundaryAspect.Fody#limitations), [Performance](https://github.com/vescon/MethodBoundaryAspect.Fody/blob/master/docs/performance.md) and the [Configuration reference](https://github.com/vescon/MethodBoundaryAspect.Fody/blob/master/docs/configuration.md)
 - [Troubleshooting](https://github.com/vescon/MethodBoundaryAspect.Fody#troubleshooting) (aspect not called, fields reset, `null` properties)
-- [Upgrading to version 3](https://github.com/vescon/MethodBoundaryAspect.Fody#upgrading-to-version-3) and the [Changelog](https://github.com/vescon/MethodBoundaryAspect.Fody/blob/master/CHANGELOG.md)
+- [Upgrading to version 3](https://github.com/vescon/MethodBoundaryAspect.Fody/blob/master/docs/upgrading-to-version-3.md) and the [Changelog](https://github.com/vescon/MethodBoundaryAspect.Fody/blob/master/CHANGELOG.md)
 - Complete sample projects: [.NET](https://github.com/vescon/MethodBoundaryAspect.Fody/tree/master/Samples/HelloWorld_NetCore) and [.NET Framework](https://github.com/vescon/MethodBoundaryAspect.Fody/tree/master/Samples/HelloWorld_NetFramework)
 
 Questions and bug reports: [GitHub issues](https://github.com/vescon/MethodBoundaryAspect.Fody/issues). MIT license.

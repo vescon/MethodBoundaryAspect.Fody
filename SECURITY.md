@@ -3,7 +3,7 @@
 ## Supported versions
 
 The latest release of version 3 gets fixes. Version 2 is not maintained anymore, please upgrade (see
-[Upgrading to version 3](README.md#upgrading-to-version-3)).
+[Upgrading to version 3](docs/upgrading-to-version-3.md)).
 
 ## Reporting a vulnerability
 

@@ -7,7 +7,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 {
     /// <summary>
     /// An aspect class with [Conditional("SYMBOL")] is only applied where SYMBOL is defined, the compiler leaves out
-    /// the attribute otherwise (see README, "Applying an aspect only in some configurations").
+    /// the attribute otherwise (see docs/applying-aspects.md, "Applying an aspect only in some configurations").
     /// </summary>
     [Collection(nameof(ConditionalAspects))]
     public class ConditionalAspectTests

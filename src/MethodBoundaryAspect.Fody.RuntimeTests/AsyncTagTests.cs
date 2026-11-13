@@ -9,7 +9,7 @@ namespace MethodBoundaryAspect.Fody.RuntimeTests
 {
     /// <summary>
     /// The tag set in OnExit of an async method is seen in OnException, which runs later when the work fails: the
-    /// README shows it as the way to find out if the method already returned its task. It worked with one aspect only.
+    /// docs/async-methods.md shows it as the way to find out if the method already returned its task. It worked with one aspect only.
     /// </summary>
     [Collection(nameof(ExitFlagAttribute))]
     public class AsyncTagTests

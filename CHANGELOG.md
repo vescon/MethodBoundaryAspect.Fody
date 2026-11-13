@@ -2,7 +2,7 @@
 
 The changes of each release which can change the behavior of existing code (fixes of cases that did not work are
 listed as well). The migration from version 2 is described in the
-[README](README.md#upgrading-to-version-3). Versions are created from the Git tags, see the
+[upgrade guide](docs/upgrading-to-version-3.md). Versions are created from the Git tags, see the
 [releases on GitHub](https://github.com/vescon/MethodBoundaryAspect.Fody/releases).
 
 ## 3.7.0
@@ -56,7 +56,7 @@ Which entries below can change existing code. The rating is an estimate: how lik
 - **Skipping the body of a method with a `ref` return calls the `OnExit` of the aspects before the aspect that skipped it,** like swallowing an exception of such a method already did. The method throws a `NotSupportedException` in both cases, but an aspect that opened a resource in `OnEntry` (a transaction) did not get its `OnExit` when the body was skipped.
 - **Finalizers are not woven.** `[assembly: Log]` or an aspect on a class called the aspect on the finalizer thread, where an exception of the aspect ends the process, and `args.Instance` could resurrect the object.
 - **A `ref` parameter with `[In]` (`void Inc([In] ref int x)`) is handled like a `ref` parameter.** The weaver treated it like an `in` parameter, so a value changed by an aspect (`[AllowChangingInputArguments]`) or by the method was not written back to the caller.
-- **With several aspects on an async method, the `MethodExecutionTag` set in `OnExit` is seen in `OnException`** (the pattern of the README to find out if the method already returned its task). It was lost, because the tag was written to the state machine after it was started and copied; with one aspect it worked. The tags of async methods are kept in an array the copies share.
+- **With several aspects on an async method, the `MethodExecutionTag` set in `OnExit` is seen in `OnException`** (the pattern of the documentation to find out if the method already returned its task). It was lost, because the tag was written to the state machine after it was started and copied; with one aspect it worked. The tags of async methods are kept in an array the copies share.
 - **An async method returns its task even if the asynchronous work fails while `OnExit` runs.** The woven code read the `ReturnValue` back after `OnExit`, where the catch block of `MoveNext` (another thread) had replaced it by the result of the swallowed exception: the caller got a `NullReferenceException`/`InvalidCastException` or, for `ValueTask<T>`, a default value instead of its task. Rare, it needs a failure on another thread before the method returns.
 - **A constructor parameter of the type parameter of a generic aspect** (`[Validate<int>(5)]`, constructor `Validate(T value)`) no longer fails the build with "Parametertype: T".
 - **A property or field of the type parameter of a generic aspect can be set to a value type** (`[Validate<int>(Value = 5)]`). The woven code boxed the value before setting it, the method threw an `InvalidProgramException`.
@@ -115,7 +115,7 @@ Mostly fixes of cases that did not work, listed because the behavior of existing
 - **Methods with a variable argument list (`__arglist`) are not woven** and a build warning is written. They were woven, but lost the variable arguments.
 - **`[AllowChangingInputArguments]` works for async methods.** The changed arguments were ignored.
 - **`null` for a value type argument passes the default value** instead of throwing a `NullReferenceException`.
-- **Aspects without state are created once** instead of for every call, see [Aspect instances](README.md#aspect-instances). Opt-out: `DisableAspectInstanceReuse`.
+- **Aspects without state are created once** instead of for every call, see [Aspect instances](docs/performance.md#aspect-instances). Opt-out: `DisableAspectInstanceReuse`.
 - **The executor method keeps `[SkipLocalsInit]`, `MethodImplOptions.NoOptimization` and `AggressiveOptimization`** of the woven method.
 - **`[AspectOrderIndex]` of an assembly and of an enclosing class** failed the build for the methods of a nested class. The closest level wins now.
 - **Async methods whose aspects override none of the aspect methods** are left alone.

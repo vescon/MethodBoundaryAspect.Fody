@@ -64,12 +64,14 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         [Fact]
         public void IfTheReadmeShowsAConfiguration_ThenItOnlyUsesKnownSettings()
         {
-            var readme = File.ReadAllText(FindFile("README.md"));
-            var examples = Regex.Matches(readme, @"<MethodBoundaryAspect(?: [^<>/]*)?(?:/>|>.*?</MethodBoundaryAspect>)", RegexOptions.Singleline)
+            var readmePath = FindFile("README.md");
+            var documentation = File.ReadAllText(readmePath)
+                + File.ReadAllText(Path.Combine(Path.GetDirectoryName(readmePath), "docs", "configuration.md"));
+            var examples = Regex.Matches(documentation,@"<MethodBoundaryAspect(?: [^<>/]*)?(?:/>|>.*?</MethodBoundaryAspect>)", RegexOptions.Singleline)
                 .Cast<Match>()
                 .Select(m => XElement.Parse(m.Value))
                 .ToList();
-            examples.Should().NotBeEmpty();
+            examples.Should().HaveCountGreaterThan(1, "the README and the configuration reference have an example");
 
             foreach (var example in examples)
             {

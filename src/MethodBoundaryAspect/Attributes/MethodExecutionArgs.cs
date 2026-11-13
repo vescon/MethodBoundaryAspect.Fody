@@ -8,7 +8,7 @@ namespace MethodBoundaryAspect.Fody.Attributes
     /// All aspects of a method get the same instance for one call. The weaver only provides the properties the
     /// aspects of the method use (<see cref="Arguments"/>, <see cref="ReturnValue"/>, <see cref="Method"/>,
     /// <see cref="Instance"/>), the others are <c>null</c>, and only handles <see cref="FlowBehavior"/> and
-    /// <see cref="MethodExecutionTag"/> if an aspect uses them, see the section Performance of the README.
+    /// <see cref="MethodExecutionTag"/> if an aspect uses them, see docs/performance.md of the repository.
     /// </summary>
     public class MethodExecutionArgs
     {

@@ -4,7 +4,7 @@ using MethodBoundaryAspect.Fody.Attributes;
 namespace MethodBoundaryAspect.Fody.RuntimeTests.Aspects
 {
     /// <summary>
-    /// The pattern of the README: OnException only handles exceptions thrown before the method returned its task,
+    /// The pattern of docs/async-methods.md: OnException only handles exceptions thrown before the method returned its task,
     /// tracked with the MethodExecutionTag. Tests using it belong to the collection
     /// <c>[Collection(nameof(ExitFlagAttribute))]</c>.
     /// </summary>

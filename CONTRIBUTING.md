@@ -23,7 +23,7 @@ dotnet test src/MethodBoundaryAspect.Fody.RuntimeTests --configuration Release -
 
 - **A test.** Behavior of woven code belongs into `RuntimeTests` (it runs on every runtime), details of the weaving (emitted
   IL, warnings, configuration) into `UnitTests.NetCore`.
-- **Documentation.** A change users can notice goes into the [README](README.md) and into the section of the next version in
+- **Documentation.** A change users can notice goes into the [README](README.md) or the page of its topic in [docs](docs) and into the section of the next version in
   the [CHANGELOG](CHANGELOG.md).
 - **No new warnings.** The solution builds with `TreatWarningsAsErrors`.
 - The weaver targets `netstandard2.0` only (Fody loads only that binary) and C# 8.
