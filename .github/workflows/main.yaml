@@ -14,7 +14,6 @@ jobs:
     timeout-minutes: 60 # the NetFramework tests can hang (e.g. PEVerify with a path that is too long), the default is 6 hours
     permissions:
       contents: read # a permissions block replaces the defaults, checkout needs it
-      id-token: write # OIDC token for the trusted publishing policy on nuget.org
     steps:    
     - name: Checkout
       uses: actions/checkout@v7
@@ -70,8 +69,25 @@ jobs:
     - name: Run tests - NetFramework
       run: dotnet test src\MethodBoundaryAspect.Fody.UnitTests.NetFramework --configuration Release --no-build
 
-    - name: Run tests - NetCore
-      run: dotnet test src\MethodBoundaryAspect.Fody.UnitTests.NetCore --configuration Release --no-build
+    # With the coverage of the weaver: it runs in the test process of this suite only. The settings limit the
+    # instrumentation to the weaver, instrumented test assemblies change the IL the weaver reads and fail tests.
+    - name: Run tests - NetCore (with coverage of the weaver)
+      run: dotnet test src\MethodBoundaryAspect.Fody.UnitTests.NetCore --configuration Release --no-build --settings src\MethodBoundaryAspect.Fody.UnitTests.NetCore\coverage.runsettings --results-directory Artifacts/Coverage
+
+    - name: Write the coverage to the summary
+      run: |
+        $report = Get-ChildItem Artifacts/Coverage -Recurse -Filter coverage.cobertura.xml | Select-Object -First 1
+        if (-not $report) { throw 'No coverage report was written.' }
+        $coverage = ([xml](Get-Content $report.FullName)).coverage
+        $lines = [math]::Round([double]::Parse($coverage.'line-rate', [cultureinfo]::InvariantCulture) * 100, 1)
+        $branches = [math]::Round([double]::Parse($coverage.'branch-rate', [cultureinfo]::InvariantCulture) * 100, 1)
+        "Coverage of the weaver by the NetCore unit tests: $lines % of the lines, $branches % of the branches" >> $env:GITHUB_STEP_SUMMARY
+
+    - name: Upload the coverage report
+      uses: actions/upload-artifact@v7
+      with:
+        name: coverage
+        path: 'Artifacts/Coverage/**/coverage.cobertura.xml'
 
     - name: Run tests - Runtime (net462, net48, net481, net8.0, net9.0, net10.0, net11.0)
       run: dotnet test src\MethodBoundaryAspect.Fody.RuntimeTests --configuration Release --no-build
@@ -98,19 +114,45 @@ jobs:
       with:
         name: nupkg
         path: 'Artifacts/Packages/**/*.nupkg'
+
+    # The samples use the released package from nuget.org, this only checks that they still build and run. The
+    # .NET Framework sample has project files in the old format, which the dotnet CLI cannot restore.
+    - name: Build and run the samples
+      run: |
+        dotnet build Samples\HelloWorld_NetCore\HelloWorld_NetCore.sln --configuration Release
+        dotnet run --project Samples\HelloWorld_NetCore\HelloWorld_NetCore --configuration Release --no-build
+        if ($LASTEXITCODE -ne 0) { throw 'The .NET sample failed.' }
+        $msbuild = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
+        if (-not $msbuild) { throw 'MSBuild of Visual Studio was not found.' }
+        & $msbuild Samples\HelloWorld_NetFramework\HelloWorld_NetFramework.sln -restore -p:Configuration=Release -v:minimal
+        if ($LASTEXITCODE -ne 0) { throw 'The .NET Framework sample did not build.' }
+        Samples\HelloWorld_NetFramework\HelloWorld_NetFramework\bin\Release\HelloWorld_NetFramework.exe
+        if ($LASTEXITCODE -ne 0) { throw 'The .NET Framework sample failed.' }
+
+  # Its own job, so only the run of a version tag gets the permission to request the OIDC token. It publishes the
+  # package the build job tested.
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    timeout-minutes: 15
+    permissions:
+      id-token: write # OIDC token for the trusted publishing policy on nuget.org
+    steps:
+    - name: Download the package
+      uses: actions/download-artifact@v7
+      with:
+        name: nupkg
+        path: Artifacts/Packages
+
     # Trusted publishing: nuget.org exchanges the OIDC token of this workflow run for an API key that is valid for one
     # hour (policy of the nuget.org account: owner vescon, repository MethodBoundaryAspect.Fody, workflow main.yaml),
     # so the login is right before the push. NUGET_USER is the profile name on nuget.org, not the email address.
     - name: NuGet login (OIDC, short-lived API key)
       uses: NuGet/login@v1
       id: login
-      if: startsWith(github.ref, 'refs/tags/v')
       with:
         user: ${{ secrets.NUGET_USER }}
 
     - name: Publish to nuget.org
       run: dotnet nuget push Artifacts/Packages/**/*.nupkg --api-key ${{ steps.login.outputs.NUGET_API_KEY }} -s https://api.nuget.org/v3/index.json --skip-duplicate
-      if: startsWith(github.ref, 'refs/tags/v')
-#     - name: Publish to github packages
-#       run: dotnet nuget push Artifacts/Packages/**/*.nupkg -s https://nuget.pkg.github.com/vescon/index.json --skip-duplicate
-#       if: startsWith(github.ref, 'refs/tags/v')

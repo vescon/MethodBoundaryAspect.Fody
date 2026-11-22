@@ -18,3 +18,10 @@ updates:
     groups:
       test-packages:
         patterns: ["xunit*", "AwesomeAssertions", "Microsoft.NET.Test.Sdk", "coverlet*", "BenchmarkDotNet"]
+  # the samples reference the released package
+  - package-ecosystem: nuget
+    directories:
+      - /Samples/HelloWorld_NetCore
+      - /Samples/HelloWorld_NetFramework
+    schedule:
+      interval: monthly
