@@ -8,6 +8,8 @@ listed as well). The migration from version 2 is described in the
 ## 3.8.0 (not released yet)
 
 - **A build warning for an aspect on a local function or a lambda** (`[Log] int Local() => ...`, `[Log] (int x) => ...`). They are not woven, the aspect was ignored silently. Projects with `TreatWarningsAsErrors` have to remove the attribute or move the code to a method.
+- **An aspect on a property of an extension block (C# 14) is woven**, `extension(string text) { [Log] public int Size => text.Length; }`. It was ignored silently (an aspect on the accessor, the class or the assembly did work), also `[DisableWeaving]` on such a property. Aspects which were never called there run now.
+- **The members of an extension block are woven once.** The compiler also emits a copy of each member (which only throws) into a nested type for its own use. These copies were woven as well: harmless, but larger assemblies and two warnings for an aspect on a parameter.
 
 ## 3.7.0
 

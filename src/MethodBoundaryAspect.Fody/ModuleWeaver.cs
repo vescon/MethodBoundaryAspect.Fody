@@ -362,6 +362,10 @@ namespace MethodBoundaryAspect.Fody
                 return;
             }
 
+            // the copies of the members of an extension block (C# 14), woven are the static methods of the class
+            if (ExtensionBlocks.IsGroupingType(type))
+                return;
+
             // Aspects (and their base aspects and nested helper types) are not woven. An assembly or class
             // aspect woven into the aspects of the same assembly called itself, directly or via another aspect,
             // until a StackOverflowException, see https://github.com/vescon/MethodBoundaryAspect.Fody/issues/70
@@ -476,30 +480,35 @@ namespace MethodBoundaryAspect.Fody
 
             // two properties could share an accessor (hand written IL), ToDictionary would throw outside of the try block
             // which names the method
-            var propertyGetters = new Dictionary<MethodDefinition, PropertyDefinition>();
-            var propertySetters = new Dictionary<MethodDefinition, PropertyDefinition>();
+            var accessorProperties = new Dictionary<MethodDefinition, PropertyDefinition>();
             foreach (var property in type.Properties)
             {
-                if (property.GetMethod != null && !propertyGetters.ContainsKey(property.GetMethod))
-                    propertyGetters.Add(property.GetMethod, property);
-                if (property.SetMethod != null && !propertySetters.ContainsKey(property.SetMethod))
-                    propertySetters.Add(property.SetMethod, property);
+                if (property.GetMethod != null && !accessorProperties.ContainsKey(property.GetMethod))
+                    accessorProperties.Add(property.GetMethod, property);
+                if (property.SetMethod != null && !accessorProperties.ContainsKey(property.SetMethod))
+                    accessorProperties.Add(property.SetMethod, property);
+            }
+
+            // the accessors of an extension property are plain static methods of the class
+            foreach (var extensionAccessor in ExtensionBlocks.GetPropertiesOfImplementationMethods(type))
+            {
+                if (!accessorProperties.ContainsKey(extensionAccessor.Key))
+                    accessorProperties.Add(extensionAccessor.Key, extensionAccessor.Value);
             }
 
             var typeNamespace = GetNamespace(type);
             var weavedAtLeastOneMethod = false;
             bool WeaveMethodWithAspects(MethodDefinition method)
             {
-                if (!IsWeavableMethod(method))
+                accessorProperties.TryGetValue(method, out var property);
+                if (!IsWeavableMethod(method, property))
                     return false;
 
                 // the aspects of a property and of its accessor (int X { [Aspect] get; }) are both on method level
                 IEnumerable<CustomAttribute> methodMethodBoundaryAspects;
 
-                if (method.IsGetter && propertyGetters.TryGetValue(method, out var getterProperty))
-                    methodMethodBoundaryAspects = getterProperty.CustomAttributes.Concat(method.CustomAttributes).ToList();
-                else if (method.IsSetter && propertySetters.TryGetValue(method, out var setterProperty))
-                    methodMethodBoundaryAspects = setterProperty.CustomAttributes.Concat(method.CustomAttributes).ToList();
+                if (property != null)
+                    methodMethodBoundaryAspects = property.CustomAttributes.Concat(method.CustomAttributes).ToList();
                 else
                     methodMethodBoundaryAspects = method.CustomAttributes;
 
@@ -548,6 +557,7 @@ namespace MethodBoundaryAspect.Fody
                 return WeaveMethod(
                     module,
                     method,
+                    property != null,
                     aspectInfos,
                     _methodInfoCompileTimeWeaver);
             }
@@ -584,12 +594,13 @@ namespace MethodBoundaryAspect.Fody
         private bool WeaveMethod(
             ModuleDefinition module,
             MethodDefinition method,
+            bool isPropertyAccessor,
             List<AspectInfo> aspectInfos,
             MethodInfoCompileTimeWeaver methodInfoCompileTimeWeaver)
         {
             aspectInfos = AspectOrderer.Order(aspectInfos);
             var aspectInfosWithMethods = aspectInfos
-                .Where(x => !x.SkipProperties || (!method.IsGetter && !method.IsSetter))
+                .Where(x => !x.SkipProperties || !isPropertyAccessor)
                 .ToList();
 
             var methodWeaver = MethodWeaverFactory.MakeWeaver(
@@ -608,7 +619,7 @@ namespace MethodBoundaryAspect.Fody
             if (methodWeaver.WeaveCounter == 0)
                 return false;
 
-            if (method.IsGetter || method.IsSetter)
+            if (isPropertyAccessor)
                 TotalWeavedProperties++;
             else
                 TotalWeavedMethods++;
@@ -667,12 +678,12 @@ namespace MethodBoundaryAspect.Fody
             return isAspect;
         }
 
-        private bool IsWeavableMethod(MethodDefinition method)
+        private bool IsWeavableMethod(MethodDefinition method, PropertyDefinition property)
         {
             var fullName = method.DeclaringType.FullName;
             var name = method.Name;
 
-            if (IsIgnoredByWeaving(method))
+            if (IsIgnoredByWeaving(method, property))
                 return false;
 
             if (IsUserFiltered(fullName, name))
@@ -726,13 +737,12 @@ namespace MethodBoundaryAspect.Fody
             return false;
         }
 
-        private static bool IsIgnoredByWeaving(MethodDefinition method)
+        private static bool IsIgnoredByWeaving(MethodDefinition method, PropertyDefinition property)
         {
             if (ContainsDisableWeavingAttribute(method.CustomAttributes))
                 return true;
 
             // the aspects of a property are read from the property, so is [DisableWeaving]
-            var property = method.DeclaringType.Properties.FirstOrDefault(p => p.GetMethod == method || p.SetMethod == method);
             if (property != null && ContainsDisableWeavingAttribute(property.CustomAttributes))
                 return true;
 

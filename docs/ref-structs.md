@@ -7,6 +7,7 @@ Ref structs cannot be boxed, so their values cannot be passed to the aspect via 
 - ref struct arguments (also `ref`, `in` and `out`) are `null` in `args.Arguments`
 - a ref struct return value is `null` in `args.ReturnValue`
 - the instance of a method declared in a `ref struct` is `null` in `args.Instance`
+- an argument or return value of a type parameter with `allows ref struct` (C# 13) is always `null`, also if the method is called with a type that could be boxed (`int`): the weaver does not know the type argument at build time
 - changes to these values by the aspect are ignored (changed arguments, overwritten return value). If the aspect skips the method body (`FlowBehavior.Return`) or swallows an exception (`FlowBehavior.Continue`), the method returns the default value (e.g. an empty `Span<T>`)
 
 ```csharp
