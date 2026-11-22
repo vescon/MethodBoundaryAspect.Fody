@@ -32,12 +32,12 @@ jobs:
     # The actions write the GitVersion_* variables used by src/Directory.Build.props into the environment of the
     # following steps. GitVersion 6 only reads tags with three numbers (v3.3.0), see "Check the version".
     - name: Install GitVersion
-      uses: gittools/actions/gitversion/setup@v4.7.0
+      uses: gittools/actions/gitversion/setup@v5.0.0
       with:
         versionSpec: '6.x'
 
     - name: Use GitVersion
-      uses: gittools/actions/gitversion/execute@v4.7.0
+      uses: gittools/actions/gitversion/execute@v5.0.0
 
     # Without a version the package would be built as 0.0.1, and a release must not be published with a version that
     # differs from its tag (GitVersion 6 does not read a tag like v3.3 as version, it builds 3.3.0-tags-v3-3.1).
