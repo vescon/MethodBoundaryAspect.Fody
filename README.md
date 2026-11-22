@@ -293,7 +293,7 @@ Details: [the names the filters see, the visibility values](docs/applying-aspect
 ### Several aspects on one method
 
 - **Order:** `OnEntry` is called in the order assembly → class → method, and in declaration order on the same level. `OnExit` and `OnException` are called in reverse order.
-- **Aspects are not inherited:** an aspect on a class does not apply to derived classes, an aspect on a virtual method not to its overrides, and an aspect on an interface not to the classes that implement it. Apply the aspect there as well.
+- **Aspects are not inherited** by derived classes, overrides and implementations, see [Three things to know first](#three-things-to-know-first).
 - **An aspect applied on several levels runs once per application:** with `[Log]` on the class and on one of its methods, that method calls `Log` twice.
 - **Explicit order:** use `[AspectOrderIndex]`, the lower index runs `OnEntry` first. If one aspect of a method has an index, all aspects of the method need one.
 
@@ -406,7 +406,7 @@ If no aspect sets `args.ReturnValue`, the method returns the default value of it
 - `FlowBehavior.Return` in `OnEntry` skips the method body and the `OnEntry` of the following aspects, and also their `OnExit`. The `OnExit` of the aspects ordered before the aspect that set it is still called.
 - If an aspect swallows an exception in `OnException`, the aspects ordered before it get a call of `OnExit` (not of `OnException`).
 
-For async methods see [below](docs/async-methods.md#flowbehavior-in-async-methods).
+For async methods see [FlowBehavior in async methods](docs/async-methods.md#flowbehavior-in-async-methods).
 
 ```csharp
 using System.Collections.Concurrent;
@@ -459,7 +459,7 @@ The page [Async methods](docs/async-methods.md) has the details: the exact order
 What MethodBoundaryAspect.Fody does not do, collected from the sections of this document:
 
 - **Method boundaries only.** An aspect runs before the method body, after it, and when it throws. It cannot change code inside the method, add members or interfaces, or validate how it is used at build time.
-- **Not every method is woven:** constructors, finalizers, abstract, interface and `extern` methods, methods with a variable argument list (`__arglist`), methods compiled with runtime-async (.NET 11, see [workarounds](docs/async-methods.md#runtime-async-methods-net-11)), methods of `[CompilerGenerated]` types and methods named with `<` (lambdas, local functions, the entry point of top-level statements) and the aspect classes themselves, see [Applying aspects](#methods-classes-properties-and-assemblies).
+- **Not every method is woven:** e.g. constructors, abstract and `extern` methods, lambdas and local functions, methods compiled with runtime-async (.NET 11, see [workarounds](docs/async-methods.md#runtime-async-methods-net-11)) and the aspect classes themselves. The full list is under [Applying aspects](#methods-classes-properties-and-assemblies).
 - **The code of the aspect does not run at build time.** The weaver only reads the values written where the aspect is applied: a filter set in the constructor of an aspect is ignored (with a warning), `CompileTimeValidate` is never called.
 - **The aspect instance is not kept between calls:** a new one is created for every call, or one shared instance for an aspect without state, see [Aspect instances](docs/performance.md#aspect-instances).
 - **Async and iterator methods have a different timing:** `OnExit` runs when the method returns its task or enumerable, see [Async methods](#async-methods) and [When the aspect methods are called](#when-the-aspect-methods-are-called). Task-like types with an own builder (e.g. `UniTask`) cannot use `OnException`.
@@ -517,7 +517,7 @@ A new aspect instance is created for every call (or, for an aspect without state
 Issues and pull requests are welcome, feel free to [fork](https://github.com/vescon/MethodBoundaryAspect.Fody/fork) the repository. See [CONTRIBUTING.md](CONTRIBUTING.md) for what a change needs, and [SECURITY.md](SECURITY.md) to report a vulnerability.
 
 ```
-dotnet build --configuration Release src/MethodBoundaryAspect.Fody.sln
+dotnet build --configuration Release src/MethodBoundaryAspect.Fody.sln -m:1 -nodeReuse:false
 dotnet test src/MethodBoundaryAspect.Fody.UnitTests.NetFramework --configuration Release --no-build
 dotnet test src/MethodBoundaryAspect.Fody.UnitTests.NetCore --configuration Release --no-build
 dotnet test src/MethodBoundaryAspect.Fody.RuntimeTests --configuration Release --no-build

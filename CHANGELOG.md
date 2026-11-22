@@ -79,7 +79,7 @@ Which entries below can change existing code. The rating is an estimate: how lik
 
 ## Planned for version 4
 
-Announced in version 3 (obsolete attributes, warnings, README). Nothing of this is done yet. The migration will be described in the README under "Upgrading to version 4".
+Announced in version 3 (obsolete attributes, warnings, README). Nothing of this is done yet. The migration will be described in an upgrade guide in `docs/`, like the one for [version 3](docs/upgrading-to-version-3.md).
 
 | Risk | Change | Notes |
 |---|---|---|

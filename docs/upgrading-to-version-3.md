@@ -25,7 +25,7 @@ Changed in the releases of version 3 since 3.0 (all of them with the reason are 
 - **New build warnings and errors** which can fail a build with `TreatWarningsAsErrors`: unknown settings in `FodyWeavers.xml`, an aspect applied where it is ignored (constructor, field, event, parameter, return value, module, an abstract, interface or `extern` method), a method compiled with runtime-async, an invalid or very slow filter regular expression (error). See [Build warnings and errors](build-warnings.md).
 - **Skipped or swallowed methods** return a completed task (`Task`, `Task<T>`) and the default value instead of `null`; a `ref` returning method throws a `NotSupportedException` then.
 
-Planned for version 4: the aspect roles and `CompileTimeValidate` are removed, aspects applied directly to an event are woven, and the `virtual` filter properties and the usage of some attributes change (list with risk rating: [CHANGELOG](../CHANGELOG.md#planned-for-version-4)). Aspects directly on an event are not woven in any version so far.
+Planned for version 4: the aspect roles and `CompileTimeValidate` are removed, aspects applied directly to an event are woven, the `virtual` filter properties and the usage of some attributes change, the minimum .NET Framework is raised from 4.6.2 to 4.7.2, and methods compiled with runtime-async (.NET 11) are woven (list with risk rating: [CHANGELOG](../CHANGELOG.md#planned-for-version-4)). Aspects directly on an event are not woven in any version so far.
 
 The configuration in `FodyWeavers.xml` is unchanged; the optimization is enabled by default.
 
