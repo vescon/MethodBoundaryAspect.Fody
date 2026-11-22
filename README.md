@@ -155,11 +155,12 @@ public int Add(int a, int b)
 
 Consequences worth knowing:
 
-- The aspect's constructor arguments and properties from the attribute (e.g. `[Log(Level = "Debug")]`) are applied to the new instance on every call, unless the aspect holds no state and one instance is shared (see [Aspect instances](docs/performance.md#aspect-instances)). Instance fields of an aspect are **not** shared between calls; use `args.MethodExecutionTag` to pass data from `OnEntry` to `OnExit`/`OnException`.
-- The original body runs in the private method `$_executor_<Name>`, which shows up in stack traces next to the original method (the JIT may inline it, then it is missing), and `MethodBase.GetCurrentMethod()` called in the method body returns the executor, not the original method. Code in the body that looks at its caller (`Assembly.GetCallingAssembly()`) sees the woven method instead of the real caller. `[SkipLocalsInit]` and `MethodImplOptions.NoOptimization`/`AggressiveOptimization` of the method apply to the executor, the other `MethodImpl` flags (e.g. `NoInlining`) stay on the original method.
-- Only the method body is guarded by `OnException`: an exception thrown by `OnEntry` or `OnExit` itself does not call `OnException` and is thrown to the caller (also for async methods, where it is thrown synchronously and not stored in the returned task).
-- Only overridden aspect methods are called, and only the `MethodExecutionArgs` properties the aspects actually use are filled (see [Performance](docs/performance.md)).
-- Async methods are woven differently, see [Async methods](#async-methods).
+- **A new aspect instance per call:** the constructor arguments and properties of the attribute (e.g. `[Log(Level = "Debug")]`) are applied each time. Instance fields are not shared between calls, use `args.MethodExecutionTag`. An aspect without state is shared instead, see [Aspect instances](docs/performance.md#aspect-instances).
+- **The original body runs in `$_executor_<Name>`**, which shows up in stack traces.
+- **Only the method body is guarded by `OnException`**, not `OnEntry` and `OnExit` themselves.
+- **Only what is used is woven:** the aspect methods you override and the `args` properties your aspects read, see [Performance](docs/performance.md).
+
+Details: [the woven method](docs/method-behavior.md). Async methods are woven differently, see [Async methods](#async-methods).
 
 ## Writing aspects
 
@@ -170,7 +171,7 @@ Derive from `OnMethodBoundaryAspect` and override any of `OnEntry`, `OnExit` and
 | `Instance` | the object the method is called on, `null` for static methods |
 | `Method` | the called method as [MethodBase](https://learn.microsoft.com/dotnet/api/system.reflection.methodbase) |
 | `Arguments` | the argument values as `object[]` (can be changed, see [Changing input arguments](#changing-input-arguments)) |
-| `ReturnValue` | the return value in `OnExit` (for async methods the returned `Task`), can be overwritten. For a method with a `ref` return it is the value of the returned variable; setting it writes through the reference (ignored for `ref readonly`, and `null` for a value type leaves the variable unchanged) |
+| `ReturnValue` | the return value in `OnExit` (for async methods the returned `Task`), can be overwritten |
 | `Exception` | the thrown exception in `OnException` |
 | `FlowBehavior` | controls what happens after the aspect method, see [FlowBehavior](#skipping-the-method-or-swallowing-exceptions-flowbehavior) |
 | `MethodExecutionTag` | any object you want to pass from `OnEntry` to `OnExit`/`OnException` of the same call |
@@ -183,16 +184,13 @@ Derive from `OnMethodBoundaryAspect` and override any of `OnEntry`, `OnExit` and
 | `OnExit` | after the method body completed successfully (**not** after an exception) | when the method returns its `Task` to the caller, usually before the asynchronous work is done, also if it fails later |
 | `OnException` | when the method body throws | when the asynchronous work fails, possibly long after `OnExit` |
 
-Iterator methods (`yield return`, also `async IAsyncEnumerable<T>` methods) are woven like synchronous methods: the compiler moves their code into a state machine which runs while the caller enumerates the result. So `OnEntry` and `OnExit` are called when the method returns the enumerable, before any element is produced, `args.ReturnValue` is the enumerable, and `OnException` is not called for exceptions thrown during the enumeration.
+Iterator methods (`yield return`, also `async IAsyncEnumerable<T>`) are woven like synchronous methods: `OnEntry` and `OnExit` are called when the method returns the enumerable, before any element is produced. `OnException` is not called for exceptions thrown during the enumeration.
 
 ### Passing data between the aspect methods: `MethodExecutionTag`
 
 A transaction aspect creates the scope in `OnEntry` and completes or disposes it at the end:
 
 ```csharp
-using System.Transactions;
-using MethodBoundaryAspect.Fody.Attributes;
-
 public sealed class TransactionScopeAttribute : OnMethodBoundaryAspect
 {
     public override void OnEntry(MethodExecutionArgs args)
@@ -214,14 +212,8 @@ public sealed class TransactionScopeAttribute : OnMethodBoundaryAspect
     }
 }
 
-public class Repository
-{
-    [TransactionScope]
-    public void Save()
-    {
-        // database work isolated in the surrounding transaction
-    }
-}
+[TransactionScope]
+public void Save() { /* database work isolated in the surrounding transaction */ }
 ```
 
 Each aspect has its own `MethodExecutionTag`, even if several aspects are applied to the same method: an aspect that did not set the tag sees `null`. For async methods read the [note on the tag](docs/async-methods.md), `OnException` can run at the same time as `OnExit`.
@@ -316,10 +308,6 @@ Details: [order, inheritance and the rules of the order index](docs/applying-asp
 Set `args.ReturnValue` in `OnExit`:
 
 ```csharp
-using System;
-using System.Linq;
-using MethodBoundaryAspect.Fody.Attributes;
-
 public sealed class IndentAttribute : OnMethodBoundaryAspect
 {
     public override void OnExit(MethodExecutionArgs args)
@@ -328,35 +316,22 @@ public sealed class IndentAttribute : OnMethodBoundaryAspect
     }
 }
 
-public class Program
-{
-    [Indent]
-    public static string GetLogs() => "Detailed Log 1\nDetailed Log 2";
-
-    public static void Main()
-    {
-        Console.WriteLine(GetLogs()); // "  Detailed Log 1\n  Detailed Log 2"
-    }
-}
+[Indent]
+public static string GetLogs() => "Detailed Log 1\nDetailed Log 2";   // returns "  Detailed Log 1\n  Detailed Log 2"
 ```
 
 For async methods, `args.ReturnValue` is the returned `Task` and can be replaced by a continuation, see [Async methods](docs/async-methods.md).
 
 ### Changing input arguments
 
-Change the elements of `args.Arguments` in `OnEntry`. The aspect class has to be annotated with `[AllowChangingInputArguments]`: the weaver has to generate additional code to pass the changed values to the method, which is unnecessary and slower for aspects which don't change them. Aspects derived from an annotated aspect class inherit it.
+Change the elements of `args.Arguments` in `OnEntry`. The aspect class needs `[AllowChangingInputArguments]`, because the weaver generates additional code for it.
 
 - Only the elements of the array count: assigning a new array to `args.Arguments` is ignored.
 - `ref` and `out` values are written back to the caller.
-- An element of a value type set to `null` passes the default value of the type.
-- A changed `in` (or `ref readonly`) argument is passed to the method, but not written back, because the variable of the caller is read only for the method.
-- An `out` parameter the method didn't assign before it threw (and an aspect swallowed the exception) keeps the value the variable of the caller had before the call, the method works on that variable.
-- It works for async methods as well: the changed values are passed to the method when it starts.
+
+Details: [`in` arguments, `null` for value types, async methods](docs/method-behavior.md#changing-input-arguments).
 
 ```csharp
-using System;
-using MethodBoundaryAspect.Fody.Attributes;
-
 [AllowChangingInputArguments]
 public sealed class InputArgumentIncrementorAttribute : OnMethodBoundaryAspect
 {
@@ -373,23 +348,11 @@ public sealed class InputArgumentIncrementorAttribute : OnMethodBoundaryAspect
     }
 }
 
-public class Program
-{
-    public static void Main()
-    {
-        MethodByValue(10);                              // prints 11
+[InputArgumentIncrementor(Increment = 1)]
+public static void MethodByValue(int i) => Console.WriteLine(i);     // MethodByValue(10) prints 11
 
-        var value = 10;
-        MethodByRef(ref value);                         // prints 20
-        Console.WriteLine("after method call: " + value); // prints 20
-    }
-
-    [InputArgumentIncrementor(Increment = 1)]
-    public static void MethodByValue(int i) => Console.WriteLine(i);
-
-    [InputArgumentIncrementor(Increment = 10)]
-    public static void MethodByRef(ref int i) => Console.WriteLine(i);
-}
+[InputArgumentIncrementor(Increment = 10)]
+public static void MethodByRef(ref int i) => Console.WriteLine(i);   // prints 20 for 10, the variable of the caller is 20 afterwards
 ```
 
 ### Skipping the method or swallowing exceptions: `FlowBehavior`
@@ -400,18 +363,11 @@ public class Program
 | `OnException` | `FlowBehavior.Continue` or `FlowBehavior.Return` | the exception is swallowed, the method returns `args.ReturnValue` |
 | `OnException` | `FlowBehavior.Default` or `FlowBehavior.RethrowException` | the exception is rethrown (default) |
 
-If no aspect sets `args.ReturnValue`, the method returns the default value of its return type (a completed task for a method returning `Task` or `Task<T>`, not `null`). A method with a `ref` return has no default value to return: skipping its body or swallowing its exception throws a `NotSupportedException` (with the original exception as inner exception). The `OnExit` of the aspects which ran `OnEntry` before the aspect that skips or swallows is called first in both cases. Details:
+If no aspect sets `args.ReturnValue`, the method returns the default value of its return type (a completed task for `Task` and `Task<T>`).
 
-- `FlowBehavior` is reset to `Default` before the first `OnException`, so a `Continue` set in `OnEntry` (where it has no effect) does not swallow a later exception. It has no effect in `OnExit`.
-- `FlowBehavior.Return` in `OnEntry` skips the method body and the `OnEntry` of the following aspects, and also their `OnExit`. The `OnExit` of the aspects ordered before the aspect that set it is still called.
-- If an aspect swallows an exception in `OnException`, the aspects ordered before it get a call of `OnExit` (not of `OnException`).
-
-For async methods see [FlowBehavior in async methods](docs/async-methods.md#flowbehavior-in-async-methods).
+Details: [several aspects, `ref` returns](docs/method-behavior.md#skipping-the-method-or-swallowing-exceptions) and [async methods](docs/async-methods.md#flowbehavior-in-async-methods).
 
 ```csharp
-using System.Collections.Concurrent;
-using MethodBoundaryAspect.Fody.Attributes;
-
 public sealed class CacheAttribute : OnMethodBoundaryAspect
 {
     private static readonly ConcurrentDictionary<string, object> Cache = new ConcurrentDictionary<string, object>();
@@ -436,11 +392,7 @@ public sealed class CacheAttribute : OnMethodBoundaryAspect
 
 ## Async methods
 
-Aspects work on `async` methods returning `Task`, `Task<T>`, `ValueTask`, `ValueTask<T>` and `void`. The timing differs from synchronous methods:
-
-- `OnEntry` runs when the method is called.
-- `OnExit` runs when the method returns its `Task` to the caller, usually **before** the asynchronous work is done. `args.ReturnValue` is that task.
-- `OnException` runs when the asynchronous work fails, possibly long after `OnExit` and on another thread.
+Aspects work on `async` methods returning `Task`, `Task<T>`, `ValueTask`, `ValueTask<T>` and `void`. `OnExit` runs when the method returns its task, usually **before** the asynchronous work is done, and `args.ReturnValue` is that task. `OnException` runs when the work fails, possibly later and on another thread (see the [table](#when-the-aspect-methods-are-called)).
 
 To run code when the asynchronous work has finished, continue the returned task in `OnExit`:
 
@@ -456,16 +408,14 @@ The page [Async methods](docs/async-methods.md) has the details: the exact order
 
 ## Limitations
 
-What MethodBoundaryAspect.Fody does not do, collected from the sections of this document:
-
 - **Method boundaries only.** An aspect runs before the method body, after it, and when it throws. It cannot change code inside the method, add members or interfaces, or validate how it is used at build time.
-- **Not every method is woven:** e.g. constructors, abstract and `extern` methods, lambdas and local functions, methods compiled with runtime-async (.NET 11, see [workarounds](docs/async-methods.md#runtime-async-methods-net-11)) and the aspect classes themselves. The full list is under [Applying aspects](#methods-classes-properties-and-assemblies).
-- **The code of the aspect does not run at build time.** The weaver only reads the values written where the aspect is applied: a filter set in the constructor of an aspect is ignored (with a warning), `CompileTimeValidate` is never called.
-- **The aspect instance is not kept between calls:** a new one is created for every call, or one shared instance for an aspect without state, see [Aspect instances](docs/performance.md#aspect-instances).
-- **Async and iterator methods have a different timing:** `OnExit` runs when the method returns its task or enumerable, see [Async methods](#async-methods) and [When the aspect methods are called](#when-the-aspect-methods-are-called). Task-like types with an own builder (e.g. `UniTask`) cannot use `OnException`.
-- **Ref structs and pointers** cannot be passed to the aspect, they are `null` in `args`, see [Ref structs](docs/ref-structs.md).
-- **The original body runs in a private method** `$_executor_<Name>`, which shows up in stack traces, and `MethodBase.GetCurrentMethod()` in the method body returns it, see [How it works](#how-it-works).
-- **Aspects are analyzed when the project that uses them is built**, so rebuild that project after changing an aspect that lives in another assembly, see [Performance](docs/performance.md).
+- **Not every method is woven,** e.g. constructors, abstract methods, lambdas and local functions. See the [list](#methods-classes-properties-and-assemblies).
+- **The code of the aspect does not run at build time.** A filter set in the constructor of an aspect is ignored (with a warning).
+- **The aspect instance is not kept between calls,** see [Aspect instances](docs/performance.md#aspect-instances).
+- **Async and iterator methods have a different timing,** see [When the aspect methods are called](#when-the-aspect-methods-are-called). Task-like types with an own builder (e.g. `UniTask`) cannot use `OnException`.
+- **Methods compiled with runtime-async (.NET 11) are not woven yet,** see the [workarounds](docs/async-methods.md#runtime-async-methods-net-11).
+- **Ref structs and pointers** are `null` in `args`, see [Ref structs](docs/ref-structs.md).
+- **Aspects are analyzed when the project that uses them is built:** rebuild it after changing an aspect that lives in another assembly, see [Performance](docs/performance.md).
 
 ## Performance
 
@@ -504,6 +454,7 @@ A new aspect instance is created for every call (or, for an aspect without state
 | Page | Content |
 |---|---|
 | [Applying aspects: details](docs/applying-aspects.md) | the names and visibilities the filters see, aspects in some build configurations only, order and inheritance of several aspects |
+| [The woven method: details](docs/method-behavior.md) | the executor method, edge cases of changed arguments, `ref` returns and `FlowBehavior` |
 | [Async methods](docs/async-methods.md) | order of the calls, replacing the returned task, `FlowBehavior`, task-like types |
 | [Ref structs and pointers](docs/ref-structs.md) | what an aspect gets for `Span<T>` and other values that cannot be boxed |
 | [Performance](docs/performance.md) | what the weaver optimizes, shared aspect instances, tips for hot paths, benchmark tables |
