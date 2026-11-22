@@ -82,6 +82,37 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             _weaver.TotalWeavedMethods.Should().Be(1);
         }
 
+        [Theory]
+        [InlineData("g__Local|")]
+        [InlineData("g__LocalWithThis|")]
+        [InlineData("<Lambda>b__")]
+        [InlineData("<LambdaWithCapture>b__")]
+        public void IfAnAspectIsAppliedToALocalFunctionOrLambda_ThenAWarningIsWritten(string name)
+        {
+            _weaver.AddClassFilter(typeof(IgnoredAspectTargetsAnonymous).FullName);
+
+            _weaver.Execute();
+
+            _warnings.Should().HaveCount(4);
+            _warnings.Should().ContainSingle(w => w.Contains(name))
+                .Which.Should().Contain("the local function or lambda")
+                .And.Contain(typeof(OnlyOnEntryAspect).FullName)
+                .And.Contain("is ignored")
+                .And.Contain("are not woven");
+            _weaver.TotalWeavedMethods.Should().Be(0);
+        }
+
+        [Fact]
+        public void IfAnAspectIsAppliedToAClassWithALocalFunction_ThenNoWarningIsWritten()
+        {
+            _weaver.AddClassFilter(typeof(ClassAspectWithLocalFunction).FullName);
+
+            _weaver.Execute();
+
+            _warnings.Should().BeEmpty();
+            _weaver.TotalWeavedMethods.Should().Be(1);
+        }
+
         [Fact]
         public void IfAnAspectIsAppliedToTheModule_ThenAWarningIsWritten()
         {

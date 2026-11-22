@@ -355,7 +355,12 @@ namespace MethodBoundaryAspect.Fody
             // weaving their MoveNext method again called the aspects for each step of the state machine,
             // see https://github.com/vescon/MethodBoundaryAspect.Fody/issues/66
             if (type.CustomAttributes.Any(a => a.AttributeType.FullName == typeof(CompilerGeneratedAttribute).FullName))
+            {
+                // the closure class of the lambdas and local functions of a user type
+                if (!IsUserFiltered(GetUserType(type).FullName, string.Empty))
+                    WarnAboutIgnoredAspectsOfAnonymousMethods(type);
                 return;
+            }
 
             // Aspects (and their base aspects and nested helper types) are not woven. An assembly or class
             // aspect woven into the aspects of the same assembly called itself, directly or via another aspect,
@@ -389,6 +394,8 @@ namespace MethodBoundaryAspect.Fody
             foreach (var eventDefinition in type.Events)
                 WarnAboutIgnoredAspects(eventDefinition.CustomAttributes, $"the event '{eventDefinition.FullName}'");
 
+            WarnAboutIgnoredAspectsOfAnonymousMethods(type);
+
             foreach (var method in type.Methods)
             {
                 if (method.IsConstructor)
@@ -410,6 +417,27 @@ namespace MethodBoundaryAspect.Fody
 
                 WarnAboutIgnoredAspects(property.CustomAttributes, $"the {DescribeMethodWithoutBody(accessor)} property '{property.FullName}'", GetHintForMethodWithoutBody(accessor));
             }
+        }
+
+        // Lambdas and local functions are compiled to methods named "<Method>b__0" or "<Method>g__Local|0_0", in the
+        // type of the method or in a closure class. They are not woven, also not by an aspect of the class.
+        private void WarnAboutIgnoredAspectsOfAnonymousMethods(TypeDefinition type)
+        {
+            foreach (var method in type.Methods.Where(m => m.Name.StartsWith("<")))
+            {
+                WarnAboutIgnoredAspects(
+                    method.CustomAttributes,
+                    $"the local function or lambda '{method.FullName}'",
+                    "Local functions and lambdas are not woven. Move the code to a method and apply the aspect there.");
+            }
+        }
+
+        private static TypeDefinition GetUserType(TypeDefinition type)
+        {
+            while (type.DeclaringType != null && type.Name.StartsWith("<"))
+                type = type.DeclaringType;
+
+            return type;
         }
 
         private static string DescribeMethodWithoutBody(MethodDefinition method)

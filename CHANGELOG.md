@@ -5,6 +5,10 @@ listed as well). The migration from version 2 is described in the
 [upgrade guide](docs/upgrading-to-version-3.md). Versions are created from the Git tags, see the
 [releases on GitHub](https://github.com/vescon/MethodBoundaryAspect.Fody/releases).
 
+## 3.8.0 (not released yet)
+
+- **A build warning for an aspect on a local function or a lambda** (`[Log] int Local() => ...`, `[Log] (int x) => ...`). They are not woven, the aspect was ignored silently. Projects with `TreatWarningsAsErrors` have to remove the attribute or move the code to a method.
+
 ## 3.7.0
 
 ### Risk overview of the changes in 3.7.0

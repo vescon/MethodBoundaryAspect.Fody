@@ -259,7 +259,7 @@ Not woven:
 - methods with a variable argument list (`__arglist`, with a build warning)
 - aspects applied directly to an event (class and assembly aspects do hit the `add`/`remove` accessors; weaving aspects of an event is planned for 4.0)
 - types marked `[CompilerGenerated]` (closures, the state machines of async and iterator methods, anonymous types)
-- methods whose name starts with `<` (lambdas, local functions, the `<Main>$` entry point of top-level statements, `<Clone>$` of records)
+- methods whose name starts with `<` (lambdas, local functions, the `<Main>$` entry point of top-level statements, `<Clone>$` of records); an aspect applied to a lambda or local function writes a build warning
 - aspect classes: classes derived from `OnMethodBoundaryAspect` (also base aspect classes) and their nested classes, so an assembly aspect doesn't call itself ([#70](https://github.com/vescon/MethodBoundaryAspect.Fody/issues/70))
 
 Aspects can be generic (generic attributes need C# 11): `[Validate<int>]` weaves the aspect with the type argument `int`.
