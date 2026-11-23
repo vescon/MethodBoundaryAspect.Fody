@@ -80,22 +80,16 @@ namespace MethodBoundaryAspect.Fody
             return blockChain;
         }
 
-        public NamedInstructionBlockChain CreateThisVariable()
+        /// <summary>
+        /// "this" of the method (ldarg.0): the instance of a class, a reference to the value of a struct.
+        /// </summary>
+        public ILoadable CreateThisLoadable()
         {
-            return CreateThisVariable(_method.DeclaringType);
-        }
-
-        public NamedInstructionBlockChain CreateThisVariable(TypeReference typeReference)
-        {
-            typeReference = FixTypeReference(typeReference);
+            var typeReference = FixTypeReference(_method.DeclaringType);
             if (typeReference.IsValueType)
                 typeReference = new ByReferenceType(typeReference);
 
-            var instanceVariable = _creator.CreateVariable(typeReference);
-            var block = _creator.CreateThisVariable(instanceVariable);
-            var result = new NamedInstructionBlockChain(instanceVariable, typeReference);
-            result.InstructionBlocks.Add(block);
-            return result;
+            return new ThisLoadable(typeReference);
         }
 
         public NamedInstructionBlockChain CreateMethodExecutionArgsInstance(
@@ -117,17 +111,16 @@ namespace MethodBoundaryAspect.Fody
                 _moduleDefinition);
 
             InstructionBlock callSetInstanceBlock = null;
-            NamedInstructionBlockChain createThisVariableBlock = null;
             if (!_method.IsStatic
                 && !_method.DeclaringType.IsByRefLike() // ref structs cannot be boxed, Instance stays null
                 && (usage & ExecutionArgsUsage.Instance) != 0)
             {
-                createThisVariableBlock = CreateThisVariable();
                 var methodExecutionArgsSetInstanceMethodRef =
                     _referenceFinder.GetMethodReference(methodExecutionArgsTypeRef, "set_Instance");
+                // the value of a struct is copied into a box
                 callSetInstanceBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetInstanceMethodRef,
                     new VariablePersistable(methodExecutionArgsVariable),
-                    new VariablePersistable(createThisVariableBlock.Variable));
+                    CreateThisLoadable());
             }
 
             var newMethodExecutionArgsBlockChain = new NamedInstructionBlockChain(methodExecutionArgsVariable,
@@ -164,10 +157,7 @@ namespace MethodBoundaryAspect.Fody
             }
 
             if (callSetInstanceBlock != null)
-            {
-                newMethodExecutionArgsBlockChain.Add(createThisVariableBlock);
                 newMethodExecutionArgsBlockChain.Add(callSetInstanceBlock);
-            }
 
             return newMethodExecutionArgsBlockChain;
         }
@@ -186,23 +176,15 @@ namespace MethodBoundaryAspect.Fody
             return block;
         }
 
-        public NamedInstructionBlockChain SetMethodExecutionArgsExceptionFromStack(
-            IPersistable createMethodExecutionArgsInstance)
+        public InstructionBlockChain SetMethodExecutionArgsException(
+            IPersistable executionArgs,
+            VariableDefinition exception)
         {
-            var exceptionTypeRef = _referenceFinder.GetTypeReference(typeof (Exception));
-            var exceptionVariable = _creator.CreateVariable(exceptionTypeRef);
-            var assignExceptionVariable = _creator.AssignValueFromStack(exceptionVariable);
+            var setException = _referenceFinder.GetMethodReference(executionArgs.PersistedType, "set_Exception");
 
-            var methodExecutionArgsSetExceptionMethodRef =
-                _referenceFinder.GetMethodReference(createMethodExecutionArgsInstance.PersistedType, "set_Exception");
-            var callSetExceptionBlock = _creator.CallVoidInstanceMethod(methodExecutionArgsSetExceptionMethodRef,
-                createMethodExecutionArgsInstance,
-                new VariablePersistable(exceptionVariable));
-
-            var block = new NamedInstructionBlockChain(exceptionVariable, exceptionTypeRef);
-            block.Add(assignExceptionVariable);
-            block.Add(callSetExceptionBlock);
-            return block;
+            var chain = new InstructionBlockChain();
+            chain.Add(_creator.CallVoidInstanceMethod(setException, executionArgs, new VariablePersistable(exception)));
+            return chain;
         }
 
         public InstructionBlockChain SaveMethodExecutionArgsTagToPersistable(

@@ -344,17 +344,17 @@ namespace MethodBoundaryAspect.Fody
                         if (copyBackBlock != null)
                             onExitChain.Add(copyBackBlock);
                     }
-                }
 
-                if (returnValue != null)
-                {
-                    if (ReadsBackReturnValue)
-                        onExitChain.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue.Variable));
-                    onExitChain.Add(CreateReturnCompletedTaskIfNull(returnValue.Variable));
-                    onExitChain.Add(_creator.LoadValueOnStack(returnValue));
-                }
+                    if (returnValue != null)
+                    {
+                        if (ReadsBackReturnValue)
+                            onExitChain.Add(_creator.ReadReturnValue(ExecutionArgs, returnValue.Variable));
+                        onExitChain.Add(CreateReturnCompletedTaskIfNull(returnValue.Variable));
+                        onExitChain.Add(_creator.LoadValueOnStack(returnValue));
+                    }
 
-                onExitChain.Add(new InstructionBlock("Return", Instruction.Create(OpCodes.Ret)));
+                    onExitChain.Add(new InstructionBlock("Return", Instruction.Create(OpCodes.Ret)));
+                }
 
                 flowChain.Add(_creator.IfFlowBehaviorIsAnyOf(ExecutionArgs, nopChain.First, onExitChain, FlowBehaviorValues.Return));
 
@@ -445,13 +445,7 @@ namespace MethodBoundaryAspect.Fody
             out Instruction instructionCallStart,
             out Instruction instructionCallEnd)
         {
-            VariableDefinition thisVariable = null;
-            if (!_method.IsStatic)
-            {
-                var thisVariableBlock = _creator.CreateThisVariable(_method.DeclaringType);
-                thisVariableBlock.Append(_ilProcessor);
-                thisVariable = thisVariableBlock.Variable;
-            }
+            var instance = _method.IsStatic ? null : _creator.CreateThisLoadable();
 
             InstructionBlockChain callSourceMethod;
 
@@ -486,7 +480,7 @@ namespace MethodBoundaryAspect.Fody
 
                 callSourceMethod = _creator.CallMethodWithReturn(
                     _clonedMethod,
-                    thisVariable == null ? null : new VariablePersistable(thisVariable),
+                    instance,
                     returnValue == null ? null : new VariablePersistable(returnValue),
                     args);
             }
@@ -495,7 +489,7 @@ namespace MethodBoundaryAspect.Fody
                 callSourceMethod = _creator.CallMethodWithLocalParameters(
                     _method,
                     _clonedMethod,
-                    thisVariable == null ? null : new VariablePersistable(thisVariable),
+                    instance,
                     returnValue == null ? null : new VariablePersistable(returnValue));
             }
             
@@ -675,12 +669,8 @@ namespace MethodBoundaryAspect.Fody
             var exception = _creator.SaveThrownException();
             var exceptionHandlerCurrent = exception.InsertAfter(tryLeaveInstruction, _ilProcessor);
 
-            var pushException = _creator.LoadValueOnStack(exception);
-            exceptionHandlerCurrent = pushException.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
-
-            var setExceptionFromStack =
-                _creator.SetMethodExecutionArgsExceptionFromStack(ExecutionArgs);
-            exceptionHandlerCurrent = setExceptionFromStack.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
+            var setException = _creator.SetMethodExecutionArgsException(ExecutionArgs, exception.Variable);
+            exceptionHandlerCurrent = setException.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
 
             // the method has written ref/out values into the variables of the caller before it threw: OnException (and
             // OnExit, if the exception is swallowed) see them in Arguments

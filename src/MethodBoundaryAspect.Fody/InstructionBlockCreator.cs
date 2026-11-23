@@ -30,20 +30,6 @@ namespace MethodBoundaryAspect.Fody
             return variableDefinition;
         }
 
-        public InstructionBlock CreateThisVariable(VariableDefinition instanceVariable)
-        {
-            if (_method.IsStatic)
-                return new InstructionBlock("Static method call: " + _method.Name, _processor.Create(OpCodes.Nop));
-            
-            var loadThisInstruction = _processor.Create(OpCodes.Ldarg_0);
-            var storeThisInstruction = _processor.Create(OpCodes.Stloc, instanceVariable);
-
-            return new InstructionBlock(
-                "Store instance for: " + _method.Name,
-                loadThisInstruction,
-                storeThisInstruction);
-        }
-
         // Array.Empty<T>() exists since .NET Framework 4.6 and .NET Standard 1.3, older target frameworks allocate
         private MethodReference GetArrayEmpty(TypeReference objectTypeReference)
         {
