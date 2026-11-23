@@ -63,7 +63,7 @@ namespace MethodBoundaryAspect.Fody
 
             foreach (var parameter in _method.Parameters)
             {
-                var boxedArguments = BoxArguments(parameter, objectArray).ToList();
+                var boxedArguments = BoxArgument(parameter, objectArray).ToList();
                 createArrayInstructions.AddRange(boxedArguments);
             }
 
@@ -197,8 +197,7 @@ namespace MethodBoundaryAspect.Fody
             IPersistable callInstanceVariable,
             params ILoadable[] argumentVariables)
         {
-            var instructions = CreateInstanceMethodCallInstructions(methodReference,
-                callInstanceVariable, null, argumentVariables);
+            var instructions = CreateMethodCallInstructions(methodReference, callInstanceVariable, null, argumentVariables);
             return new InstructionBlock("CallVoidInstanceMethod: " + methodReference.Name, instructions);
         }
 
@@ -217,18 +216,8 @@ namespace MethodBoundaryAspect.Fody
             IPersistable returnValue,
             params ILoadable[] arguments)
         {
-            var instructions = CreateInstanceMethodCallInstructions(methodReference,
-                callerInstance, returnValue, arguments);
+            var instructions = CreateMethodCallInstructions(methodReference, callerInstance, returnValue, arguments);
             return new InstructionBlock("CallInstanceMethod: " + methodReference.Name, instructions);
-        }
-
-        private static List<Instruction> CreateInstanceMethodCallInstructions(
-            MethodReference methodReference,
-            ILoadable callerInstance,
-            IPersistable returnValue,
-            params ILoadable[] arguments)
-        {
-            return CreateMethodCallInstructions(methodReference, callerInstance, returnValue, arguments);
         }
 
         private static List<Instruction> CreateMethodCallInstructions(
@@ -452,7 +441,11 @@ namespace MethodBoundaryAspect.Fody
             throw new NotSupportedException("Not a supported primitve parameter type: " + type);
         }
 
-        private static IEnumerable<Instruction> BoxArguments(
+        /// <summary>
+        /// Stores the value of the parameter in the arguments array, boxed if it is a value. The value a ref, out or in
+        /// parameter refers to is read.
+        /// </summary>
+        internal static IEnumerable<Instruction> BoxArgument(
             ParameterDefinition parameterDefinition,
             VariableDefinition paramsArray)
         {

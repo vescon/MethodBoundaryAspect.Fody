@@ -311,6 +311,7 @@ namespace MethodBoundaryAspect.Fody
             Instruction exceptionHandlerCurrent = firstInstructionToSetException.Previous; // Need to start inserting before SetException
             Instruction retInstruction = handler.HandlerEnd;
             var processor = _moveNext.Body.GetILProcessor();
+            var moveNextCreator = new InstructionBlockCreator(_moveNext, new ReferenceFinder(_module));
             // The calls of the aspects are wrapped in a try/catch, so an exception thrown by OnException
             // completes the task as faulted with that exception instead of escaping MoveNext (#5).
             var beforeTry = exceptionHandlerCurrent;
@@ -346,7 +347,7 @@ namespace MethodBoundaryAspect.Fody
             if (setResultMethod.Parameters.Count == 1)
             {
                 var builderType = (GenericInstanceType)setResultMethod.DeclaringType;
-                result = new InstructionBlockCreator(_moveNext, new ReferenceFinder(_module)).CreateVariable(builderType.GenericArguments[0]);
+                result = moveNextCreator.CreateVariable(builderType.GenericArguments[0]);
                 returnedTaskType = GetReturnedTaskType(builderType);
 
                 // ReturnValue holds the task returned to the caller (set before OnExit), it is no result of the task:
@@ -391,7 +392,7 @@ namespace MethodBoundaryAspect.Fody
 
                 var nop = Instruction.Create(OpCodes.Nop);
                 callAspectOnException.Add(_creator.IfFlowBehaviorIsAnyOf(
-                    new InstructionBlockCreator(_moveNext, new ReferenceFinder(_module)).CreateVariable,
+                    moveNextCreator.CreateVariable,
                     onExceptionAspect.GetMoveNextExecutionArgs(ExecutionArgs),
                     nop,
                     thenBody,

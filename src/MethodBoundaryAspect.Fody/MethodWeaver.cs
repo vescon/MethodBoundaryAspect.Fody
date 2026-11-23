@@ -530,21 +530,9 @@ namespace MethodBoundaryAspect.Fody
 
         private InstructionBlock CreateUpdateArgumentsArrayFromByRefParameters(NamedInstructionBlockChain arguments)
         {
-            var instructions = new List<Instruction>();
-            foreach (var parameter in GetByRefParametersPassedViaArguments())
-            {
-                instructions.Add(_ilProcessor.Create(OpCodes.Ldloc, arguments.Variable));
-                instructions.Add(_ilProcessor.Create(OpCodes.Ldc_I4, parameter.Index));
-
-                var elementType = ((ByReferenceType)parameter.ParameterType.WithoutModifiers()).ElementType;
-                instructions.Add(_ilProcessor.Create(OpCodes.Ldarg, parameter));
-                instructions.Add(_ilProcessor.Create(OpCodes.Ldobj, elementType));
-                // Resolve() returns the element type of an array
-                if (elementType.IsValueTypeOrGenericParameter() || (!elementType.IsArray && elementType.Resolve()?.IsValueType == true))
-                    instructions.Add(_ilProcessor.Create(OpCodes.Box, elementType));
-
-                instructions.Add(_ilProcessor.Create(OpCodes.Stelem_Ref));
-            }
+            var instructions = GetByRefParametersPassedViaArguments()
+                .SelectMany(parameter => InstructionBlockCreator.BoxArgument(parameter, arguments.Variable))
+                .ToList();
 
             return instructions.Any()
                 ? new InstructionBlock("Update arguments with ref values", instructions)
