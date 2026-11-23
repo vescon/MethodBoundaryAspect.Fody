@@ -28,7 +28,7 @@ dotnet test src/MethodBoundaryAspect.Fody.RuntimeTests --configuration Release -
 - Benchmark (weaves with the local weaver, build it first; run it from the project folder, BenchmarkDotNet needs exactly one project file there): `cd src/MethodBoundaryAspect.Fody.Benchmark; dotnet run -c Release -f net10.0 -- --filter '*' --job short`. Without `--job short` the run takes 6-10 minutes. The results go to `BenchmarkDotNet.Artifacts/` (ignored by git).
 - **Prerequisite:** the NetFramework tests and a few NetCore tests need the installed targeting pack of .NET Framework 4.6.2 (`FolderAssemblyResolver` reads it from `Program Files (x86)`); without it nearly all of them fail with `Failed to resolve mscorlib`.
 - `Directory.Build.props`: C# 8, `TreatWarningsAsErrors`, strong-name signing.
-- Versioning is GitVersion 6 (default config, run by the GitTools actions in the workflow): `+semver: major|minor` in a commit message bumps the version. Pushing a `v*` tag publishes to nuget.org. **Tag with three numbers (`v3.3.0`)**: GitVersion 6 does not read `v3.3` as a version. The workflow step "Check the version" fails a tag build whose version does not match the tag.
+- Versioning is GitVersion 7.0 (default config, run by the GitTools actions in the workflow): `+semver: major|minor` in a commit message bumps the version. Pushing a `v*` tag publishes to nuget.org. **Tag with three numbers (`v3.3.0`)**: GitVersion does not read `v3.3` as a version. The workflow step "Check the version" fails a tag build whose version does not match the tag.
 
 ## Projects
 

@@ -13,7 +13,7 @@
     <Version>$(GitVersion_SemVer)</Version>
     <Version Condition="'$(Version)' == ''">0.0.1</Version>
     <FileVersion>0.0.1</FileVersion>
-    <FileVersion Condition="'$(GitVersion_MajorMinorPatch)' != '' And '$(GitVersion_CommitsSinceVersionSource)' != ''">$(GitVersion_MajorMinorPatch).$(GitVersion_CommitsSinceVersionSource)</FileVersion>
+    <FileVersion Condition="'$(GitVersion_MajorMinorPatch)' != '' And '$(GitVersion_VersionSourceDistance)' != ''">$(GitVersion_MajorMinorPatch).$(GitVersion_VersionSourceDistance)</FileVersion>
     <InformationalVersion>$(GitVersion_InformationalVersion)</InformationalVersion>
     <InformationalVersion Condition="'$(InformationalVersion)' == ''">0.0.1 - localBuild</InformationalVersion>
   </PropertyGroup>
