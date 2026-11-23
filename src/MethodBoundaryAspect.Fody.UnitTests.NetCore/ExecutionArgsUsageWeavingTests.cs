@@ -138,6 +138,24 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
             CallsFlowBehavior(weavedModule, nameof(ExecutionArgsUsageMethods.EscapingUsage)).Should().BeTrue();
         }
 
+        [Fact]
+        public void IfOneOfSeveralAspectsChangesTheFlowBehavior_ThenItIsOnlyCheckedAfterThatAspect()
+        {
+            var weavedModule = Weave(OptOutConfig(), out _);
+
+            var method = GetWeavedMethod(weavedModule, nameof(ExecutionArgsUsageMethods.FlowBehaviorOfOneAspect));
+            var calls = method.Body.Instructions
+                .Select(i => i.Operand)
+                .OfType<MethodReference>()
+                .Where(m => m.Name == "OnEntry" || m.Name == "get_FlowBehavior")
+                .Select(m => m.DeclaringType.Name + "." + m.Name)
+                .ToList();
+
+            calls.Should().HaveCount(4).And.ContainSingle(c => c == "MethodExecutionArgs.get_FlowBehavior");
+            calls[calls.IndexOf("MethodExecutionArgs.get_FlowBehavior") - 1].Should().Be(nameof(FlowBehaviorUsageAspect) + ".OnEntry");
+            method.Body.Variables.Should().ContainSingle(v => v.VariableType.Name == "FlowBehavior");
+        }
+
         private static bool CallsFlowBehavior(ModuleDefinition module, string methodName)
         {
             return GetWeavedMethod(module, methodName).Body.Instructions

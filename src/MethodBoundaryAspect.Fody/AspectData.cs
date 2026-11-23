@@ -37,6 +37,13 @@ namespace MethodBoundaryAspect.Fody
 
         public AspectInfo Info { get; private set; }
         public AspectMethods AspectMethods { get; private set; }
+
+        /// <summary>
+        /// The aspect can set MethodExecutionArgs.FlowBehavior: it is only checked after the calls of such an aspect.
+        /// An aspect which never sets it can't change what happens next: had an aspect called before it set a value
+        /// that ends the method, the method would have ended there.
+        /// </summary>
+        public bool WritesFlowBehavior { get; set; } = true;
         
         public virtual void EnsureTagStorage()
         {

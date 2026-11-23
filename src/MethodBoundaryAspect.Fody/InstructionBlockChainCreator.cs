@@ -13,6 +13,7 @@ namespace MethodBoundaryAspect.Fody
 
         private readonly ReferenceFinder _referenceFinder;
         private readonly InstructionBlockCreator _creator;
+        private VariableDefinition _flowBehaviorVariable;
 
         public InstructionBlockChainCreator(
             MethodDefinition method, 
@@ -451,7 +452,10 @@ namespace MethodBoundaryAspect.Fody
 
         public InstructionBlockChain IfFlowBehaviorIsAnyOf(ILoadable args, Instruction nextInstruction, InstructionBlockChain thenBody, params int[] behaviors)
         {
-            return IfFlowBehaviorIsAnyOf(_creator.CreateVariable, args, nextInstruction, thenBody, behaviors);
+            // one variable for all checks of the method
+            return IfFlowBehaviorIsAnyOf(
+                type => _flowBehaviorVariable ?? (_flowBehaviorVariable = _creator.CreateVariable(type)),
+                args, nextInstruction, thenBody, behaviors);
         }
 
         public InstructionBlockChain IfFlowBehaviorIsAnyOf(Func<TypeReference, VariableDefinition> variableFactory, ILoadable args, Instruction nextInstruction, InstructionBlockChain thenBody, params int[] behaviors)

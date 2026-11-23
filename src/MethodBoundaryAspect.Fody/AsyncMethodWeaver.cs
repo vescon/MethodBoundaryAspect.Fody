@@ -356,6 +356,7 @@ namespace MethodBoundaryAspect.Fody
                 exceptionHandlerCurrent = clearReturnValue.InsertAfter(exceptionHandlerCurrent, processor);
             }
 
+            VariableDefinition flowBehavior = null; // one variable for the checks of all aspects
             foreach (var onExceptionAspect in onExceptionAspects)
             {
                 if (HandlesTags)
@@ -366,8 +367,8 @@ namespace MethodBoundaryAspect.Fody
 
                 var callAspectOnException = onExceptionAspect.CallOnExceptionInMoveNext(ExecutionArgs, exceptionLocal);
 
-                // without a FlowBehavior set by an aspect the exception is always set on the task
-                if (!WritesFlowBehavior)
+                // without a FlowBehavior set by the aspect the exception is set on the task (or handled by the next aspect)
+                if (!WritesFlowBehavior || !onExceptionAspect.WritesFlowBehavior)
                 {
                     callAspectOnException.InsertAfter(exceptionHandlerCurrent, processor);
                     exceptionHandlerCurrent = callAspectOnException.Last;
@@ -392,7 +393,7 @@ namespace MethodBoundaryAspect.Fody
 
                 var nop = Instruction.Create(OpCodes.Nop);
                 callAspectOnException.Add(_creator.IfFlowBehaviorIsAnyOf(
-                    moveNextCreator.CreateVariable,
+                    type => flowBehavior ?? (flowBehavior = moveNextCreator.CreateVariable(type)),
                     onExceptionAspect.GetMoveNextExecutionArgs(ExecutionArgs),
                     nop,
                     thenBody,

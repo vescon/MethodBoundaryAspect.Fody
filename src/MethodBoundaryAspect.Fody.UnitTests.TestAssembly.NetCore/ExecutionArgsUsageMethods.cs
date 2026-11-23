@@ -32,5 +32,11 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
 
         [OptOutUsageAspect]
         public int OptOutUsage(int value) => value;
+
+        // only the second aspect can set the FlowBehavior
+        [NoUsageAspect]
+        [FlowBehaviorUsageAspect]
+        [ArgumentsUsageAspect]
+        public int FlowBehaviorOfOneAspect(int value) => value;
     }
 }

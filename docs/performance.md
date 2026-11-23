@@ -12,7 +12,7 @@ The aspect calls are woven into the IL at build time, so there is no reflection 
 | Only the aspect methods you override are called | calls of empty base methods, and the `try`/`catch` for `OnException` if no aspect overrides it | - |
 | The original body runs in a method marked `AggressiveInlining` | the JIT can inline it again, so there is usually no additional stack frame | - |
 | `MethodExecutionTag` is only saved and restored with several aspects on a method, and only if one of them uses the tag | a local variable and two assignments per aspect | `DisableExecutionArgsOptimization` |
-| `FlowBehavior` is only checked if an aspect of the method sets it | the checks after `OnEntry` and `OnException` | `DisableExecutionArgsOptimization` |
+| `FlowBehavior` is only checked after the calls of an aspect which sets it | the checks after `OnEntry` and `OnException` | `DisableExecutionArgsOptimization` |
 | Async methods get no wrapper method | no additional call level, the aspect state lives in the compiler-generated state machine | - |
 
 What an aspect costs with and without these optimizations: see [Measured overhead](#measured-overhead).

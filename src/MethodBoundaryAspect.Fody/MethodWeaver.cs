@@ -308,7 +308,7 @@ namespace MethodBoundaryAspect.Fody
                 if (HandlesTags)
                     AddToSetup(_creator.SaveMethodExecutionArgsTagToPersistable(ExecutionArgs, aspect.TagPersistable));
 
-                if (!WritesFlowBehavior)
+                if (!WritesFlowBehavior || !aspect.WritesFlowBehavior)
                     continue;
 
                 var nopChain = new InstructionBlockChain();
@@ -697,6 +697,8 @@ namespace MethodBoundaryAspect.Fody
                 .Select(x => x.index)
                 .Reverse()
                 .ToList();
+            // an aspect which sets the FlowBehavior has OnException: the code which returns after the handler is needed
+            var canSwallow = false;
             foreach (var index in indices)
             {
                 var onExceptionAspect = allAspects[index];
@@ -710,8 +712,8 @@ namespace MethodBoundaryAspect.Fody
                 var callAspectOnException =
                     _creator.CallAspectOnException(onExceptionAspect, ExecutionArgs);
 
-                // without a FlowBehavior set by an aspect the exception is always rethrown
-                if (!WritesFlowBehavior)
+                // without a FlowBehavior set by the aspect the exception is rethrown (or handled by the next aspect)
+                if (!WritesFlowBehavior || !onExceptionAspect.WritesFlowBehavior)
                 {
                     callAspectOnException.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
                     exceptionHandlerCurrent = callAspectOnException.Last;
@@ -747,13 +749,14 @@ namespace MethodBoundaryAspect.Fody
                 callAspectOnException.Add(nop);
                 callAspectOnException.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
                 exceptionHandlerCurrent = callAspectOnException.Last;
+                canSwallow = true;
             }
             
             var flowBehaviorHandler = new InstructionBlockChain();
             flowBehaviorHandler.Add(new InstructionBlock("throw", Instruction.Create(OpCodes.Rethrow)));
             flowBehaviorHandler.InsertAfter(exceptionHandlerCurrent, _ilProcessor);
 
-            if (WritesFlowBehavior)
+            if (canSwallow)
                 returnAfterHandling.InsertAfter(flowBehaviorHandler.Last, _ilProcessor);
 
             _method.Body.ExceptionHandlers.Add(new ExceptionHandler(ExceptionHandlerType.Catch)
