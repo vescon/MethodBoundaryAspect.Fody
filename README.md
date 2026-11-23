@@ -246,7 +246,7 @@ The members the compiler generates for records (`Equals`, `PrintMembers`, ...), 
 
 Not woven:
 
-- constructors and finalizers (finalizers run on the finalizer thread, where an exception of an aspect ends the process)
+- constructors and finalizers (finalizers run on the finalizer thread, where an exception of an aspect ends the process); an aspect applied to one writes a build warning
 - abstract and interface methods and `extern` methods
 - methods with a variable argument list (`__arglist`, with a build warning)
 - aspects applied directly to an event (class and assembly aspects do hit the `add`/`remove` accessors; weaving aspects of an event is planned for 4.0)

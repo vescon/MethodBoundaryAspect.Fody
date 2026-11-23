@@ -392,6 +392,8 @@ namespace MethodBoundaryAspect.Fody
         // the aspects of assemblies, types, methods and properties (and their accessors).
         private void WarnAboutIgnoredAspects(TypeDefinition type)
         {
+            WarnAboutIgnoredAspectsOfTypeWithoutBodies(type);
+
             foreach (var field in type.Fields)
                 WarnAboutIgnoredAspects(field.CustomAttributes, $"the field '{field.FullName}'");
 
@@ -404,6 +406,8 @@ namespace MethodBoundaryAspect.Fody
             {
                 if (method.IsConstructor)
                     WarnAboutIgnoredAspects(method.CustomAttributes, $"the constructor '{method.FullName}'");
+                else if (IsFinalizer(method))
+                    WarnAboutIgnoredAspects(method.CustomAttributes, $"the finalizer '{method.FullName}'", "Finalizers are not woven. Remove the aspect.");
                 else if (!method.HasBody)
                     WarnAboutIgnoredAspects(method.CustomAttributes, $"the {DescribeMethodWithoutBody(method)} method '{method.FullName}'", GetHintForMethodWithoutBody(method));
 
@@ -421,6 +425,51 @@ namespace MethodBoundaryAspect.Fody
 
                 WarnAboutIgnoredAspects(property.CustomAttributes, $"the {DescribeMethodWithoutBody(accessor)} property '{property.FullName}'", GetHintForMethodWithoutBody(accessor));
             }
+        }
+
+        // An aspect on an interface, an abstract class, a delegate or an enum hits the methods of the type (and of its
+        // nested types) which have a body. Without any it does nothing: the same mistake as an aspect on an abstract method.
+        private void WarnAboutIgnoredAspectsOfTypeWithoutBodies(TypeDefinition type)
+        {
+            if (!type.HasCustomAttributes)
+                return;
+
+            string target;
+            string hint;
+            if (type.IsEnum)
+            {
+                target = "enum";
+                hint = "It has no methods to weave. Remove the aspect.";
+            }
+            else if (type.BaseType?.FullName == "System.MulticastDelegate")
+            {
+                target = "delegate";
+                hint = "It has no methods with a body to weave. Remove the aspect.";
+            }
+            else if (type.IsInterface)
+            {
+                target = "interface";
+                hint = "It has no method with a body to weave and aspects are not inherited. Apply the aspect to the classes which implement it.";
+            }
+            else if (type.IsAbstract && !type.IsSealed) // abstract and sealed is a static class
+            {
+                target = "abstract class";
+                hint = "It has no method with a body to weave and aspects are not inherited. Apply the aspect to the classes derived from it.";
+            }
+            else
+                return;
+
+            if (HasMethodWithBody(type))
+                return;
+
+            WarnAboutIgnoredAspects(type.CustomAttributes, $"the {target} '{type.FullName}'", hint);
+        }
+
+        // a method an aspect of the type could be woven into, also of a nested type
+        private static bool HasMethodWithBody(TypeDefinition type)
+        {
+            return type.Methods.Any(m => m.HasBody && !m.IsConstructor && !IsFinalizer(m) && !m.Name.StartsWith("<"))
+                   || type.NestedTypes.Any(HasMethodWithBody);
         }
 
         // Lambdas and local functions are compiled to methods named "<Method>b__0" or "<Method>g__Local|0_0", in the

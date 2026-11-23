@@ -83,6 +83,49 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Theory]
+        [InlineData(typeof(IIgnoredAspectOnInterface), "the interface '", "not inherited")]
+        [InlineData(typeof(IgnoredAspectOnAbstractClass), "the abstract class '", "not inherited")]
+        [InlineData(typeof(IgnoredAspectOnDelegate), "the delegate '", "Remove the aspect")]
+        [InlineData(typeof(IgnoredAspectOnEnum), "the enum '", "Remove the aspect")]
+        public void IfAnAspectIsAppliedToATypeWithoutMethodBodies_ThenAWarningIsWritten(System.Type type, string target, string hint)
+        {
+            _weaver.AddClassFilter(type.FullName);
+
+            _weaver.Execute();
+
+            _warnings.Should().ContainSingle()
+                .Which.Should().Contain(target + type.FullName + "'")
+                .And.Contain("is ignored")
+                .And.Contain(hint);
+        }
+
+        [Theory]
+        [InlineData(typeof(AspectOnAbstractClassWithMethodBody))]
+        [InlineData(typeof(AspectOnAbstractClassWithNestedClass))]
+        public void IfAnAspectIsAppliedToAnAbstractTypeWithAMethodBody_ThenNoWarningIsWritten(System.Type type)
+        {
+            _weaver.AddClassFilter(type.FullName);
+
+            _weaver.Execute();
+
+            _warnings.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void IfAnAspectIsAppliedToAFinalizer_ThenAWarningIsWritten()
+        {
+            _weaver.AddClassFilter(typeof(IgnoredAspectOnFinalizer).FullName);
+
+            _weaver.Execute();
+
+            _warnings.Should().ContainSingle()
+                .Which.Should().Contain("the finalizer")
+                .And.Contain("is ignored")
+                .And.Contain("Finalizers are not woven");
+            _weaver.TotalWeavedMethods.Should().Be(0);
+        }
+
+        [Theory]
         [InlineData("g__Local|")]
         [InlineData("g__LocalWithThis|")]
         [InlineData("<Lambda>b__")]
