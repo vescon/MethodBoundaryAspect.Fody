@@ -15,6 +15,16 @@ namespace MethodBoundaryAspect.Fody.UnitTests.TestAssembly.NetCore
         }
     }
 
+    public class AsyncWithOnException
+    {
+        [OnlyOnExceptionAspect]
+        public async Task<int> Async()
+        {
+            await Task.Yield();
+            return 1;
+        }
+    }
+
     [OnlyOnEntryAspect]
     public class StateMachineMethods
     {

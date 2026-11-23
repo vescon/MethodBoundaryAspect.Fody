@@ -115,10 +115,44 @@ namespace MethodBoundaryAspect.Fody
 
             var handlerInstructions = GetHandlerInstructions(handler).ToList();
             var setException = handlerInstructions.FirstOrDefault(IsBuilderSetException);
-            if (setException == null || !handlerInstructions.Any(IsStloc) || setException.Previous?.Previous?.Previous == null)
+            if (setException == null || !handlerInstructions.Any(IsStloc) || !LoadsBuilderAndException(setException))
                 return "OnException is used, but the catch block of MoveNext doesn't set the exception in the expected way";
 
             return null;
+        }
+
+        /// <summary>
+        /// "ldarg.0; ldflda builder; ldloc exception; call SetException": the weaver reuses the first two instructions
+        /// to call SetResult and inserts its code before them. Another sequence would be woven into invalid code.
+        /// </summary>
+        private static bool LoadsBuilderAndException(Instruction setException)
+        {
+            var loadException = setException.Previous;
+            var loadBuilder = loadException?.Previous;
+            var loadThis = loadBuilder?.Previous;
+
+            return loadThis != null
+                   && loadThis.OpCode == OpCodes.Ldarg_0
+                   && loadBuilder.OpCode == OpCodes.Ldflda
+                   && loadBuilder.Operand is FieldReference builder
+                   && IsAsyncMethodBuilder(builder.FieldType)
+                   && IsLdloc(loadException);
+        }
+
+        private static bool IsLdloc(Instruction i)
+        {
+            switch (i.OpCode.Code)
+            {
+                case Code.Ldloc:
+                case Code.Ldloc_S:
+                case Code.Ldloc_0:
+                case Code.Ldloc_1:
+                case Code.Ldloc_2:
+                case Code.Ldloc_3:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         protected override void Setup() { }

@@ -80,6 +80,54 @@ namespace MethodBoundaryAspect.Fody.UnitTests.NetCore
         }
 
         [Fact]
+        public void IfTheCatchBlockOfMoveNextIsAsExpected_ThenOnExceptionIsWeaved()
+        {
+            var warnings = new List<string>();
+            var weaver = CreateWeaverForAsyncWithOnException(warnings, out _);
+
+            weaver.Execute();
+
+            warnings.Should().BeEmpty();
+            weaver.TotalWeavedMethods.Should().Be(1);
+        }
+
+        [Fact]
+        public void IfTheCatchBlockOfMoveNextLoadsTheBuilderInAnotherWay_ThenTheMethodIsNotWeavedAndAWarningIsWritten()
+        {
+            var warnings = new List<string>();
+            var weaver = CreateWeaverForAsyncWithOnException(warnings, out var moveNext);
+            // "ldarg.0; ldflda builder; ldloc exception; call SetException" is no longer what precedes the call
+            var setException = moveNext.Body.Instructions.Single(i => i.Operand is MethodReference m && m.Name == "SetException");
+            moveNext.Body.GetILProcessor().InsertBefore(setException, Instruction.Create(OpCodes.Nop));
+            var instructionCount = moveNext.Body.Instructions.Count;
+
+            weaver.Execute();
+
+            warnings.Should().ContainSingle()
+                .Which.Should().Contain(nameof(AsyncWithOnException.Async))
+                .And.Contain("is not woven")
+                .And.Contain("expected way");
+            moveNext.Body.Instructions.Should().HaveCount(instructionCount);
+            weaver.TotalWeavedMethods.Should().Be(0);
+        }
+
+        private static ModuleWeaver CreateWeaverForAsyncWithOnException(List<string> warnings, out MethodDefinition moveNext)
+        {
+            var weaver = new ModuleWeaver
+            {
+                ModuleDefinition = WeaverTestHelper.ReadModule(typeof(AsyncWithOnException))
+            }.CaptureWarnings(warnings);
+            weaver.AddClassFilter(typeof(AsyncWithOnException).FullName);
+
+            var kickoff = weaver.ModuleDefinition.GetType(typeof(AsyncWithOnException).FullName).Methods
+                .Single(m => m.Name == nameof(AsyncWithOnException.Async));
+            var stateMachine = (TypeDefinition)kickoff.CustomAttributes
+                .Single(a => a.AttributeType.Name == "AsyncStateMachineAttribute").ConstructorArguments[0].Value;
+            moveNext = stateMachine.Methods.Single(m => m.Name == "MoveNext");
+            return weaver;
+        }
+
+        [Fact]
         public void IfOnlyOnEntryIsUsedWithAnotherAsyncMethodBuilder_ThenTheMethodIsWeaved()
         {
             _weaver.Execute();
