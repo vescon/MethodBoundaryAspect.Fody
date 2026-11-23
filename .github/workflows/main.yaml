@@ -140,7 +140,7 @@ jobs:
       id-token: write # OIDC token for the trusted publishing policy on nuget.org
     steps:
     - name: Download the package
-      uses: actions/download-artifact@v7
+      uses: actions/download-artifact@v8
       with:
         name: nupkg
         path: Artifacts/Packages
