@@ -1,5 +1,6 @@
 ﻿using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -419,6 +420,9 @@ namespace MethodBoundaryAspect.Fody
                 HandlerStart = catchOnException.First,
                 HandlerEnd = firstInstructionToSetException
             });
+
+            // back to the short forms where the target is still in reach, all branches were widened above
+            _moveNext.Body.Optimize();
         }
 
         // the task returned to the caller, e.g. Task<TResult> for AsyncTaskMethodBuilder<TResult>
